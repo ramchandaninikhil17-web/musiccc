@@ -1,0 +1,16 @@
+{
+  "name": "musicflow",
+  "version": "1.0.0",
+  "description": "MusicFlow — YouTube Audio Player (No API Required)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.0",
+    "ffmpeg-static": "^5.3.0",
+    "yt-dlp-wrap": "^2.3.12"
+  }
+}

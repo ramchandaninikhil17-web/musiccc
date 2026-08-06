@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MusicFlow — Stream Music from YouTube</title>
+  <meta name="description" content="MusicFlow is a beautiful, free music player that streams high-quality audio directly from YouTube." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation" id="bgAnimation"></div>
+
+  <!-- Main Layout -->
+  <div class="app-layout">
+
+    <!-- ============ SIDEBAR NAV ============ -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="logo">
+          <span class="logo-icon">🎵</span>
+          <span class="logo-text">MusicFlow</span>
+        </div>
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="#home" class="nav-link active" data-page="home" id="navHome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </a></li>
+        <li><a href="#search" class="nav-link" data-page="search" id="navSearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Search</span>
+        </a></li>
+        <li><a href="#library" class="nav-link" data-page="library" id="navLibrary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Library</span>
+        </a></li>
+        <li><a href="#profile" class="nav-link" data-page="profile" id="navProfile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Profile</span>
+        </a></li>
+      </ul>
+
+      <div class="sidebar-bottom">
+        <button class="sidebar-btn" id="settingsBtn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ============ MAIN AREA ============ -->
+    <div class="main-area">
+
+      <!-- Top bar (search + actions) -->
+      <header class="top-bar" id="topBar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <div class="search-bar-wrap" id="searchBarWrap">
+          <div class="search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, albums..." autocomplete="off" />
+            <button class="search-clear" id="searchClear" title="Clear">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <div class="search-loading" id="searchLoading"><div class="spinner"></div></div>
+          </div>
+          <!-- Search Suggestions Dropdown -->
+          <div class="search-suggestions" id="searchSuggestions"></div>
+        </div>
+
+        <div class="top-bar-actions">
+          <button class="top-btn" id="themeToggleBtn" title="Toggle theme">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="top-btn queue-toggle-btn" id="queueToggleBtn" title="Queue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+            <span class="queue-badge" id="queueBadge">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content" id="pageContent">
+
+        <!-- ===== HOME PAGE ===== -->
+        <section class="page" id="pageHome">
+          <div class="home-greeting" id="homeGreeting">
+            <h1>Good Evening</h1>
+            <p>What would you like to listen to?</p>
+          </div>
+
+          <!-- Personalized Endless Radio Banner -->
+          <div class="home-hero-card" id="personalizedRadioHero">
+            <div class="hero-content">
+              <div class="hero-badge">✨ Smart Flow</div>
+              <h2>Your Personalized Mix</h2>
+              <p>Endless dynamic playlist adapted in real-time from your favorite tracks & artists.</p>
+              <button class="hero-play-btn" id="startRadioBtn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Play Personalized Mix</span>
+              </button>
+            </div>
+            <div class="hero-visual">
+              <div class="hero-glow-circle"></div>
+              <div class="hero-disc"><span class="hero-disc-icon">🎵</span></div>
+            </div>
+          </div>
+
+          <!-- Recommended For You Section -->
+          <div class="home-section" id="recommendedSection">
+            <div class="section-header">
+              <h2>✨ Recommended For You</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="playAllRecBtn" title="Play all recommendations">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="refreshRecBtn">🔄 Refresh</button>
+              </div>
+            </div>
+            <div class="results-grid" id="recommendedGrid"></div>
+          </div>
+
+          <!-- Based on Recent Vibe Section (Dynamic) -->
+          <div class="home-section" id="tasteSection" style="display:none;">
+            <div class="section-header">
+              <h2 id="tasteSectionTitle">🔥 More Like What You Love</h2>
+            </div>
+            <div class="horizontal-scroll" id="tasteGrid"></div>
+          </div>
+
+          <!-- Recently Played -->
+          <div class="home-section" id="recentlyPlayedSection" style="display:none;">
+            <div class="section-header">
+              <h2>🎧 Recently Played</h2>
+            </div>
+            <div class="horizontal-scroll" id="recentlyPlayedGrid"></div>
+          </div>
+
+          <!-- Quick Picks / Made For You -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>🎯 Quick Picks</h2>
+            </div>
+            <div class="quick-tags" id="quickTags">
+              <button class="tag" data-query="trending songs 2024">🔥 Trending</button>
+              <button class="tag" data-query="Arijit Singh best songs">Arijit Singh</button>
+              <button class="tag" data-query="lo-fi hip hop beats study">Lo-Fi Beats</button>
+              <button class="tag" data-query="top bollywood songs 2024">Bollywood Hits</button>
+              <button class="tag" data-query="EDM party music 2024">EDM Party</button>
+              <button class="tag" data-query="classical piano relaxing">Classical Piano</button>
+              <button class="tag" data-query="K-pop hits 2024">K-Pop</button>
+              <button class="tag" data-query="90s rock hits">90s Rock</button>
+            </div>
+          </div>
+
+          <!-- Browse by Mood -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>🌐 Browse by Mood</h2>
+            </div>
+            <div class="genre-grid" id="moodGrid">
+              <div class="genre-card" data-query="happy upbeat songs" style="--gc1:#f97316;--gc2:#eab308;"><span>😊</span><p>Happy</p></div>
+              <div class="genre-card" data-query="sad emotional songs" style="--gc1:#6366f1;--gc2:#8b5cf6;"><span>😢</span><p>Sad</p></div>
+              <div class="genre-card" data-query="romantic love songs" style="--gc1:#ec4899;--gc2:#f43f5e;"><span>❤️</span><p>Romantic</p></div>
+              <div class="genre-card" data-query="chill relaxing music" style="--gc1:#06b6d4;--gc2:#3b82f6;"><span>😌</span><p>Chill</p></div>
+              <div class="genre-card" data-query="energetic workout music" style="--gc1:#ef4444;--gc2:#f97316;"><span>💪</span><p>Energetic</p></div>
+              <div class="genre-card" data-query="focus study concentration music" style="--gc1:#10b981;--gc2:#14b8a6;"><span>🧠</span><p>Focus</p></div>
+              <div class="genre-card" data-query="party dance music" style="--gc1:#d946ef;--gc2:#a855f7;"><span>🎉</span><p>Party</p></div>
+              <div class="genre-card" data-query="sleep ambient calm music" style="--gc1:#1e3a5f;--gc2:#312e81;"><span>🌙</span><p>Sleep</p></div>
+            </div>
+          </div>
+
+          <!-- Browse by Genre -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>🎶 Browse by Genre</h2>
+            </div>
+            <div class="genre-grid" id="genreGrid">
+              <div class="genre-card" data-query="pop music hits 2024" style="--gc1:#ec4899;--gc2:#8b5cf6;"><span>🎤</span><p>Pop</p></div>
+              <div class="genre-card" data-query="hip hop rap music 2024" style="--gc1:#f59e0b;--gc2:#ef4444;"><span>🎧</span><p>Hip Hop</p></div>
+              <div class="genre-card" data-query="rock music greatest hits" style="--gc1:#dc2626;--gc2:#991b1b;"><span>🎸</span><p>Rock</p></div>
+              <div class="genre-card" data-query="electronic dance music" style="--gc1:#7c3aed;--gc2:#2563eb;"><span>🎹</span><p>Electronic</p></div>
+              <div class="genre-card" data-query="R&B soul music" style="--gc1:#be185d;--gc2:#7c2d12;"><span>🎷</span><p>R&B / Soul</p></div>
+              <div class="genre-card" data-query="jazz smooth music" style="--gc1:#92400e;--gc2:#78350f;"><span>🎺</span><p>Jazz</p></div>
+              <div class="genre-card" data-query="classical music masterpieces" style="--gc1:#1e40af;--gc2:#1e3a5f;"><span>🎻</span><p>Classical</p></div>
+              <div class="genre-card" data-query="country music hits" style="--gc1:#b45309;--gc2:#a16207;"><span>🤠</span><p>Country</p></div>
+            </div>
+          </div>
+
+          <!-- Browse by Language -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>🌍 Browse by Language</h2>
+            </div>
+            <div class="genre-grid" id="langGrid">
+              <div class="genre-card" data-query="hindi songs latest 2024" style="--gc1:#f97316;--gc2:#dc2626;"><span>🇮🇳</span><p>Hindi</p></div>
+              <div class="genre-card" data-query="english pop songs 2024" style="--gc1:#3b82f6;--gc2:#6366f1;"><span>🇺🇸</span><p>English</p></div>
+              <div class="genre-card" data-query="punjabi songs latest" style="--gc1:#eab308;--gc2:#f97316;"><span>🎵</span><p>Punjabi</p></div>
+              <div class="genre-card" data-query="tamil songs hits 2024" style="--gc1:#10b981;--gc2:#059669;"><span>🎵</span><p>Tamil</p></div>
+              <div class="genre-card" data-query="korean k-pop music" style="--gc1:#ec4899;--gc2:#d946ef;"><span>🇰🇷</span><p>Korean</p></div>
+              <div class="genre-card" data-query="spanish latin music reggaeton" style="--gc1:#ef4444;--gc2:#b91c1c;"><span>🇪🇸</span><p>Spanish</p></div>
+              <div class="genre-card" data-query="telugu songs latest hits" style="--gc1:#8b5cf6;--gc2:#6d28d9;"><span>🎵</span><p>Telugu</p></div>
+              <div class="genre-card" data-query="japanese anime music" style="--gc1:#f43f5e;--gc2:#e11d48;"><span>🇯🇵</span><p>Japanese</p></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== SEARCH PAGE ===== -->
+        <section class="page" id="pageSearch" style="display:none;">
+          <div class="search-history-section" id="searchHistorySection">
+            <div class="section-header">
+              <h2>🕐 Recent Searches</h2>
+              <button class="text-btn" id="clearSearchHistory">Clear</button>
+            </div>
+            <div class="search-history-tags" id="searchHistoryTags"></div>
+          </div>
+
+          <div class="results-header" id="resultsHeader" style="display:none;">
+            <h2 class="results-title" id="resultsTitle">Results</h2>
+            <button class="play-all-btn" id="playAllBtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Play All
+            </button>
+          </div>
+          <div class="results-grid" id="resultsGrid"></div>
+        </section>
+
+        <!-- ===== LIBRARY PAGE ===== -->
+        <section class="page" id="pageLibrary" style="display:none;">
+          <h1 class="page-title">Your Library</h1>
+
+          <!-- Liked Songs -->
+          <div class="library-card liked-card" id="likedSongsCard">
+            <div class="lib-card-icon">❤️</div>
+            <div class="lib-card-info">
+              <h3>Liked Songs</h3>
+              <p id="likedCount">0 songs</p>
+            </div>
+            <button class="lib-card-play" id="playLikedBtn" title="Play liked songs">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            </button>
+          </div>
+
+          <!-- Liked Songs List -->
+          <div class="liked-songs-list" id="likedSongsList" style="display:none;"></div>
+
+          <!-- Playlists -->
+          <div class="section-header" style="margin-top:24px;">
+            <h2>📂 Your Playlists</h2>
+            <div class="playlist-header-actions">
+              <button class="batch-import-btn" id="openBatchImportBtn" title="Batch add songs from text">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                <span>✨ Batch Import</span>
+              </button>
+              <button class="create-playlist-btn" id="createPlaylistBtn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                <span>New Playlist</span>
+              </button>
+            </div>
+          </div>
+          <div class="playlists-grid" id="playlistsGrid">
+            <p class="empty-msg" id="noPlaylists">No playlists yet. Create one!</p>
+          </div>
+
+          <!-- Playlist Detail View -->
+          <div class="playlist-detail" id="playlistDetail" style="display:none;">
+            <button class="back-btn" id="playlistBackBtn">← Back</button>
+            <div class="playlist-detail-header">
+              <h2 id="playlistDetailName"></h2>
+              <div class="playlist-detail-actions">
+                <button class="batch-add-btn" id="playlistBatchAddBtn" title="Add multiple songs from text to this playlist">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
+                  <span>➕ Add from Text</span>
+                </button>
+                <button class="play-all-btn" id="playPlaylistBtn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play All</button>
+                <button class="text-btn danger" id="deletePlaylistBtn">Delete</button>
+              </div>
+            </div>
+            <div class="playlist-songs-list" id="playlistSongsList"></div>
+          </div>
+        </section>
+
+        <!-- ===== PROFILE PAGE ===== -->
+        <section class="page" id="pageProfile" style="display:none;">
+          <h1 class="page-title">Your Profile</h1>
+
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number" id="statTotalPlayed">0</div><div class="stat-label">Songs Played</div></div>
+            <div class="stat-card"><div class="stat-number" id="statMinutes">0</div><div class="stat-label">Minutes Listened</div></div>
+            <div class="stat-card"><div class="stat-number" id="statLiked">0</div><div class="stat-label">Liked Songs</div></div>
+            <div class="stat-card"><div class="stat-number" id="statPlaylists">0</div><div class="stat-label">Playlists</div></div>
+          </div>
+
+          <!-- Top Songs -->
+          <div class="home-section">
+            <div class="section-header"><h2>🏆 Top Songs</h2></div>
+            <div class="top-list" id="topSongsList"><p class="empty-msg">Play some songs to see your top tracks!</p></div>
+          </div>
+
+          <!-- Top Artists -->
+          <div class="home-section">
+            <div class="section-header"><h2>🌟 Top Artists</h2></div>
+            <div class="top-list" id="topArtistsList"><p class="empty-msg">Listen to music to see your top artists!</p></div>
+          </div>
+
+          <!-- Listening History -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>📜 Listening History</h2>
+              <button class="text-btn" id="clearHistoryBtn">Clear History</button>
+            </div>
+            <div class="history-list" id="historyList"><p class="empty-msg">No listening history yet.</p></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Queue Sidebar -->
+    <aside class="queue-sidebar" id="queueSidebar">
+      <div class="queue-header">
+        <h3>Up Next</h3>
+        <div class="queue-actions">
+          <button class="queue-clear-btn" id="queueClearBtn">Clear</button>
+          <button class="queue-close-btn" id="queueCloseBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="queue-empty" id="queueEmpty"><p>Queue is empty</p><p class="queue-hint">Search and add songs</p></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ============ NOW PLAYING BAR ============ -->
+  <div class="now-playing-bar" id="nowPlayingBar">
+    <div class="now-playing-inner">
+
+      <!-- Track Info -->
+      <div class="np-track-info" id="npTrackInfo">
+        <div class="np-thumbnail-wrap" id="npThumbWrap">
+          <img class="np-thumbnail" id="npThumbnail" src="" alt="" />
+          <div class="np-thumbnail-overlay">
+            <div class="np-equalizer"><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="np-details">
+          <div class="np-title" id="npTitle">Not Playing</div>
+          <div class="np-channel" id="npChannel">—</div>
+        </div>
+        <button class="np-like-btn" id="npLikeBtn" title="Like">
+          <svg class="heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg class="heart-filled" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+      </div>
+
+      <!-- Controls -->
+      <div class="np-controls">
+        <div class="np-buttons">
+          <button class="np-btn" id="shuffleBtn" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>
+          <button class="np-btn" id="prevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button class="np-btn np-play-btn" id="playPauseBtn" title="Play">
+            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="np-btn" id="nextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button class="np-btn" id="repeatBtn" title="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+        </div>
+        <div class="np-progress-wrap">
+          <span class="np-time" id="npCurrentTime">0:00</span>
+          <div class="np-progress-bar" id="npProgressBar">
+            <div class="np-progress-track">
+              <div class="np-progress-fill" id="npProgressFill"></div>
+              <div class="np-progress-thumb" id="npProgressThumb"></div>
+            </div>
+          </div>
+          <span class="np-time" id="npDuration">0:00</span>
+        </div>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="np-right-controls">
+        <button class="np-btn" id="lyricsBtn" title="Lyrics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+        <button class="np-btn" id="shareBtn" title="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+        <button class="np-btn" id="downloadBtn" title="Download MP3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="np-btn" id="qualityBtn" title="Audio Quality">
+          <span class="quality-label" id="qualityLabel">HQ</span>
+        </button>
+        <button class="np-btn" id="muteBtn" title="Mute">
+          <svg class="vol-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <svg class="vol-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+        <div class="np-volume-bar" id="npVolumeBar">
+          <div class="np-volume-track">
+            <div class="np-volume-fill" id="npVolumeFill"></div>
+            <div class="np-volume-thumb" id="npVolumeThumb"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ LYRICS PANEL ============ -->
+  <div class="lyrics-panel" id="lyricsPanel">
+    <div class="lyrics-panel-header">
+      <h3>Lyrics</h3>
+      <button class="lyrics-close-btn" id="lyricsCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="lyrics-content" id="lyricsContent">
+      <p class="lyrics-placeholder">Play a song to see lyrics</p>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div class="modal-overlay" id="settingsModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="modal-close" id="settingsCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Theme</span><span class="setting-desc">Switch between dark and light mode</span></div>
+          <select class="setting-select" id="settingTheme"><option value="dark">Dark</option><option value="light">Light</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Audio Quality</span><span class="setting-desc">Higher quality uses more data</span></div>
+          <select class="setting-select" id="settingQuality"><option value="high">High (Best)</option><option value="low">Low (Save Data)</option></select>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CREATE PLAYLIST MODAL ============ -->
+  <div class="modal-overlay" id="playlistModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="playlistModalTitle">Create Playlist</h3>
+        <button class="modal-close" id="playlistModalClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="text" class="modal-input" id="playlistNameInput" placeholder="Playlist name..." />
+        <button class="modal-submit-btn" id="playlistSaveBtn">Create</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD TO PLAYLIST MODAL ============ -->
+  <div class="modal-overlay" id="addToPlaylistModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add to Playlist</h3>
+        <button class="modal-close" id="addToPlaylistClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="playlist-select-list" id="playlistSelectList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BATCH IMPORT FROM TEXT MODAL ============ -->
+  <div class="modal-overlay" id="batchImportModal" style="display:none;">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3 class="modal-gradient-title">✨ Batch Import Songs from Text</h3>
+          <p class="modal-subtitle">Paste song names or lyrics queries to search & add famous official releases.</p>
+        </div>
+        <button class="modal-close" id="batchImportClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Quick examples pill chips -->
+        <div class="batch-examples">
+          <span class="batch-example-label">Quick test presets:</span>
+          <button class="batch-example-pill" type="button" data-text="siyara keshariya akhari ishk blinglight starboy">Bollywood & Pop Mix</button>
+          <button class="batch-example-pill" type="button" data-text="Apna Bana Le, Kesariya, Chaleya, Tum Hi Ho, O Bedardeya">Arijit Singh Hits</button>
+          <button class="batch-example-pill" type="button" data-text="Blinding Lights, Starboy, Save Your Tears, Die For You">The Weeknd Hits</button>
+        </div>
+
+        <!-- Text input area -->
+        <div class="batch-textarea-wrap">
+          <textarea class="batch-textarea" id="batchTextarea" rows="4" placeholder="Enter song names separated by lines, commas, or spaces (e.g. siyara keshariya akhari ishk blinglight starboy)..."></textarea>
+          <div class="batch-textarea-footer">
+            <span id="batchCountBadge" class="batch-count-badge">0 songs detected</span>
+            <button class="text-btn text-xs" type="button" id="batchClearText">Clear</button>
+          </div>
+        </div>
+
+        <!-- Interactive Recognized Chips Preview -->
+        <div class="batch-chips-section" id="batchChipsSection" style="display:none;">
+          <div class="batch-section-header">
+            <label class="batch-section-label">Recognized Songs (Click ✕ to remove):</label>
+            <span class="batch-section-sub" id="batchChipsCount">0 items</span>
+          </div>
+          <div class="batch-chips-container" id="batchChipsContainer"></div>
+        </div>
+
+        <!-- Destination Selection -->
+        <div class="batch-options-card">
+          <label class="batch-section-label">Destination Playlist:</label>
+          <div class="batch-dest-radios">
+            <label class="radio-label">
+              <input type="radio" name="batchDestType" value="new" id="destRadioNew" checked />
+              <span>Create New Playlist</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="batchDestType" value="existing" id="destRadioExisting" />
+              <span>Add to Existing Playlist</span>
+            </label>
+          </div>
+          <div id="batchNewPlaylistWrap">
+            <input type="text" class="modal-input" id="batchNewPlaylistName" placeholder="New Playlist Name (e.g. Batch Mix)" />
+          </div>
+          <div id="batchExistingPlaylistWrap" style="display:none;">
+            <select class="setting-select full-width" id="batchExistingPlaylistSelect">
+              <option value="">Select a playlist...</option>
+            </select>
+          </div>
+
+          <div class="batch-pref-group">
+            <label class="checkbox-label" title="Prioritizes verified releases from T-Series, Sony, Zee Music, VEVO, and top official tracks">
+              <input type="checkbox" id="batchPreferOfficial" checked />
+              <span>⭐ Prioritize Famous / Official Releases (T-Series, Sony, VEVO, High Views)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Live Progress Animated Box -->
+        <div class="batch-progress-box" id="batchProgressBox" style="display:none;">
+          <div class="batch-progress-header">
+            <span id="batchProgressStatus">Searching & adding songs...</span>
+            <span id="batchProgressPercent">0%</span>
+          </div>
+          <div class="batch-progress-track">
+            <div class="batch-progress-fill" id="batchProgressFill"></div>
+          </div>
+        </div>
+
+        <!-- Results / Summary Preview -->
+        <div class="batch-results-preview" id="batchResultsPreview" style="display:none;"></div>
+
+        <!-- Modal Actions -->
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="batchCancelBtn">Cancel</button>
+          <button class="modal-submit-btn" type="button" id="batchStartBtn">✨ Import Songs to Playlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Audio Element -->
+  <audio id="audioPlayer" preload="auto"></audio>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
