@@ -1,0 +1,13 @@
+{
+  "appId": "com.musicflow.app",
+  "appName": "MusicFlow",
+  "webDir": "../public",
+  "bundledWebRuntime": false,
+  "server": {
+    "cleartext": true,
+    "allowNavigation": ["*"]
+  },
+  "android": {
+    "allowMixedContent": true
+  }
+}
