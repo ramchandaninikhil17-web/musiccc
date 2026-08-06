@@ -712,30 +712,6 @@ app.get('/api/download/:videoId', async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  Network Info Endpoint (For Phone / Mobile Connection)             */
-/* ------------------------------------------------------------------ */
-const os = require('os');
-
-app.get('/api/network-info', (req, res) => {
-  const interfaces = os.networkInterfaces();
-  const addresses = [];
-  for (const k in interfaces) {
-    for (const k2 in interfaces[k]) {
-      const address = interfaces[k][k2];
-      if (address.family === 'IPv4' && !address.internal) {
-        addresses.push(address.address);
-      }
-    }
-  }
-  res.json({
-    localIp: addresses[0] || 'localhost',
-    port: PORT,
-    allIps: addresses,
-    phoneUrl: addresses[0] ? `http://${addresses[0]}:${PORT}` : `http://localhost:${PORT}`
-  });
-});
-
-/* ------------------------------------------------------------------ */
 /*  Persistent User Data Storage (Disk Backup for likes, playlists)   */
 /* ------------------------------------------------------------------ */
 const dataDir = path.join(__dirname, 'data');

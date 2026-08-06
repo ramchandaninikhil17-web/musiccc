@@ -1,121 +1,139 @@
-# 🎵 MusicFlow — High-Performance Web Music Streaming Player
+# 🎵 MusicFlow — High-Performance Music Streaming Player
 
-**MusicFlow** is a modern, responsive web-based music application powered by Express.js and `yt-dlp`. It allows users to search, stream, download, and manage music playlists without requiring YouTube Data API keys or database setup.
+<p align="center">
+  <strong>Stream, search, batch-import, and download high-quality music across any device with zero setup.</strong>
+  <br />
+  <em>Zero Database Required • Zero API Keys Required • Works on Windows, Mac, Linux, Android & iOS</em>
+</p>
 
 ---
 
-## ✨ Features
+## 🚀 Instant Start (For New Users & ZIP Downloads)
+
+Whether you downloaded the **ZIP from GitHub** or cloned via **Git**, here is how to start in under 1 minute:
+
+### 1️⃣ Prerequisite: Install Node.js
+If you don't already have Node.js installed, download the free **LTS version** from **[https://nodejs.org/](https://nodejs.org/)** and run the installer.
+
+---
+
+### 2️⃣ Launch MusicFlow
+
+#### 🪟 On Windows PC:
+Simply choose **ONE** of these 1-click methods:
+
+- 🟢 **Method A (Easiest)**: Double-click **`start.bat`**  
+  *Automatically checks Node.js, installs dependencies on first run, starts the server, and opens MusicFlow in your browser.*
+- 🚀 **Method B (App Mode)**: Double-click **`MusicFlow.exe`**  
+  *Ultra-lite desktop launcher (5.6 KB) that runs MusicFlow in a dedicated, distraction-free desktop window.*
+- 🖥️ **Method C (Desktop Shortcut)**: Double-click **`create-desktop-shortcut.bat`**  
+  *Creates a MusicFlow shortcut icon directly on your Windows desktop.*
+
+#### 🍏 On macOS / Linux:
+1. Open Terminal in the project folder.
+2. Run:
+   ```bash
+   chmod +x start.sh
+   ./start.sh
+   ```
+3. MusicFlow installs any missing dependencies and opens in your browser at `http://localhost:3000`.
+
+#### 💻 Standard Terminal / Developer Method:
+```bash
+npm install
+npm start
+```
+Then visit **[http://localhost:3000](http://localhost:3000)**.
+
+---
+
+## 📱 How to Use on Your Phone / Tablet (Same Wi-Fi)
+
+MusicFlow is a full **Progressive Web App (PWA)** with background audio playback, lock screen media controls, and offline caching.
+
+1. Start MusicFlow on your computer.
+2. In MusicFlow, click the **📱 Phone** icon in the sidebar / top bar.
+3. Your PC's Wi-Fi network address (e.g. `http://192.168.1.15:3000`) and a **live QR code** will appear.
+4. Scan the QR code with your phone camera or type the address into **Chrome** (Android) or **Safari** (iPhone):
+   - **Android (Chrome)**: Tap **⋮ Menu** &rarr; **"Add to Home Screen"** or **"Install App"**.
+   - **iOS / iPhone (Safari)**: Tap **Share** &rarr; **"Add to Home Screen"**.
+5. 🎉 **Done!** You now have MusicFlow installed as an app on your phone with background audio and media controls!
+
+---
+
+## ✨ Key Features
 
 - 📜 **Smart Batch Text Song Importer**:
-  - Add multiple songs to new or existing playlists using raw text strings, space-separated names (e.g. `siyara keshariya akhari ishk blinglight starboy`), line breaks, or comma-separated lists.
-  - Interactive tokenized chip editor to preview and refine detected song terms.
+  - Add multiple songs to playlists using raw text strings, space-separated song names, line breaks, or comma-separated lists.
+  - Interactive tokenized chip editor to preview, edit, and refine detected terms before importing.
 
 - 🏆 **Official Release Prioritization Engine**:
-  - Smart scoring system that ranks search results based on view counts, track durations, and official record labels (**T-Series**, **Sony Music**, **YRF**, **Zee Music**, **Saregama**, **The Weeknd**, etc.).
-  - Automatic filtering out of fan covers, ringtones, and slowed+reverb edits.
+  - Intelligent scoring engine prioritizing official record labels (**T-Series**, **Sony Music**, **YRF**, **Zee Music**, **Saregama**, **The Weeknd**, etc.).
+  - Filters out amateur covers, ringtones, and pitch-shifted edits.
 
 - 📻 **Personalized Home Recommendations & Radio**:
-  - Dynamically builds custom music recommendations based on listening history and liked tracks.
-  - One-click **Personalized Radio Mix** that generates an endless stream of music matching your taste.
+  - Dynamically builds personalized music mixes based on your liked songs and listening history.
+  - 1-click **Personalized Radio Mix** for continuous playback matching your musical taste.
 
-- ⚡ **Database-Free & Ultra-Fast**:
-  - Built entirely on `localStorage` for client state.
-  - Features an in-memory LRU/TTL cache and concurrency control on the server to ensure fast performance.
+- ⚡ **Database-Free & Auto-Setup**:
+  - Automatically manages background stream dependencies (`yt-dlp` auto-installer).
+  - Uses `localStorage` and optional local JSON sync for zero-database persistence.
+  - In-memory LRU/TTL caching for fast search responses.
 
-- 📥 **Direct MP3 Downloading**:
-  - Integrated high-speed MP3 audio download endpoint.
+- 📥 **Direct MP3 Audio Downloader**:
+  - Integrated high-speed MP3 audio download endpoint for offline listening.
 
-- 🎨 **Modern Dark Glassmorphism UI**:
-  - Styled with CSS variables, smooth micro-animations, theme toggling (Dark/Light), responsive layouts, and lyrics synchronization.
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: Node.js, Express.js, `yt-dlp`
-- **Frontend**: Vanilla JavaScript (ES6+), HTML5, Custom CSS3
-- **Storage**: `localStorage` (Zero external database required)
-
----
-
-## 💻 How to Use `MusicFlow.exe` Desktop App on Windows PC
-
-**`MusicFlow.exe`** is a native, ultra-lightweight Windows launcher (5.6 KB executable, ~30 MB RAM) that automatically launches the MusicFlow backend server headlessly and opens the app as a dedicated desktop application window using Microsoft Edge App Mode.
-
-### ⚡ Quick Start (Method 1: Direct Executable)
-
-1. Make sure **Node.js** (v16+) is installed on your PC.
-2. Simply **double-click `MusicFlow.exe`** in the project folder.
-3. `MusicFlow.exe` will:
-   - Silently launch `node server.js` in the background if the server isn't already running.
-   - Open MusicFlow in a dedicated window without browser tabs/toolbars.
-
----
-
-### 🖥️ Create Desktop Shortcut (Method 2: Desktop Launcher)
-
-To launch MusicFlow directly from your Windows Desktop like a native app:
-
-1. Right-click **`create-shortcut.ps1`** and select **Run with PowerShell** (or run `powershell -ExecutionPolicy Bypass -File .\create-shortcut.ps1` in terminal).
-2. A **MusicFlow** shortcut will appear on your desktop.
-3. Double-click the **MusicFlow** desktop icon anytime to play music!
-
----
-
-### 🛠️ Alternative Launchers
-
-- **Command Prompt / Terminal**: Run `npm start` or `node server.js`, then open `http://localhost:3000` in any browser.
-- **Batch File**: Double-click `start.bat` to launch both the server and your default web browser automatically.
-- **Recompiling Launcher**: If you modify `MusicFlowLauncher.cs`, compile it with C# compiler (`csc`):
-  ```cmd
-  csc /target:winexe /out:MusicFlow.exe MusicFlowLauncher.cs
-  ```
-
----
-
-## 🚀 Getting Started (Standard Setup)
-
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v16 or higher)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) binary (`yt-dlp.exe`) placed in the project root directory.
-
-### Installation
-
-1. **Clone or Download the repository**:
-   ```bash
-   git clone https://github.com/YOUR_USERNAME/musicflow.git
-   cd musicflow
-   ```
-
-2. **Install dependencies**:
-   ```bash
-   npm install
-   ```
-
-3. **Start the server / Launcher**:
-   - Double-click **`MusicFlow.exe`** (Windows PC App Mode)
-   - OR run `npm start` and visit `http://localhost:3000`
+- 🎨 **Modern Dark Glassmorphism Design**:
+  - Sleek visual aesthetics, smooth animations, dark/light themes, dynamic synchronized lyrics, and responsive layouts for desktop and mobile.
 
 ---
 
 ## 📁 Project Structure
 
 ```text
-musiccc/
+musicflow/
 ├── public/
-│   ├── index.html        # Main SPA interface
 │   ├── css/
-│   │   └── style.css     # Glassmorphism design system & components
-│   └── js/
-│       └── app.js        # Single-page application logic & player state
-├── server.js             # Express server, search scoring & streaming API
-├── package.json          # Project metadata and dependencies
-└── README.md             # Documentation
+│   │   └── style.css            # Glassmorphism design system & UI styles
+│   ├── js/
+│   │   └── app.js               # Frontend SPA player logic & state management
+│   ├── icons/                   # App icons for Desktop, PWA & Mobile
+│   ├── index.html               # Main application interface
+│   ├── manifest.json            # Web App Manifest for PWA installation
+│   └── sw.js                    # Service Worker for offline audio caching
+├── server.js                    # Express backend, auto-downloader & streaming API
+├── MusicFlow.exe                # Native Windows desktop app launcher
+├── MusicFlowLauncher.cs         # C# source code for the Windows launcher
+├── start.bat                    # 1-Click Windows startup script (auto-checks dependencies)
+├── start.sh                     # 1-Click macOS/Linux startup script
+├── create-shortcut.ps1          # PowerShell shortcut generator
+├── create-desktop-shortcut.bat  # 1-Click desktop icon creator
+├── capacitor.config.json        # Capacitor configuration for mobile builds
+├── android/                     # Pre-configured native Android Studio project
+├── GETTING_STARTED.md           # Step-by-step beginner guide
+├── BUILD_APPS.md                # Mobile APK & native apps build guide
+├── package.json                 # Dependencies and scripts
+└── README.md                    # Project documentation
 ```
+
+---
+
+## 🛠️ Tech Stack
+
+- **Backend**: Node.js, Express.js, `yt-dlp`
+- **Frontend**: Vanilla Modern JavaScript (ES6+), HTML5 Semantic Elements, Custom Glassmorphism CSS3
+- **Mobile / Desktop**: PWA (Service Workers + Web App Manifest), Capacitor (Android Native), Edge App Mode (Windows)
+- **Storage**: Client `localStorage` with server-side JSON backup (No external database required)
+
+---
+
+## 📖 Additional Guides
+
+- 📘 **[GETTING_STARTED.md](GETTING_STARTED.md)** — Step-by-step guide for first-time users.
+- 📱 **[BUILD_APPS.md](BUILD_APPS.md)** — Guide on building native Android APKs and cross-device setups.
 
 ---
 
 ## 📄 License
 
-This project is licensed under the MIT License.
+This project is open source and available under the [MIT License](LICENSE).
