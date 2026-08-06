@@ -1,9 +1,8 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Net.Http;
+using System.Net;
 using System.Threading;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace MusicFlow
@@ -82,11 +81,12 @@ namespace MusicFlow
         {
             try
             {
-                using (var client = new HttpClient())
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
+                request.Timeout = 1000;
+                request.Method = "GET";
+                using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
-                    client.Timeout = TimeSpan.FromMilliseconds(800);
-                    var response = client.GetAsync(url).Result;
-                    return response.IsSuccessStatusCode;
+                    return response.StatusCode == HttpStatusCode.OK;
                 }
             }
             catch

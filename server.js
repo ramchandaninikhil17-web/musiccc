@@ -700,6 +700,44 @@ app.get('/api/network-info', (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  Persistent User Data Storage (Disk Backup for likes, playlists)   */
+/* ------------------------------------------------------------------ */
+const dataDir = path.join(__dirname, 'data');
+const userDataFile = path.join(dataDir, 'userData.json');
+
+if (!fs.existsSync(dataDir)) {
+  try { fs.mkdirSync(dataDir, { recursive: true }); } catch (e) {}
+}
+
+app.get('/api/user-data', (req, res) => {
+  try {
+    if (fs.existsSync(userDataFile)) {
+      const data = fs.readFileSync(userDataFile, 'utf8');
+      return res.json(JSON.parse(data || '{}'));
+    }
+    res.json({});
+  } catch (err) {
+    console.error('[UserData Get Error]', err.message);
+    res.json({});
+  }
+});
+
+app.post('/api/user-data', (req, res) => {
+  try {
+    let current = {};
+    if (fs.existsSync(userDataFile)) {
+      try { current = JSON.parse(fs.readFileSync(userDataFile, 'utf8') || '{}'); } catch (e) {}
+    }
+    const updated = { ...current, ...req.body, lastSaved: new Date().toISOString() };
+    fs.writeFileSync(userDataFile, JSON.stringify(updated, null, 2), 'utf8');
+    res.json({ success: true, lastSaved: updated.lastSaved });
+  } catch (err) {
+    console.error('[UserData Save Error]', err.message);
+    res.status(500).json({ error: 'Failed to save data' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /*  SPA fallback                                                      */
 /* ------------------------------------------------------------------ */
 app.get('*', (req, res) => {

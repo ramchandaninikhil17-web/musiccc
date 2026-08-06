@@ -9,15 +9,86 @@
   const $$ = (s) => document.querySelectorAll(s);
 
   /* ================================================================
-     STORAGE MANAGER
+     STORAGE MANAGER WITH DISK & LOCAL DUAL PERSISTENCE
      ================================================================ */
+  let syncTimeout = null;
+  const pendingSync = {};
+
   const Storage = {
     get(key, fallback) {
-      try { const v = localStorage.getItem('mf_' + key); return v ? JSON.parse(v) : fallback; }
+      try { const v = localStorage.getItem('mf_' + key); return v !== null ? JSON.parse(v) : fallback; }
       catch { return fallback; }
     },
-    set(key, val) { try { localStorage.setItem('mf_' + key, JSON.stringify(val)); } catch {} },
-    remove(key) { localStorage.removeItem('mf_' + key); },
+    set(key, val) {
+      try { localStorage.setItem('mf_' + key, JSON.stringify(val)); } catch {}
+      
+      // Auto sync to server disk database
+      pendingSync[key] = val;
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => {
+        try {
+          fetch('/api/user-data', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(pendingSync)
+          }).catch(() => {});
+        } catch {}
+      }, 500);
+    },
+    remove(key) {
+      localStorage.removeItem('mf_' + key);
+      try {
+        fetch('/api/user-data', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [key]: null })
+        }).catch(() => {});
+      } catch {}
+    },
+    async syncFromServer() {
+      try {
+        const res = await fetch('/api/user-data');
+        if (!res.ok) return;
+        const serverData = await res.json();
+        if (!serverData) return;
+
+        let needsUpdate = false;
+
+        if (serverData.likes && Array.isArray(serverData.likes) && serverData.likes.length > 0) {
+          const localLikes = Storage.get('likes', []);
+          const map = new Map();
+          [...serverData.likes, ...localLikes].forEach(s => { if (s && s.id) map.set(s.id, s); });
+          likedSongs = Array.from(map.values());
+          localStorage.setItem('mf_likes', JSON.stringify(likedSongs));
+          needsUpdate = true;
+        }
+
+        if (serverData.playlists && Array.isArray(serverData.playlists) && serverData.playlists.length > 0) {
+          const localPls = Storage.get('playlists', []);
+          const plMap = new Map();
+          [...serverData.playlists, ...localPls].forEach(p => { if (p && p.id) plMap.set(p.id, p); });
+          playlists = Array.from(plMap.values());
+          localStorage.setItem('mf_playlists', JSON.stringify(playlists));
+          needsUpdate = true;
+        }
+
+        if (serverData.history && Array.isArray(serverData.history) && serverData.history.length > 0) {
+          if (!history.length) {
+            history = serverData.history;
+            localStorage.setItem('mf_history', JSON.stringify(history));
+            needsUpdate = true;
+          }
+        }
+
+        if (needsUpdate) {
+          updateLikeBtn();
+          if (pages.library && pages.library.style.display !== 'none') renderLibrary();
+          if (pages.profile && pages.profile.style.display !== 'none') renderProfile();
+        }
+      } catch (e) {
+        // Fallback gracefully
+      }
+    }
   };
 
   /* ================================================================
@@ -97,6 +168,9 @@
     bindEvents();
     navigateTo('home');
     renderHomePage();
+
+    // Auto-restore saved likes and playlists from disk database
+    Storage.syncFromServer();
   }
 
   function createOrbs() {
@@ -176,6 +250,11 @@
     $('#settingsModal').addEventListener('click', (e) => { if (e.target === $('#settingsModal')) $('#settingsModal').style.display = 'none'; });
     $('#settingTheme').addEventListener('change', (e) => applyTheme(e.target.value));
     $('#settingQuality').addEventListener('change', (e) => { audioQuality = e.target.value; Storage.set('quality', audioQuality); updateQualityLabel(); toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
+
+    // Phone modal
+    $('#navPhone').addEventListener('click', (e) => { e.preventDefault(); $('#phoneModalOverlay').style.display = ''; });
+    $('#phoneModalCloseBtn').addEventListener('click', () => { $('#phoneModalOverlay').style.display = 'none'; });
+    $('#phoneModalOverlay').addEventListener('click', (e) => { if (e.target === $('#phoneModalOverlay')) $('#phoneModalOverlay').style.display = 'none'; });
 
     // Quality button
     $('#qualityBtn').addEventListener('click', () => { audioQuality = audioQuality === 'high' ? 'low' : 'high'; Storage.set('quality', audioQuality); updateQualityLabel(); $('#settingQuality').value = audioQuality; toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
@@ -313,6 +392,61 @@
     });
   }
 
+  /* ================================================================
+     DIRECT STANDALONE CLOUD MUSIC ENGINE (Zero PC Required)
+     ================================================================ */
+  const CloudMusicEngine = {
+    async search(query) {
+      try {
+        const url = `https://jiosaavn-api.vercel.app/search?query=${encodeURIComponent(query)}`;
+        const res = await fetch(url);
+        if (!res.ok) throw new Error('Cloud search failed');
+        const data = await res.json();
+        if (!data || !data.results) return [];
+        return data.results.map(s => {
+          let thumbUrl = '';
+          if (s.images && s.images['500x500']) thumbUrl = s.images['500x500'];
+          else if (s.image) thumbUrl = s.image.replace('150x150', '500x500');
+          
+          return {
+            id: s.id,
+            title: s.title || s.song,
+            channel: s.more_info?.singers || s.primary_artists || s.description || 'Official Release',
+            duration: parseInt(s.duration) || 210,
+            thumbnail: thumbUrl || s.image,
+            isCloud: true
+          };
+        });
+      } catch (e) {
+        console.warn('Cloud search error:', e);
+        return [];
+      }
+    },
+    async getStreamUrl(songId) {
+      try {
+        const res = await fetch(`https://jiosaavn-api.vercel.app/song?id=${encodeURIComponent(songId)}`);
+        if (!res.ok) return null;
+        const song = await res.json();
+        if (song.media_urls) {
+          return song.media_urls['320_KBPS'] || song.media_urls['160_KBPS'] || song.media_urls['96_KBPS'] || song.media_url;
+        }
+        return song.media_url || null;
+      } catch (e) {
+        console.warn('Cloud stream error:', e);
+        return null;
+      }
+    },
+    async getTrending() {
+      try {
+        const queries = ['Top Bollywood Hits', 'Global Billboard Hot 100', 'Trending Hindi Hits', 'Punjabi Hits'];
+        const q = queries[Math.floor(Math.random() * queries.length)];
+        return await this.search(q);
+      } catch (e) {
+        return [];
+      }
+    }
+  };
+
   async function doSearch(query) {
     if (!query) return;
     lastQuery = query;
@@ -329,17 +463,31 @@
     searchLoading.classList.add('active');
 
     try {
-      const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
-      if (!res.ok) throw new Error('Search failed');
-      searchResults = await res.json();
+      let results = [];
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) {
+          results = await res.json();
+        }
+      } catch (e) {
+        // Fallback to Cloud Music Engine
+      }
 
+      if (!results || results.length === 0) {
+        results = await CloudMusicEngine.search(query);
+      }
+
+      searchResults = results;
       if (searchResults.length === 0) {
         resultsGrid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">No results found.</p>';
       } else {
         renderResults(searchResults);
       }
     } catch (err) {
-      resultsGrid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1;text-align:center;">Search failed. Is the server running?</p>`;
+      resultsGrid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1;text-align:center;">Search failed. Please check connection.</p>`;
     } finally {
       searchLoading.classList.remove('active');
     }
@@ -435,8 +583,40 @@
     npChannel.textContent = song.channel;
     updateLikeBtn();
 
-    audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-    audioPlayer.play().catch(() => {});
+    if (song.streamUrl) {
+      audioPlayer.src = song.streamUrl;
+      audioPlayer.play().catch(() => {});
+    } else if (song.isCloud) {
+      toast('⚡ Loading high-quality audio...');
+      CloudMusicEngine.getStreamUrl(song.id).then(url => {
+        if (url) {
+          song.streamUrl = url;
+          audioPlayer.src = url;
+          audioPlayer.play().catch(() => {});
+        } else {
+          audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
+          audioPlayer.play().catch(() => {});
+        }
+      }).catch(() => {
+        audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
+        audioPlayer.play().catch(() => {});
+      });
+    } else {
+      audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
+      audioPlayer.play().catch(() => {
+        // Fallback to direct cloud track
+        CloudMusicEngine.search(song.title).then(results => {
+          if (results && results[0]) {
+            CloudMusicEngine.getStreamUrl(results[0].id).then(u => {
+              if (u) {
+                audioPlayer.src = u;
+                audioPlayer.play().catch(() => {});
+              }
+            });
+          }
+        });
+      });
+    }
 
     // History
     addToHistory(song);
@@ -991,17 +1171,26 @@
     const url = `/api/recommendations?seedArtists=${encodeURIComponent(topArtists.join(','))}&seedQueries=${encodeURIComponent(recentTracks.join(','))}${forceRefresh ? '&t=' + Date.now() : ''}`;
 
     try {
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Recs failed');
-      const data = await res.json();
+      let data = [];
+      try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const res = await fetch(url, { signal: controller.signal });
+        clearTimeout(timeoutId);
+        if (res.ok) data = await res.json();
+      } catch (e) {}
+
+      if (!data || data.length === 0) {
+        data = await CloudMusicEngine.getTrending();
+      }
+
       recommendedSongs = data;
       renderRecommendationCards(grid, recommendedSongs);
 
-      // Render Taste Section if user has history
-      renderTasteSection(topArtists[0]);
+      if (topArtists[0]) renderTasteSection(topArtists[0]);
     } catch (err) {
       console.error(err);
-      grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">Could not load recommendations. Check server connection.</p>';
+      grid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">Could not load recommendations.</p>';
     } finally {
       isFetchingRecs = false;
     }
