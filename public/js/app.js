@@ -252,7 +252,42 @@
     $('#settingQuality').addEventListener('change', (e) => { audioQuality = e.target.value; Storage.set('quality', audioQuality); updateQualityLabel(); toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
 
     // Phone modal
-    $('#navPhone').addEventListener('click', (e) => { e.preventDefault(); $('#phoneModalOverlay').style.display = ''; });
+    async function updatePhoneModal() {
+      const urlEl = $('#phoneModalUrl');
+      const qrEl = $('#phoneModalQrImg');
+      let targetUrl = window.location.origin;
+
+      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+        try {
+          const res = await fetch('/api/network-info');
+          if (res.ok) {
+            const data = await res.json();
+            if (data && data.primaryNetworkUrl) {
+              targetUrl = data.primaryNetworkUrl;
+            }
+          }
+        } catch (e) { /* fallback to origin */ }
+      }
+
+      if (urlEl) {
+        urlEl.textContent = targetUrl;
+        urlEl.onclick = () => {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(targetUrl);
+            toast('📋 Network link copied to clipboard!');
+          }
+        };
+      }
+      if (qrEl && targetUrl) {
+        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
+      }
+    }
+
+    $('#navPhone').addEventListener('click', (e) => {
+      e.preventDefault();
+      $('#phoneModalOverlay').style.display = '';
+      updatePhoneModal();
+    });
     $('#phoneModalCloseBtn').addEventListener('click', () => { $('#phoneModalOverlay').style.display = 'none'; });
     $('#phoneModalOverlay').addEventListener('click', (e) => { if (e.target === $('#phoneModalOverlay')) $('#phoneModalOverlay').style.display = 'none'; });
 

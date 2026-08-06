@@ -596,20 +596,20 @@
       <button class="modal-close-btn" id="phoneModalCloseBtn">&times;</button>
       <div class="modal-header">
         <h2 style="margin-bottom:6px;">📱 Use MusicFlow on your Phone</h2>
-        <p class="modal-subtitle">Scan QR code or open link in mobile Chrome browser</p>
+        <p class="modal-subtitle">Scan QR code or open link in Chrome / Safari / Edge browser</p>
       </div>
       <div class="modal-body" style="padding:15px 0;">
         <div style="background:#fff; display:inline-block; padding:12px; border-radius:16px; margin-bottom:15px; box-shadow:0 10px 25px rgba(0,0,0,0.3);">
-          <img src="/phone-qr.png" alt="Phone QR Code" style="width:200px; height:200px; display:block;" />
+          <img id="phoneModalQrImg" src="/phone-qr.png" alt="Phone QR Code" style="width:200px; height:200px; display:block;" />
         </div>
-        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:12px; font-family:monospace; font-size:15px; font-weight:600; color:#818cf8; word-break:break-all; margin-bottom:15px;">
-          http://10.117.252.225:3000
+        <div id="phoneModalUrl" style="background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12); padding:12px; border-radius:12px; font-family:monospace; font-size:15px; font-weight:600; color:#818cf8; word-break:break-all; margin-bottom:15px; cursor:pointer; transition:all 0.2s;" title="Click to copy link">
+          Loading network URL...
         </div>
         <div style="text-align:left; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:12px 16px; font-size:13px; color:#cbd5e1; line-height:1.6;">
           <strong>⚡ Quick 3-Step Setup:</strong><br/>
-          1. Connect phone to same Wi-Fi as PC.<br/>
-          2. Scan QR code above with Phone Camera.<br/>
-          3. Tap Chrome menu (<strong>⋮</strong>) → <strong>"Add to Home Screen"</strong> to install as App!
+          1. Connect your phone to the <strong>same Wi-Fi</strong> as your PC.<br/>
+          2. Scan the QR code or open the link above in your phone's browser.<br/>
+          3. Tap browser menu (<strong>⋮</strong> or <strong>Share</strong>) &rarr; <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong> to use as a full-screen app!
         </div>
       </div>
     </div>

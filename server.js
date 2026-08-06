@@ -5,7 +5,14 @@ const path = require('path');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
+const os = require('os');
 const ffmpegPath = require('ffmpeg-static');
+let YTDlpWrap;
+try {
+  YTDlpWrap = require('yt-dlp-wrap').default || require('yt-dlp-wrap');
+} catch (e) {
+  // Optional fallback
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -15,17 +22,46 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 /* ------------------------------------------------------------------ */
-/*  Resolve yt-dlp binary path                                        */
+/*  Resolve yt-dlp binary path & Auto-Download if missing             */
 /* ------------------------------------------------------------------ */
 let ytDlpPath = 'yt-dlp';
 
-try {
-  const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
-  const rootBinary = path.join(__dirname, binaryName);
-  if (fs.existsSync(rootBinary)) ytDlpPath = rootBinary;
-} catch (e) { /* fallback to PATH */ }
+async function ensureYtDlp() {
+  try {
+    const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+    const rootBinary = path.join(__dirname, binaryName);
 
-console.log(`[MusicFlow] yt-dlp: ${ytDlpPath}`);
+    if (fs.existsSync(rootBinary)) {
+      ytDlpPath = rootBinary;
+      console.log(`[MusicFlow] yt-dlp ready: ${ytDlpPath}`);
+      return;
+    }
+
+    // Check if available in system PATH
+    try {
+      const check = require('child_process').spawnSync('yt-dlp', ['--version'], { windowsHide: true });
+      if (check && check.status === 0) {
+        ytDlpPath = 'yt-dlp';
+        console.log('[MusicFlow] Using system yt-dlp from PATH');
+        return;
+      }
+    } catch (e) {}
+
+    // Not found locally or in PATH -> auto-download from official GitHub releases
+    if (YTDlpWrap && typeof YTDlpWrap.downloadFromGithub === 'function') {
+      console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release from GitHub...');
+      await YTDlpWrap.downloadFromGithub(rootBinary);
+      if (process.platform !== 'win32') {
+        try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
+      }
+      ytDlpPath = rootBinary;
+      console.log(`[MusicFlow] ✅ yt-dlp downloaded successfully: ${ytDlpPath}`);
+    }
+  } catch (err) {
+    console.warn(`[MusicFlow] ⚠️ Auto-download of yt-dlp note: ${err.message}`);
+  }
+}
+
 
 /* ------------------------------------------------------------------ */
 /*  Helper: run yt-dlp                                                */
@@ -738,12 +774,51 @@ app.post('/api/user-data', (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  GET /api/network-info - Returns local IP addresses for mobile     */
+/* ------------------------------------------------------------------ */
+function getLocalNetworkAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      if (iface.family === 'IPv4' && !iface.internal) {
+        addresses.push(iface.address);
+      }
+    }
+  }
+  return addresses;
+}
+
+app.get('/api/network-info', (req, res) => {
+  const ips = getLocalNetworkAddresses();
+  res.json({
+    port: PORT,
+    localUrl: `http://localhost:${PORT}`,
+    ips,
+    networkUrls: ips.map(ip => `http://${ip}:${PORT}`),
+    primaryNetworkUrl: ips.length > 0 ? `http://${ips[0]}:${PORT}` : `http://localhost:${PORT}`
+  });
+});
+
+/* ------------------------------------------------------------------ */
 /*  SPA fallback                                                      */
 /* ------------------------------------------------------------------ */
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`\n🎵 MusicFlow is running at http://localhost:${PORT}\n`);
+app.listen(PORT, async () => {
+  await ensureYtDlp();
+  const networkIps = getLocalNetworkAddresses();
+  console.log('\n============================================================');
+  console.log('  🎵  MusicFlow is running successfully!');
+  console.log('============================================================');
+  console.log(`  💻  Local PC (This Device):  http://localhost:${PORT}`);
+  if (networkIps.length > 0) {
+    networkIps.forEach(ip => {
+      console.log(`  📱  Mobile / Other Devices:  http://${ip}:${PORT}`);
+    });
+  }
+  console.log('============================================================\n');
 });
+
