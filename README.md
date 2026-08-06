@@ -38,16 +38,51 @@
 
 ---
 
-## 🚀 Getting Started
+## 💻 How to Use `MusicFlow.exe` Desktop App on Windows PC
+
+**`MusicFlow.exe`** is a native, ultra-lightweight Windows launcher (5.6 KB executable, ~30 MB RAM) that automatically launches the MusicFlow backend server headlessly and opens the app as a dedicated desktop application window using Microsoft Edge App Mode.
+
+### ⚡ Quick Start (Method 1: Direct Executable)
+
+1. Make sure **Node.js** (v16+) is installed on your PC.
+2. Simply **double-click `MusicFlow.exe`** in the project folder.
+3. `MusicFlow.exe` will:
+   - Silently launch `node server.js` in the background if the server isn't already running.
+   - Open MusicFlow in a dedicated window without browser tabs/toolbars.
+
+---
+
+### 🖥️ Create Desktop Shortcut (Method 2: Desktop Launcher)
+
+To launch MusicFlow directly from your Windows Desktop like a native app:
+
+1. Right-click **`create-shortcut.ps1`** and select **Run with PowerShell** (or run `powershell -ExecutionPolicy Bypass -File .\create-shortcut.ps1` in terminal).
+2. A **MusicFlow** shortcut will appear on your desktop.
+3. Double-click the **MusicFlow** desktop icon anytime to play music!
+
+---
+
+### 🛠️ Alternative Launchers
+
+- **Command Prompt / Terminal**: Run `npm start` or `node server.js`, then open `http://localhost:3000` in any browser.
+- **Batch File**: Double-click `start.bat` to launch both the server and your default web browser automatically.
+- **Recompiling Launcher**: If you modify `MusicFlowLauncher.cs`, compile it with C# compiler (`csc`):
+  ```cmd
+  csc /target:winexe /out:MusicFlow.exe MusicFlowLauncher.cs
+  ```
+
+---
+
+## 🚀 Getting Started (Standard Setup)
 
 ### Prerequisites
 
 - [Node.js](https://nodejs.org/) (v16 or higher)
-- [yt-dlp](https://github.com/yt-dlp/yt-dlp) binary installed locally or placed in the project root directory.
+- [yt-dlp](https://github.com/yt-dlp/yt-dlp) binary (`yt-dlp.exe`) placed in the project root directory.
 
 ### Installation
 
-1. **Clone the repository**:
+1. **Clone or Download the repository**:
    ```bash
    git clone https://github.com/YOUR_USERNAME/musicflow.git
    cd musicflow
@@ -58,19 +93,9 @@
    npm install
    ```
 
-3. **Start the server**:
-   ```bash
-   npm start
-   ```
-   Or for development mode:
-   ```bash
-   npm run dev
-   ```
-
-4. Open your browser and navigate to:
-   ```text
-   http://localhost:3000
-   ```
+3. **Start the server / Launcher**:
+   - Double-click **`MusicFlow.exe`** (Windows PC App Mode)
+   - OR run `npm start` and visit `http://localhost:3000`
 
 ---
 
