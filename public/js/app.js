@@ -628,8 +628,11 @@
   /* ================================================================
      PLAYER
      ================================================================ */
+  let audioRetryCount = 0;
+
   function playSong(song) {
     recordListenTime();
+    audioRetryCount = 0;
 
     let idx = queue.findIndex(s => s.id === song.id);
     if (idx === -1) { queue.push(song); idx = queue.length - 1; }
@@ -644,36 +647,9 @@
     if (song.streamUrl) {
       audioPlayer.src = song.streamUrl;
       audioPlayer.play().catch(() => {});
-    } else if (song.isCloud) {
-      toast('⚡ Loading high-quality audio...');
-      CloudMusicEngine.getStreamUrl(song.id).then(url => {
-        if (url) {
-          song.streamUrl = url;
-          audioPlayer.src = url;
-          audioPlayer.play().catch(() => {});
-        } else {
-          audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-          audioPlayer.play().catch(() => {});
-        }
-      }).catch(() => {
-        audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-        audioPlayer.play().catch(() => {});
-      });
     } else {
       audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-      audioPlayer.play().catch(() => {
-        // Fallback to direct cloud track
-        CloudMusicEngine.search(song.title).then(results => {
-          if (results && results[0]) {
-            CloudMusicEngine.getStreamUrl(results[0].id).then(u => {
-              if (u) {
-                audioPlayer.src = u;
-                audioPlayer.play().catch(() => {});
-              }
-            });
-          }
-        });
-      });
+      audioPlayer.play().catch(() => {});
     }
 
     // History
@@ -740,7 +716,18 @@
     else playNext();
   }
 
-  function onAudioError() { toast('⚠️ Playback error'); setTimeout(playNext, 1500); }
+  function onAudioError() {
+    if (currentSong && audioRetryCount < 2) {
+      audioRetryCount++;
+      const fallbackQuality = audioRetryCount === 1 ? 'low' : 'high';
+      audioPlayer.src = `/api/stream/${currentSong.id}?quality=${fallbackQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
+      audioPlayer.play().catch(() => {});
+      return;
+    }
+    audioRetryCount = 0;
+    toast('⚠️ Playback issue on this track, skipping...');
+    setTimeout(playNext, 1200);
+  }
 
   function onTimeUpdate() {
     if (isSeeking) return;
