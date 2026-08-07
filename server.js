@@ -536,11 +536,15 @@ app.get('/api/info/:videoId', async (req, res) => {
 
 /* ------------------------------------------------------------------ */
 /*  GET /api/stream/:videoId?quality=low|high                         */
-/*  Robust cloud streaming with direct URL proxy and pipe fallback    */
+/*  Multi-Tier Audio Proxy: yt-dlp Direct -> Pipe -> Serverless API    */
 /* ------------------------------------------------------------------ */
-/*  GET /api/stream/:videoId?quality=low|high                         */
-/*  Robust cloud streaming with direct URL proxy and pipe fallback    */
-/* ------------------------------------------------------------------ */
+const httpsAgent = new https.Agent({
+  keepAlive: true,
+  keepAliveMsecs: 10000,
+  maxSockets: 50,
+  rejectUnauthorized: false,
+});
+
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';
@@ -550,90 +554,110 @@ app.get('/api/stream/:videoId', async (req, res) => {
     high: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
   };
 
+  // Tier 1: Try direct audio URL extraction via yt-dlp
   try {
     const audioUrl = await runYtDlp([
       `https://www.youtube.com/watch?v=${videoId}`,
       '-f', formatMap[quality] || formatMap.high,
       '-g', '--no-warnings',
-    ], 18000);
+    ], 15000);
 
-    if (!audioUrl || !audioUrl.startsWith('http')) {
-      return streamViaPipeFallback(videoId, res);
+    if (audioUrl && audioUrl.startsWith('http')) {
+      return fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
     }
-
-    // Proxy the audio stream from direct URL
-    fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
   } catch (err) {
-    console.warn('[Stream Fetch Error]', err.message);
-    streamViaPipeFallback(videoId, res);
+    console.warn(`[Stream Tier 1 Warning for ${videoId}]`, err.message);
   }
+
+  // Tier 2: Try direct stdout pipe via yt-dlp
+  streamViaPipeFallback(videoId, req, res);
 });
 
 function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
   if (redirectCount > 4 || res.headersSent) {
-    return streamViaPipeFallback(videoId, res);
+    return streamViaPipeFallback(videoId, req, res);
   }
 
   try {
     const parsedUrl = new URL(targetUrl);
-    const protocol = parsedUrl.protocol === 'https:' ? https : http;
+    const isHttps = parsedUrl.protocol === 'https:';
+    const protocol = isHttps ? https : http;
+
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
       'Accept': '*/*',
       'Referer': 'https://www.youtube.com/',
       'Origin': 'https://www.youtube.com',
+      'Host': parsedUrl.host,
+      'Connection': 'keep-alive',
     };
     if (req.headers.range) headers['Range'] = req.headers.range;
 
-    const proxyReq = protocol.get(targetUrl, { headers }, (proxyRes) => {
+    const options = {
+      hostname: parsedUrl.hostname,
+      port: parsedUrl.port || (isHttps ? 443 : 80),
+      path: parsedUrl.pathname + parsedUrl.search,
+      method: 'GET',
+      headers,
+      agent: isHttps ? httpsAgent : undefined,
+    };
+
+    const proxyReq = protocol.request(options, (proxyRes) => {
       // Follow HTTP redirects
       if ([301, 302, 303, 307, 308].includes(proxyRes.statusCode) && proxyRes.headers.location) {
         return fetchAndProxyAudio(proxyRes.headers.location, req, res, videoId, redirectCount + 1);
       }
 
-      // If YouTube CDN returns 403 Forbidden or non-2xx status, use pipe fallback
+      // If YouTube CDN returns HTTP >= 400, fallback to pipe
       if (proxyRes.statusCode >= 400) {
-        console.warn(`[Stream Proxy] CDN returned HTTP ${proxyRes.statusCode}, using pipe fallback...`);
-        return streamViaPipeFallback(videoId, res);
+        console.warn(`[Stream Proxy] CDN HTTP ${proxyRes.statusCode}, trying pipe fallback...`);
+        return streamViaPipeFallback(videoId, req, res);
       }
 
-      const fwd = {
+      const fwdHeaders = {
         'Content-Type': proxyRes.headers['content-type'] || 'audio/mp4',
         'Accept-Ranges': 'bytes',
         'Cache-Control': 'public, max-age=3600',
         'Access-Control-Allow-Origin': '*',
       };
-      if (proxyRes.headers['content-length']) fwd['Content-Length'] = proxyRes.headers['content-length'];
-      if (proxyRes.headers['content-range']) fwd['Content-Range'] = proxyRes.headers['content-range'];
-      
-      res.writeHead(proxyRes.statusCode || 200, fwd);
+      if (proxyRes.headers['content-length']) fwdHeaders['Content-Length'] = proxyRes.headers['content-length'];
+      if (proxyRes.headers['content-range']) fwdHeaders['Content-Range'] = proxyRes.headers['content-range'];
+
+      if (!res.headersSent) {
+        res.writeHead(proxyRes.statusCode || 200, fwdHeaders);
+      }
+
       proxyRes.pipe(res);
+
+      proxyRes.on('error', (err) => {
+        console.warn('[Proxy Res Error]', err.message);
+        if (!res.headersSent) streamViaPipeFallback(videoId, req, res);
+      });
     });
 
     proxyReq.on('error', (err) => {
-      console.warn('[Stream Proxy Error]', err.message);
-      streamViaPipeFallback(videoId, res);
+      console.warn(`[Proxy Req Error - ${err.code || err.message}]`);
+      if (!res.headersSent) {
+        streamViaPipeFallback(videoId, req, res);
+      }
     });
 
     req.on('close', () => {
       try { proxyReq.destroy(); } catch (e) {}
     });
+
+    proxyReq.end();
   } catch (err) {
     console.warn('[Stream Proxy Exception]', err.message);
-    streamViaPipeFallback(videoId, res);
+    if (!res.headersSent) streamViaPipeFallback(videoId, req, res);
   }
 }
 
-// Fallback: Direct stream via yt-dlp stdout pipe if YouTube blocks CDN URL
-function streamViaPipeFallback(videoId, res) {
+// Tier 2: Direct stream via yt-dlp stdout pipe if YouTube CDN URL drops socket
+function streamViaPipeFallback(videoId, req, res) {
   if (res.headersSent) return;
 
   try {
-    res.setHeader('Content-Type', 'audio/mp4');
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-
     const streamProcess = spawn(ytDlpPath, [
       ...BASE_YTDLP_ARGS,
       `https://www.youtube.com/watch?v=${videoId}`,
@@ -642,18 +666,77 @@ function streamViaPipeFallback(videoId, res) {
       '--no-warnings',
     ], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
 
+    let headersSet = false;
+
+    streamProcess.stdout.on('data', (chunk) => {
+      if (!headersSet && !res.headersSent) {
+        headersSet = true;
+        res.writeHead(200, {
+          'Content-Type': 'audio/mp4',
+          'Accept-Ranges': 'bytes',
+          'Cache-Control': 'no-cache',
+          'Access-Control-Allow-Origin': '*',
+        });
+      }
+    });
+
     streamProcess.stdout.pipe(res);
 
     streamProcess.on('error', (err) => {
-      console.error('[Stream Pipe Error]', err.message);
-      if (!res.headersSent) res.status(500).json({ error: 'Stream failed' });
+      console.warn('[Pipe Process Error]', err.message);
+      if (!res.headersSent && !headersSet) {
+        streamViaServerlessApi(videoId, res);
+      }
     });
 
     res.on('close', () => {
       try { streamProcess.kill('SIGTERM'); } catch (e) {}
     });
   } catch (e) {
-    if (!res.headersSent) res.status(500).json({ error: 'Stream fallback error' });
+    if (!res.headersSent) streamViaServerlessApi(videoId, res);
+  }
+}
+
+// Tier 3: Serverless Piped / Invidious API Fallback (Works on Vercel / Cloud Functions with 0 binaries!)
+async function streamViaServerlessApi(videoId, res) {
+  if (res.headersSent) return;
+
+  const apis = [
+    `https://pipedapi.kavin.rocks/streams/${videoId}`,
+    `https://api.piped.video/streams/${videoId}`,
+    `https://invidious.privacydev.net/api/v1/videos/${videoId}`,
+  ];
+
+  for (const apiUrl of apis) {
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const r = https.get(apiUrl, { timeout: 6000, agent: httpsAgent }, (resp) => {
+          let body = '';
+          resp.on('data', c => body += c);
+          resp.on('end', () => {
+            try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+          });
+        });
+        r.on('error', reject);
+        r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
+      });
+
+      const audioStreams = data.audioStreams || data.adaptiveFormats;
+      if (Array.isArray(audioStreams) && audioStreams.length > 0) {
+        const bestStream = audioStreams.find(s => s.mimeType && s.mimeType.includes('audio/mp4')) || audioStreams[0];
+        if (bestStream && bestStream.url) {
+          if (!res.headersSent) {
+            return res.redirect(302, bestStream.url);
+          }
+        }
+      }
+    } catch (err) {
+      // try next API endpoint
+    }
+  }
+
+  if (!res.headersSent) {
+    res.status(500).json({ error: 'Audio stream unavailable' });
   }
 }
 

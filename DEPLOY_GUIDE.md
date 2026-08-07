@@ -23,7 +23,21 @@ Render is the easiest platform to host MusicFlow with full Node.js, `yt-dlp` str
 
 ---
 
-## 🚂 Option 2: Railway
+## 🔺 Option 2: Vercel (1-Click Serverless Deployment)
+
+MusicFlow includes a built-in serverless audio stream resolver that works on Vercel without requiring native binaries!
+
+### Steps:
+1. Go to **[vercel.com](https://vercel.com)** and log in with GitHub.
+2. Click **"Add New..."** ➔ **"Project"**.
+3. Import your `musiccc` repository.
+4. Vercel will automatically detect `vercel.json` and `package.json`.
+5. Click **"Deploy"**.
+6. Your site will be live instantly on Vercel's global CDN!
+
+---
+
+## 🚂 Option 3: Railway
 
 Railway provides high-speed container hosting with zero configuration needed.
 
@@ -37,7 +51,7 @@ Railway provides high-speed container hosting with zero configuration needed.
 
 ---
 
-## 🐳 Option 3: Docker / Fly.io / DigitalOcean / VPS
+## 🐳 Option 4: Docker / Fly.io / DigitalOcean / VPS
 
 MusicFlow comes with a production-ready, optimized `Dockerfile` that packages Python 3, Node.js 20, ffmpeg, and yt-dlp on Alpine Linux.
 
