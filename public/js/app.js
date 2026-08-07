@@ -169,6 +169,12 @@
     navigateTo('home');
     renderHomePage();
 
+    // Advanced Apple Orb, PiP & Focus Modules
+    AppleOrbController.init();
+    CanvasPiPManager.init();
+    PomodoroManager.init();
+    setupMediaSessionHandlers();
+
     // Auto-restore saved likes and playlists from disk database
     Storage.syncFromServer();
   }
@@ -250,6 +256,18 @@
     $('#settingsModal').addEventListener('click', (e) => { if (e.target === $('#settingsModal')) $('#settingsModal').style.display = 'none'; });
     $('#settingTheme').addEventListener('change', (e) => applyTheme(e.target.value));
     $('#settingQuality').addEventListener('change', (e) => { audioQuality = e.target.value; Storage.set('quality', audioQuality); updateQualityLabel(); toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
+    
+    // Orb Setting
+    const settingOrbEl = $('#settingOrb');
+    if (settingOrbEl) {
+      settingOrbEl.value = Storage.get('orb', 'show');
+      settingOrbEl.addEventListener('change', (e) => {
+        Storage.set('orb', e.target.value);
+        const orbEl = $('#appleFloatingOrb');
+        if (orbEl) orbEl.style.display = e.target.value === 'hide' ? 'none' : '';
+        toast('Floating Orb: ' + (e.target.value === 'show' ? 'Visible' : 'Hidden'));
+      });
+    }
 
     // Phone modal
     async function updatePhoneModal() {
@@ -660,6 +678,11 @@
     highlightResults();
     toast(`▶ ${song.title}`);
 
+    // Update Floating Orb, PiP & MediaSession
+    AppleOrbController.updateSong(song, isPlaying);
+    CanvasPiPManager.updateSong(song);
+    updateMediaSession(song);
+
     // Set document title
     document.title = `${song.title} — MusicFlow`;
 
@@ -678,6 +701,12 @@
     $('.pause-icon').style.display = playing ? '' : 'none';
     playPauseBtn.title = playing ? 'Pause' : 'Play';
     nowPlayingBar.classList.toggle('playing', playing);
+    
+    // Sync with Apple Orb & MediaSession
+    AppleOrbController.setPlaying(playing);
+    if ('mediaSession' in navigator) {
+      navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
+    }
   }
 
   function playNext() {
@@ -713,7 +742,9 @@
     const c = audioPlayer.currentTime, d = audioPlayer.duration || 0;
     npCurrentTime.textContent = fmtTime(c);
     if (d > 0) { const p = (c / d) * 100; npProgressFill.style.width = p + '%'; npProgressThumb.style.left = p + '%'; }
-    // Lyrics sync
+    
+    // Sync with Apple Orb & Lyrics
+    AppleOrbController.updateProgress(c, d);
     syncLyrics(c);
   }
 
@@ -1722,7 +1753,7 @@
   }
 
   /* ================================================================
-     KEYBOARD SHORTCUTS
+     KEYBOARD SHORTCUTS & GLOBAL HOTKEYS
      ================================================================ */
   function onKeyboard(e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
@@ -1734,11 +1765,681 @@
       case 'ArrowDown': e.preventDefault(); volume = Math.max(0, volume - 0.05); audioPlayer.volume = volume; updateVolumeUI(); Storage.set('volume', volume); break;
       case 'm': case 'M': toggleMute(); break;
       case 'n': case 'N': playNext(); break;
-      case 'p': case 'P': playPrev(); break;
+      case 'p': case 'P':
+        if (e.shiftKey) playPrev();
+        else CanvasPiPManager.toggle();
+        break;
+      case 'f': case 'F': PomodoroManager.openModal(); break;
       case 'q': case 'Q': toggleQueue(); break;
       case 'l': case 'L': toggleLyrics(); break;
       case 'd': case 'D': if (currentSong) downloadSong(currentSong); break;
     }
+  }
+
+  /* ================================================================
+     APPLE FLOATING TRANSPARENT DYNAMIC ORB CONTROLLER
+     ================================================================ */
+  const AppleOrbController = {
+    orb: null,
+    core: null,
+    capsule: null,
+    art: null,
+    capsuleArt: null,
+    capsuleTitle: null,
+    capsuleArtist: null,
+    capsuleFill: null,
+    orbPlayIcon: null,
+    orbPauseIcon: null,
+    isExpanded: false,
+    isDragging: false,
+    hasDragged: false,
+    startX: 0,
+    startY: 0,
+    initialX: 0,
+    initialY: 0,
+
+    init() {
+      this.orb = $('#appleFloatingOrb');
+      if (!this.orb) return;
+
+      this.core = $('#orbCircleCore');
+      this.capsule = $('#orbExpandedCapsule');
+      this.art = $('#orbArt');
+      this.capsuleArt = $('#capsuleArt');
+      this.capsuleTitle = $('#capsuleTitle');
+      this.capsuleArtist = $('#capsuleArtist');
+      this.capsuleFill = $('#capsuleProgressFill');
+      this.orbPlayIcon = $('.orb-play-icon');
+      this.orbPauseIcon = $('.orb-pause-icon');
+
+      const orbSetting = Storage.get('orb', 'show');
+      this.orb.style.display = orbSetting === 'hide' ? 'none' : '';
+
+      // Dragging logic with touch & pointer support
+      this.core.addEventListener('pointerdown', (e) => this.onDragStart(e));
+      window.addEventListener('pointermove', (e) => this.onDragMove(e));
+      window.addEventListener('pointerup', (e) => this.onDragEnd(e));
+
+      // Expand & Collapse
+      this.core.addEventListener('click', (e) => {
+        if (this.hasDragged) {
+          this.hasDragged = false;
+          return;
+        }
+        this.toggleExpand();
+      });
+
+      $('#orbCloseBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.collapse();
+      });
+
+      $('#orbPlayPauseBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+
+      $('#orbNextBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playNext();
+      });
+
+      $('#orbPrevBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playPrev();
+      });
+
+      // Quick Switch instant hit
+      $('#orbQuickSwitchBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.quickSwitch();
+      });
+
+      // PiP & Focus buttons in capsule
+      $('#orbPipBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        CanvasPiPManager.toggle();
+      });
+
+      $('#orbFocusBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        PomodoroManager.openModal();
+      });
+
+      // Seek progress in capsule
+      $('#capsuleProgressBar')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const rect = e.currentTarget.getBoundingClientRect();
+        const pct = (e.clientX - rect.left) / rect.width;
+        if (audioPlayer.duration) audioPlayer.currentTime = pct * audioPlayer.duration;
+      });
+
+      // Restore saved orb position
+      const savedPos = Storage.get('orb_pos', null);
+      if (savedPos && savedPos.x !== undefined && savedPos.y !== undefined) {
+        this.orb.style.left = savedPos.x + 'px';
+        this.orb.style.top = savedPos.y + 'px';
+        this.orb.style.bottom = 'auto';
+        this.orb.style.right = 'auto';
+      }
+    },
+
+    onDragStart(e) {
+      if (this.isExpanded) return;
+      this.isDragging = true;
+      this.hasDragged = false;
+      this.startX = e.clientX;
+      this.startY = e.clientY;
+      const rect = this.orb.getBoundingClientRect();
+      this.initialX = rect.left;
+      this.initialY = rect.top;
+    },
+
+    onDragMove(e) {
+      if (!this.isDragging) return;
+      const dx = e.clientX - this.startX;
+      const dy = e.clientY - this.startY;
+      if (Math.abs(dx) > 5 || Math.abs(dy) > 5) {
+        this.hasDragged = true;
+      }
+      const newX = Math.max(10, Math.min(window.innerWidth - 74, this.initialX + dx));
+      const newY = Math.max(10, Math.min(window.innerHeight - 150, this.initialY + dy));
+      this.orb.style.left = newX + 'px';
+      this.orb.style.top = newY + 'px';
+      this.orb.style.bottom = 'auto';
+      this.orb.style.right = 'auto';
+    },
+
+    onDragEnd(e) {
+      if (!this.isDragging) return;
+      this.isDragging = false;
+      if (this.hasDragged) {
+        const rect = this.orb.getBoundingClientRect();
+        const snapLeft = rect.left < window.innerWidth / 2 ? 20 : window.innerWidth - 84;
+        this.orb.style.transition = 'left 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)';
+        this.orb.style.left = snapLeft + 'px';
+        setTimeout(() => {
+          this.orb.style.transition = '';
+          Storage.set('orb_pos', { x: snapLeft, y: rect.top });
+        }, 300);
+      }
+    },
+
+    toggleExpand() {
+      this.isExpanded ? this.collapse() : this.expand();
+    },
+
+    expand() {
+      this.isExpanded = true;
+      if (this.capsule) this.capsule.style.display = 'block';
+      if (this.core) this.core.style.display = 'none';
+    },
+
+    collapse() {
+      this.isExpanded = false;
+      if (this.capsule) this.capsule.style.display = 'none';
+      if (this.core) this.core.style.display = 'flex';
+    },
+
+    updateSong(song, playing) {
+      if (!song) return;
+      const artwork = thumb(song);
+      if (this.art) this.art.src = artwork;
+      if (this.capsuleArt) this.capsuleArt.src = artwork;
+      if (this.capsuleTitle) this.capsuleTitle.textContent = song.title || 'MusicFlow';
+      if (this.capsuleArtist) this.capsuleArtist.textContent = song.channel || 'Now Playing';
+      this.setPlaying(playing);
+    },
+
+    setPlaying(playing) {
+      if (this.orb) this.orb.classList.toggle('playing', playing);
+      if (this.orbPlayIcon) this.orbPlayIcon.style.display = playing ? 'none' : '';
+      if (this.orbPauseIcon) this.orbPauseIcon.style.display = playing ? '' : 'none';
+    },
+
+    updateProgress(currentTime, duration) {
+      if (duration > 0 && this.capsuleFill) {
+        const pct = (currentTime / duration) * 100;
+        this.capsuleFill.style.width = pct + '%';
+      }
+    },
+
+    async quickSwitch() {
+      toast('⚡ Instant Switch: Finding next track...');
+      if (queue.length > currentIndex + 1) {
+        playNext();
+        return;
+      }
+      try {
+        const res = await fetch(`/api/recommendations?seedQueries=${encodeURIComponent(currentSong?.title || 'trending hits')}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            const nextSong = data[Math.floor(Math.random() * Math.min(6, data.length))];
+            playSong(nextSong);
+            return;
+          }
+        }
+      } catch {}
+      playNext();
+    }
+  };
+
+  /* ================================================================
+     ALWAYS-ON-TOP PICTURE-IN-PICTURE (PiP) MINI PLAYER
+     ================================================================ */
+  const CanvasPiPManager = {
+    video: null,
+    canvas: null,
+    ctx: null,
+    animId: null,
+    cachedThumbImg: new Image(),
+
+    init() {
+      this.video = $('#pipVideo');
+      this.canvas = $('#pipCanvas');
+      if (!this.canvas || !this.video) return;
+
+      this.ctx = this.canvas.getContext('2d');
+      this.cachedThumbImg.crossOrigin = 'anonymous';
+
+      // PiP Action Buttons
+      $('#pipBtn')?.addEventListener('click', () => this.toggle());
+      $('#pipBtnTop')?.addEventListener('click', () => this.toggle());
+      $('#focusLaunchPipBtn')?.addEventListener('click', () => this.toggle());
+      $('#settingLaunchPipBtn')?.addEventListener('click', () => this.toggle());
+
+      this.video.addEventListener('leavepictureinpicture', () => {
+        this.stopRenderLoop();
+        $('#pipBtn')?.classList.remove('active');
+        $('#pipBtnTop')?.classList.remove('active');
+      });
+
+      this.video.addEventListener('enterpictureinpicture', () => {
+        this.startRenderLoop();
+        $('#pipBtn')?.classList.add('active');
+        $('#pipBtnTop')?.classList.add('active');
+      });
+    },
+
+    async toggle() {
+      if (document.pictureInPictureElement) {
+        try {
+          await document.exitPictureInPicture();
+          toast('Picture-in-Picture Mini closed');
+        } catch {}
+        return;
+      }
+
+      if (!('pictureInPictureEnabled' in document)) {
+        toast('⚠️ Picture-in-Picture is not supported in this browser');
+        return;
+      }
+
+      try {
+        this.drawFrame();
+        const stream = this.canvas.captureStream(25);
+        this.video.srcObject = stream;
+        await this.video.play();
+        await this.video.requestPictureInPicture();
+        toast('🖼️ Always-On-Top Mini-Player active!');
+      } catch (err) {
+        console.warn('PiP launch error:', err);
+        toast('⚠️ Could not open PiP: ' + (err.message || 'Check browser permissions'));
+      }
+    },
+
+    startRenderLoop() {
+      if (this.animId) cancelAnimationFrame(this.animId);
+      const loop = () => {
+        this.drawFrame();
+        if (document.pictureInPictureElement) {
+          this.animId = requestAnimationFrame(loop);
+        }
+      };
+      this.animId = requestAnimationFrame(loop);
+    },
+
+    stopRenderLoop() {
+      if (this.animId) cancelAnimationFrame(this.animId);
+      this.animId = null;
+    },
+
+    updateSong(song) {
+      if (song) {
+        this.cachedThumbImg.src = thumb(song);
+      }
+    },
+
+    drawFrame() {
+      const ctx = this.ctx;
+      if (!ctx || !this.canvas) return;
+      const w = this.canvas.width;
+      const h = this.canvas.height;
+
+      // Dark Glass Background
+      const bgGrad = ctx.createLinearGradient(0, 0, w, h);
+      bgGrad.addColorStop(0, '#0f172a');
+      bgGrad.addColorStop(0.5, '#1e1b4b');
+      bgGrad.addColorStop(1, '#090d16');
+      ctx.fillStyle = bgGrad;
+      ctx.fillRect(0, 0, w, h);
+
+      // Artwork Rounded Box
+      const artSize = 160;
+      const artX = 30;
+      const artY = (h - artSize) / 2;
+
+      ctx.save();
+      ctx.shadowColor = 'rgba(99, 102, 241, 0.45)';
+      ctx.shadowBlur = 24;
+      ctx.beginPath();
+      ctx.roundRect(artX, artY, artSize, artSize, 18);
+      ctx.fillStyle = '#1e293b';
+      ctx.fill();
+      ctx.restore();
+
+      if (this.cachedThumbImg.complete && this.cachedThumbImg.naturalWidth) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.roundRect(artX, artY, artSize, artSize, 18);
+        ctx.clip();
+        ctx.drawImage(this.cachedThumbImg, artX, artY, artSize, artSize);
+        ctx.restore();
+      }
+
+      // Title & Channel info
+      const textX = artX + artSize + 24;
+      ctx.fillStyle = '#818cf8';
+      ctx.font = 'bold 13px Inter, sans-serif';
+      ctx.fillText('🎵 MUSICFLOW MINI', textX, artY + 24);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 18px Inter, sans-serif';
+      const title = (currentSong?.title || 'MusicFlow').slice(0, 24);
+      ctx.fillText(title, textX, artY + 54);
+
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px Inter, sans-serif';
+      const channel = (currentSong?.channel || 'Ready to Play').slice(0, 28);
+      ctx.fillText(channel, textX, artY + 80);
+
+      // Visualizer soundbars
+      const bars = 8;
+      const barW = 6;
+      const now = Date.now() / 200;
+      for (let i = 0; i < bars; i++) {
+        const bh = isPlaying ? Math.abs(Math.sin(now + i * 0.8)) * 26 + 6 : 4;
+        const bx = textX + i * (barW + 5);
+        const by = artY + 115 - bh;
+        ctx.fillStyle = isPlaying ? '#a855f7' : '#475569';
+        ctx.beginPath();
+        ctx.roundRect(bx, by, barW, bh, 3);
+        ctx.fill();
+      }
+
+      // Progress bar
+      const progY = h - 28;
+      const progW = w - 60;
+      const progH = 6;
+      const dur = audioPlayer.duration || 1;
+      const cur = audioPlayer.currentTime || 0;
+      const pct = Math.min(1, cur / dur);
+
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+      ctx.beginPath();
+      ctx.roundRect(30, progY, progW, progH, 3);
+      ctx.fill();
+
+      ctx.fillStyle = '#6366f1';
+      ctx.beginPath();
+      ctx.roundRect(30, progY, Math.max(progH, progW * pct), progH, 3);
+      ctx.fill();
+
+      // Time Stamp
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '11px Inter, monospace';
+      ctx.fillText(`${fmtTime(cur)} / ${fmtTime(dur)}`, textX + 110, artY + 110);
+    }
+  };
+
+  /* ================================================================
+     POMODORO FOCUS FLOW & SYNTHETIC AMBIENT GENERATOR
+     ================================================================ */
+  const PomodoroManager = {
+    modal: null,
+    digits: null,
+    label: null,
+    ring: null,
+    startBtn: null,
+    resetBtn: null,
+    blocksCompletedEl: null,
+    minutesCompletedEl: null,
+    
+    timer: null,
+    totalSeconds: 25 * 60,
+    remainingSeconds: 25 * 60,
+    isRunning: false,
+    currentMode: 'focus',
+    blocksCount: Storage.get('pomo_blocks', 0),
+    minutesCount: Storage.get('pomo_minutes', 0),
+
+    audioCtx: null,
+    ambientNodes: {},
+
+    init() {
+      this.modal = $('#focusModalOverlay');
+      if (!this.modal) return;
+
+      this.digits = $('#pomodoroDigits');
+      this.label = $('#pomodoroStatusLabel');
+      this.ring = $('#pomodoroRing');
+      this.startBtn = $('#pomodoroStartBtn');
+      this.resetBtn = $('#pomodoroResetBtn');
+      this.blocksCompletedEl = $('#focusBlocksCompleted');
+      this.minutesCompletedEl = $('#focusMinutesCompleted');
+
+      this.updateDisplay();
+      this.updateStatsUI();
+
+      // Modal triggers
+      $('#focusModeBtn')?.addEventListener('click', () => this.openModal());
+      $('#npFocusBtn')?.addEventListener('click', () => this.openModal());
+      $('#navFocus')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        this.openModal();
+      });
+      $('#focusModalCloseBtn')?.addEventListener('click', () => this.closeModal());
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.closeModal();
+      });
+
+      // Controls
+      this.startBtn?.addEventListener('click', () => this.toggleTimer());
+      this.resetBtn?.addEventListener('click', () => this.resetTimer());
+
+      // Presets
+      $$('.pomo-preset').forEach(btn => {
+        btn.addEventListener('click', () => {
+          $$('.pomo-preset').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const mins = parseInt(btn.dataset.mins) || 25;
+          this.currentMode = btn.dataset.type || 'focus';
+          this.setDuration(mins);
+        });
+      });
+
+      // Focus Music Presets
+      $$('.focus-preset-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const query = card.dataset.query;
+          if (query) {
+            toast(`🎧 Starting: ${card.querySelector('.fp-name').textContent}`);
+            searchInput.value = query;
+            navigateTo('search');
+            doSearch(query);
+            this.closeModal();
+          }
+        });
+      });
+
+      // Ambient Sound Chips
+      $$('.ambient-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const soundType = chip.dataset.sound;
+          this.toggleAmbientSound(soundType, chip);
+        });
+      });
+    },
+
+    openModal() {
+      if (this.modal) this.modal.style.display = 'flex';
+    },
+
+    closeModal() {
+      if (this.modal) this.modal.style.display = 'none';
+    },
+
+    setDuration(mins) {
+      this.pauseTimer();
+      this.totalSeconds = mins * 60;
+      this.remainingSeconds = this.totalSeconds;
+      if (this.label) this.label.textContent = this.currentMode === 'focus' ? 'Focus Session' : 'Rest Break';
+      this.updateDisplay();
+    },
+
+    toggleTimer() {
+      this.isRunning ? this.pauseTimer() : this.startTimer();
+    },
+
+    startTimer() {
+      this.isRunning = true;
+      if (this.startBtn) {
+        this.startBtn.textContent = 'Pause';
+        this.startBtn.classList.remove('pomodoro-primary');
+      }
+      this.timer = setInterval(() => this.tick(), 1000);
+    },
+
+    pauseTimer() {
+      this.isRunning = false;
+      if (this.startBtn) {
+        this.startBtn.textContent = 'Start Focus';
+        this.startBtn.classList.add('pomodoro-primary');
+      }
+      clearInterval(this.timer);
+    },
+
+    resetTimer() {
+      this.pauseTimer();
+      this.remainingSeconds = this.totalSeconds;
+      this.updateDisplay();
+    },
+
+    tick() {
+      if (this.remainingSeconds > 0) {
+        this.remainingSeconds--;
+        if (this.currentMode === 'focus') {
+          this.minutesCount += (1 / 60);
+          if (Math.floor(this.minutesCount) > Storage.get('pomo_minutes', 0)) {
+            Storage.set('pomo_minutes', Math.floor(this.minutesCount));
+            this.updateStatsUI();
+          }
+        }
+        this.updateDisplay();
+      } else {
+        this.pauseTimer();
+        if (this.currentMode === 'focus') {
+          this.blocksCount++;
+          Storage.set('pomo_blocks', this.blocksCount);
+          this.updateStatsUI();
+          toast('🎉 Focus session completed! Great job! Take a short break.');
+          this.currentMode = 'break';
+          this.setDuration(5);
+        } else {
+          toast('⚡ Break over! Ready for next session?');
+          this.currentMode = 'focus';
+          this.setDuration(25);
+        }
+      }
+    },
+
+    updateDisplay() {
+      const mins = Math.floor(this.remainingSeconds / 60);
+      const secs = this.remainingSeconds % 60;
+      if (this.digits) this.digits.textContent = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+
+      if (this.ring) {
+        const pct = this.remainingSeconds / this.totalSeconds;
+        const offset = 440 * (1 - pct);
+        this.ring.style.strokeDashoffset = offset;
+      }
+    },
+
+    updateStatsUI() {
+      if (this.blocksCompletedEl) this.blocksCompletedEl.textContent = this.blocksCount;
+      if (this.minutesCompletedEl) this.minutesCompletedEl.textContent = Math.floor(this.minutesCount);
+    },
+
+    // Web Audio Synthesizer for ambient noise
+    toggleAmbientSound(soundType, chipEl) {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) {
+        toast('Web Audio not supported');
+        return;
+      }
+      if (!this.audioCtx) {
+        this.audioCtx = new AudioCtx();
+      }
+      if (this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume();
+      }
+
+      if (this.ambientNodes[soundType]) {
+        try {
+          const node = this.ambientNodes[soundType];
+          node.gain.gain.linearRampToValueAtTime(0.001, this.audioCtx.currentTime + 0.4);
+          setTimeout(() => {
+            node.source.stop();
+            delete this.ambientNodes[soundType];
+          }, 450);
+        } catch {}
+        chipEl.classList.remove('active');
+      } else {
+        try {
+          const bufferSize = this.audioCtx.sampleRate * 2;
+          const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
+          const data = buffer.getChannelData(0);
+          for (let i = 0; i < bufferSize; i++) {
+            data[i] = (Math.random() * 2 - 1) * 0.1;
+          }
+
+          const noise = this.audioCtx.createBufferSource();
+          noise.buffer = buffer;
+          noise.loop = true;
+
+          const filter = this.audioCtx.createBiquadFilter();
+          filter.type = soundType === 'rain' ? 'lowpass' : soundType === 'waves' ? 'bandpass' : 'lowpass';
+          filter.frequency.value = soundType === 'rain' ? 800 : soundType === 'waves' ? 400 : 300;
+
+          const gain = this.audioCtx.createGain();
+          gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime);
+
+          noise.connect(filter);
+          filter.connect(gain);
+          gain.connect(this.audioCtx.destination);
+          noise.start();
+
+          this.ambientNodes[soundType] = { source: noise, gain, filter };
+          chipEl.classList.add('active');
+          toast(`🌧️ Ambient ${soundType} active`);
+        } catch (e) {
+          console.warn('Ambient synth error:', e);
+        }
+      }
+    }
+  };
+
+  /* ================================================================
+     MEDIASESSION API INTEGRATION (Desktop & Mobile Lockscreen Controls)
+     ================================================================ */
+  function setupMediaSessionHandlers() {
+    if (!('mediaSession' in navigator)) return;
+
+    navigator.mediaSession.setActionHandler('play', () => togglePlayPause());
+    navigator.mediaSession.setActionHandler('pause', () => togglePlayPause());
+    navigator.mediaSession.setActionHandler('previoustrack', () => playPrev());
+    navigator.mediaSession.setActionHandler('nexttrack', () => playNext());
+    
+    try {
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        if (details.seekTime && audioPlayer.duration) {
+          audioPlayer.currentTime = details.seekTime;
+        }
+      });
+      navigator.mediaSession.setActionHandler('seekforward', () => {
+        if (audioPlayer.duration) audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+      });
+      navigator.mediaSession.setActionHandler('seekbackward', () => {
+        audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+      });
+      navigator.mediaSession.setActionHandler('stop', () => {
+        audioPlayer.pause();
+        audioPlayer.currentTime = 0;
+      });
+    } catch {}
+  }
+
+  function updateMediaSession(song) {
+    if (!('mediaSession' in navigator) || !song) return;
+    navigator.mediaSession.metadata = new MediaMetadata({
+      title: song.title || 'Unknown Title',
+      artist: song.channel || 'MusicFlow',
+      album: 'MusicFlow Web',
+      artwork: [
+        { src: thumb(song), sizes: '512x512', type: 'image/jpeg' }
+      ]
+    });
   }
 
   /* ================================================================
@@ -1774,3 +2475,4 @@
   /* ----- Start ----- */
   init();
 })();
+

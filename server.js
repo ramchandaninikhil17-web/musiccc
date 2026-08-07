@@ -7,6 +7,7 @@ const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const ffmpegPath = require('ffmpeg-static');
+
 let YTDlpWrap;
 try {
   YTDlpWrap = require('yt-dlp-wrap').default || require('yt-dlp-wrap');
@@ -16,10 +17,42 @@ try {
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+const HOST = process.env.HOST || '0.0.0.0';
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+
+/* ------------------------------------------------------------------ */
+/*  Standard Extractor & User-Agent Arguments for Cloud Anti-Bot Bypass*/
+/* ------------------------------------------------------------------ */
+const BASE_YTDLP_ARGS = [
+  '--extractor-args', 'youtube:player_client=android,web,tv_embedded',
+  '--geo-bypass',
+  '--no-check-certificates',
+  '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+];
+
+/* ------------------------------------------------------------------ */
+/*  Healthcheck Endpoints for Cloud Load Balancers (Render, Railway)  */
+/* ------------------------------------------------------------------ */
+app.get('/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    service: 'musicflow-api',
+  });
+});
+
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'ok',
+    uptime: Math.floor(process.uptime()),
+    timestamp: new Date().toISOString(),
+    ytDlpReady: ytDlpPath ? true : false,
+  });
+});
 
 /* ------------------------------------------------------------------ */
 /*  Resolve yt-dlp binary path & Auto-Download if missing             */
@@ -28,12 +61,16 @@ let ytDlpPath = 'yt-dlp';
 
 async function ensureYtDlp() {
   try {
-    const binaryName = process.platform === 'win32' ? 'yt-dlp.exe' : 'yt-dlp';
+    const isWin = process.platform === 'win32';
+    const binaryName = isWin ? 'yt-dlp.exe' : 'yt-dlp';
     const rootBinary = path.join(__dirname, binaryName);
 
     if (fs.existsSync(rootBinary)) {
+      if (!isWin) {
+        try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
+      }
       ytDlpPath = rootBinary;
-      console.log(`[MusicFlow] yt-dlp ready: ${ytDlpPath}`);
+      console.log(`[MusicFlow] ✅ yt-dlp binary ready: ${ytDlpPath}`);
       return;
     }
 
@@ -42,7 +79,7 @@ async function ensureYtDlp() {
       const check = require('child_process').spawnSync('yt-dlp', ['--version'], { windowsHide: true });
       if (check && check.status === 0) {
         ytDlpPath = 'yt-dlp';
-        console.log('[MusicFlow] Using system yt-dlp from PATH');
+        console.log('[MusicFlow] ✅ Using system yt-dlp from PATH');
         return;
       }
     } catch (e) {}
@@ -51,7 +88,7 @@ async function ensureYtDlp() {
     if (YTDlpWrap && typeof YTDlpWrap.downloadFromGithub === 'function') {
       console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release from GitHub...');
       await YTDlpWrap.downloadFromGithub(rootBinary);
-      if (process.platform !== 'win32') {
+      if (!isWin) {
         try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
       }
       ytDlpPath = rootBinary;
@@ -62,13 +99,13 @@ async function ensureYtDlp() {
   }
 }
 
-
 /* ------------------------------------------------------------------ */
-/*  Helper: run yt-dlp                                                */
+/*  Helper: run yt-dlp with cloud anti-bot args                       */
 /* ------------------------------------------------------------------ */
 function runYtDlp(args, timeout = 30000) {
   return new Promise((resolve, reject) => {
-    execFile(ytDlpPath, args, {
+    const fullArgs = [...BASE_YTDLP_ARGS, ...args];
+    execFile(ytDlpPath, fullArgs, {
       maxBuffer: 10 * 1024 * 1024,
       timeout,
       windowsHide: true,
@@ -170,7 +207,7 @@ function scoreSong(item, query, preferOfficial = true) {
     // 5. High View Count bonus (logarithmic scaling)
     const views = Number(item.views) || 0;
     if (views > 0) {
-      score += Math.min(450, Math.log10(views + 1) * 50); // 100M views -> ~400 pts
+      score += Math.min(450, Math.log10(views + 1) * 50);
     }
 
     // 6. Optimal Music Track Duration (1:20 to 7:00 is normal song range)
@@ -178,9 +215,9 @@ function scoreSong(item, query, preferOfficial = true) {
     if (dur >= 80 && dur <= 450) {
       score += 150;
     } else if (dur > 600) {
-      score -= 350; // likely a full album, DJ set, or 1-hour loop
+      score -= 350;
     } else if (dur < 50 && dur > 0) {
-      score -= 250; // likely a short, teaser, or ringtone
+      score -= 250;
     }
 
     // 7. Negative Penalties
@@ -203,7 +240,6 @@ async function performSingleSmartSearch(query, preferOfficial = true) {
   const cached = getCached(cacheKey);
   if (cached) return cached;
 
-  // Add search term hint if query doesn't specify
   const searchTerm = cleanQ.length <= 15 && !cleanQ.toLowerCase().includes('song') && !cleanQ.toLowerCase().includes('audio')
     ? `${cleanQ} song`
     : cleanQ;
@@ -234,7 +270,6 @@ async function performSingleSmartSearch(query, preferOfficial = true) {
 
     if (!items.length) return null;
 
-    // Score and rank all items
     const scored = items.map(item => ({
       item,
       score: scoreSong(item, cleanQ, preferOfficial),
@@ -318,7 +353,6 @@ app.get('/api/smart-search', async (req, res) => {
 
 /* ------------------------------------------------------------------ */
 /*  POST /api/batch-search                                            */
-/*  Body: { queries: string[], preferOfficial?: boolean }             */
 /* ------------------------------------------------------------------ */
 app.post('/api/batch-search', async (req, res) => {
   const queries = req.body.queries;
@@ -328,17 +362,15 @@ app.post('/api/batch-search', async (req, res) => {
     return res.status(400).json({ error: 'Queries array is required' });
   }
 
-  // Sanitize and limit to 40 items max per batch
   const cleanQueries = queries
     .map(q => (typeof q === 'string' ? q.trim() : ''))
     .filter(Boolean)
     .slice(0, 40);
 
   try {
-    // Run concurrent queries with limit of 4
     const resolvedList = await mapConcurrent(cleanQueries, 4, async (q) => {
-      const res = await performSingleSmartSearch(q, preferOfficial);
-      return res ? { query: q, song: res.bestMatch, candidates: res.candidates } : null;
+      const r = await performSingleSmartSearch(q, preferOfficial);
+      return r ? { query: q, song: r.bestMatch, candidates: r.candidates } : null;
     });
 
     const successful = resolvedList.filter(Boolean);
@@ -355,7 +387,6 @@ app.post('/api/batch-search', async (req, res) => {
 
 /* ------------------------------------------------------------------ */
 /*  GET /api/recommendations                                          */
-/*  Query: seedArtists=Arijit Singh,The Weeknd & seedQueries=...      */
 /* ------------------------------------------------------------------ */
 app.get('/api/recommendations', async (req, res) => {
   const seedArtists = req.query.seedArtists ? String(req.query.seedArtists).split(',').map(s => s.trim()).filter(Boolean) : [];
@@ -365,11 +396,9 @@ app.get('/api/recommendations', async (req, res) => {
   const cached = getCached(cacheKey);
   if (cached) return res.json(cached);
 
-  // Determine search queries based on seeds or defaults
   let searchPrompts = [];
 
   if (seedArtists.length > 0) {
-    // Generate artist specific recommendation prompts
     seedArtists.slice(0, 3).forEach(artist => {
       searchPrompts.push(`ytsearch8:${artist} best songs playlist`);
       searchPrompts.push(`ytsearch6:songs similar to ${artist}`);
@@ -382,7 +411,6 @@ app.get('/api/recommendations', async (req, res) => {
     });
   }
 
-  // Fallbacks if no history seeds
   if (searchPrompts.length === 0) {
     searchPrompts = [
       'ytsearch10:top global music hits 2024',
@@ -419,7 +447,6 @@ app.get('/api/recommendations', async (req, res) => {
       }
     });
 
-    // Flatten, deduplicate by ID, filter out weird lengths
     const seen = new Set();
     const allSongs = [];
     rawResults.flat().forEach(s => {
@@ -432,7 +459,6 @@ app.get('/api/recommendations', async (req, res) => {
       }
     });
 
-    // Shuffle slightly for organic variety
     for (let i = allSongs.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [allSongs[i], allSongs[j]] = [allSongs[j], allSongs[i]];
@@ -448,7 +474,7 @@ app.get('/api/recommendations', async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  GET /api/suggestions?q=...  (fast, 5 results, flat)               */
+/*  GET /api/suggestions?q=...                                        */
 /* ------------------------------------------------------------------ */
 app.get('/api/suggestions', async (req, res) => {
   const query = req.query.q;
@@ -510,13 +536,14 @@ app.get('/api/info/:videoId', async (req, res) => {
 
 /* ------------------------------------------------------------------ */
 /*  GET /api/stream/:videoId?quality=low|high                         */
+/*  Robust cloud streaming with direct URL proxy and pipe fallback    */
 /* ------------------------------------------------------------------ */
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';
 
   const formatMap = {
-    low:  'worstaudio[ext=m4a]/worstaudio',
+    low: 'worstaudio[ext=m4a]/worstaudio',
     high: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio',
   };
 
@@ -527,20 +554,30 @@ app.get('/api/stream/:videoId', async (req, res) => {
       '-g', '--no-warnings',
     ], 15000);
 
-    if (!audioUrl) return res.status(404).json({ error: 'No audio' });
+    if (!audioUrl) {
+      return streamViaPipeFallback(videoId, res);
+    }
 
-    // Proxy the audio stream
+    // Proxy the audio stream from direct URL
     const parsedUrl = new URL(audioUrl);
     const protocol = parsedUrl.protocol === 'https:' ? https : http;
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
+      'Accept': '*/*',
     };
     if (req.headers.range) headers['Range'] = req.headers.range;
 
     const proxyReq = protocol.get(audioUrl, { headers }, (proxyRes) => {
+      // If YouTube CDN returns 403 Forbidden or non-2xx status, use pipe fallback
+      if (proxyRes.statusCode >= 400) {
+        console.warn(`[Stream Proxy] Received HTTP ${proxyRes.statusCode} from CDN, falling back to direct pipe stream...`);
+        return streamViaPipeFallback(videoId, res);
+      }
+
       const fwd = {
         'Content-Type': proxyRes.headers['content-type'] || 'audio/mp4',
         'Accept-Ranges': 'bytes',
+        'Cache-Control': 'public, max-age=3600',
       };
       if (proxyRes.headers['content-length']) fwd['Content-Length'] = proxyRes.headers['content-length'];
       if (proxyRes.headers['content-range']) fwd['Content-Range'] = proxyRes.headers['content-range'];
@@ -549,26 +586,56 @@ app.get('/api/stream/:videoId', async (req, res) => {
     });
 
     proxyReq.on('error', (err) => {
-      console.error('[Stream Proxy]', err.message);
-      if (!res.headersSent) res.status(500).json({ error: 'Stream failed' });
+      console.warn('[Stream Proxy Error]', err.message);
+      streamViaPipeFallback(videoId, res);
     });
 
     req.on('close', () => proxyReq.destroy());
   } catch (err) {
-    console.error('[Stream]', err.message);
-    res.status(500).json({ error: 'Failed to get stream' });
+    console.warn('[Stream]', err.message);
+    streamViaPipeFallback(videoId, res);
   }
 });
 
+// Fallback: Direct stream via yt-dlp stdout pipe if YouTube blocks CDN URL
+function streamViaPipeFallback(videoId, res) {
+  if (res.headersSent) return;
+
+  try {
+    res.setHeader('Content-Type', 'audio/mp4');
+    res.setHeader('Accept-Ranges', 'bytes');
+    res.setHeader('Cache-Control', 'no-cache');
+
+    const streamProcess = spawn(ytDlpPath, [
+      ...BASE_YTDLP_ARGS,
+      `https://www.youtube.com/watch?v=${videoId}`,
+      '-f', 'bestaudio[ext=m4a]/bestaudio',
+      '-o', '-',
+      '--no-warnings',
+    ], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+
+    streamProcess.stdout.pipe(res);
+
+    streamProcess.on('error', (err) => {
+      console.error('[Stream Pipe Error]', err.message);
+      if (!res.headersSent) res.status(500).json({ error: 'Stream failed' });
+    });
+
+    res.on('close', () => {
+      try { streamProcess.kill('SIGTERM'); } catch (e) {}
+    });
+  } catch (e) {
+    if (!res.headersSent) res.status(500).json({ error: 'Stream fallback error' });
+  }
+}
+
 /* ------------------------------------------------------------------ */
 /*  GET /api/lyrics/:videoId                                          */
-/*  Attempts to get subtitles/captions from YouTube as lyrics proxy   */
 /* ------------------------------------------------------------------ */
 app.get('/api/lyrics/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
   try {
-    // Try to get auto-generated subtitles from YouTube
     const stdout = await runYtDlp([
       `https://www.youtube.com/watch?v=${videoId}`,
       '--dump-json', '--no-warnings', '--skip-download',
@@ -578,7 +645,6 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
     const title = data.title || '';
     const artist = data.channel || data.uploader || '';
 
-    // Check if subtitles are available
     let subtitles = null;
     if (data.subtitles && Object.keys(data.subtitles).length > 0) {
       subtitles = data.subtitles;
@@ -587,16 +653,13 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
     }
 
     if (subtitles) {
-      // Get English subtitles first, fallback to first available
       const lang = subtitles['en'] || subtitles[Object.keys(subtitles)[0]];
       if (lang) {
-        // Find json3 or vtt format
         const sub = lang.find(s => s.ext === 'json3') || lang.find(s => s.ext === 'vtt') || lang[0];
         if (sub && sub.url) {
-          // Fetch the subtitle content
           const subRes = await new Promise((resolve, reject) => {
             const proto = sub.url.startsWith('https') ? https : http;
-            proto.get(sub.url, (r) => {
+            proto.get(sub.url, { headers: { 'User-Agent': 'Mozilla/5.0' } }, (r) => {
               let body = '';
               r.on('data', c => body += c);
               r.on('end', () => resolve(body));
@@ -615,13 +678,9 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
                 }))
                 .filter(l => l.text && l.text !== '\n');
 
-              return res.json({
-                title, artist, synced: true,
-                lines,
-              });
+              return res.json({ title, artist, synced: true, lines });
             }
           } catch {
-            // Parse as plain text
             return res.json({
               title, artist, synced: false,
               lines: subRes.split('\n').filter(l => l.trim() && !l.includes('-->') && !l.match(/^\d+$/)).map(l => ({ time: 0, text: l.trim() })),
@@ -631,9 +690,7 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
       }
     }
 
-    // No subtitles available
     res.json({ title, artist, synced: false, lines: [] });
-
   } catch (err) {
     console.error('[Lyrics]', err.message);
     res.status(500).json({ error: 'Failed to fetch lyrics' });
@@ -647,7 +704,6 @@ app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
   try {
-    // 1. Get video info for the filename
     const infoStdout = await runYtDlp([
       `https://www.youtube.com/watch?v=${videoId}`,
       '--dump-json', '--no-warnings', '--skip-download',
@@ -656,7 +712,6 @@ app.get('/api/download/:videoId', async (req, res) => {
     const info = JSON.parse(infoStdout);
     const safeTitle = (info.title || 'download').replace(/[^a-zA-Z0-9\s\-_.()\[\]]/g, '').trim();
 
-    // 2. Get the direct audio URL
     const audioUrl = await runYtDlp([
       `https://www.youtube.com/watch?v=${videoId}`,
       '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio',
@@ -665,29 +720,25 @@ app.get('/api/download/:videoId', async (req, res) => {
 
     if (!audioUrl) return res.status(404).json({ error: 'No audio found' });
 
-    // 3. Set download headers
     res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp3"`);
+    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeTitle)}.mp3"`);
 
-    // 4. Use ffmpeg to convert audio stream to MP3 and pipe to response
-    //    ffmpeg reads from the URL, converts to MP3, outputs to stdout
     const ffmpeg = spawn(ffmpegPath, [
-      '-i', audioUrl,           // input from URL
-      '-vn',                    // no video
-      '-ab', '192k',            // 192kbps bitrate
-      '-ar', '44100',           // 44.1kHz sample rate
-      '-f', 'mp3',              // output format MP3
+      '-i', audioUrl,
+      '-vn',
+      '-ab', '192k',
+      '-ar', '44100',
+      '-f', 'mp3',
       '-metadata', `title=${info.title || ''}`,
       '-metadata', `artist=${info.channel || info.uploader || ''}`,
-      'pipe:1',                 // output to stdout
+      'pipe:1',
     ], {
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
 
     ffmpeg.stdout.pipe(res);
-
-    ffmpeg.stderr.on('data', () => {}); // suppress ffmpeg logs
+    ffmpeg.stderr.on('data', () => {});
 
     ffmpeg.on('error', (err) => {
       console.error('[Download ffmpeg error]', err.message);
@@ -700,11 +751,9 @@ app.get('/api/download/:videoId', async (req, res) => {
       }
     });
 
-    // If client disconnects, kill ffmpeg
     req.on('close', () => {
       ffmpeg.kill('SIGTERM');
     });
-
   } catch (err) {
     console.error('[Download]', err.message);
     if (!res.headersSent) res.status(500).json({ error: 'Download failed' });
@@ -712,7 +761,7 @@ app.get('/api/download/:videoId', async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  Persistent User Data Storage (Disk Backup for likes, playlists)   */
+/*  Persistent User Data Storage                                      */
 /* ------------------------------------------------------------------ */
 const dataDir = path.join(__dirname, 'data');
 const userDataFile = path.join(dataDir, 'userData.json');
@@ -750,7 +799,7 @@ app.post('/api/user-data', (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
-/*  GET /api/network-info - Returns local IP addresses for mobile     */
+/*  GET /api/network-info - Returns local IP or Cloud Public URL      */
 /* ------------------------------------------------------------------ */
 function getLocalNetworkAddresses() {
   const interfaces = os.networkInterfaces();
@@ -766,13 +815,18 @@ function getLocalNetworkAddresses() {
 }
 
 app.get('/api/network-info', (req, res) => {
+  const isCloud = !!(process.env.RENDER || process.env.RAILWAY_ENVIRONMENT || process.env.VERCEL || process.env.FLY_APP_NAME || process.env.PORT);
+  const cloudUrl = process.env.RENDER_EXTERNAL_URL || process.env.RAILWAY_STATIC_URL || (req.headers.host ? `https://${req.headers.host}` : null);
+
   const ips = getLocalNetworkAddresses();
   res.json({
     port: PORT,
+    isCloud,
+    cloudUrl: cloudUrl || null,
     localUrl: `http://localhost:${PORT}`,
     ips,
     networkUrls: ips.map(ip => `http://${ip}:${PORT}`),
-    primaryNetworkUrl: ips.length > 0 ? `http://${ips[0]}:${PORT}` : `http://localhost:${PORT}`
+    primaryNetworkUrl: isCloud && cloudUrl ? cloudUrl : (ips.length > 0 ? `http://${ips[0]}:${PORT}` : `http://localhost:${PORT}`)
   });
 });
 
@@ -783,13 +837,14 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, async () => {
+app.listen(PORT, HOST, async () => {
   await ensureYtDlp();
   const networkIps = getLocalNetworkAddresses();
   console.log('\n============================================================');
-  console.log('  🎵  MusicFlow is running successfully!');
+  console.log('  🎵  MusicFlow v2.0 is running successfully!');
   console.log('============================================================');
-  console.log(`  💻  Local PC (This Device):  http://localhost:${PORT}`);
+  console.log(`  💻  Local PC / Server:       http://localhost:${PORT}`);
+  console.log(`  🌐  Bound to Network Host:   http://${HOST}:${PORT}`);
   if (networkIps.length > 0) {
     networkIps.forEach(ip => {
       console.log(`  📱  Mobile / Other Devices:  http://${ip}:${PORT}`);
@@ -797,4 +852,3 @@ app.listen(PORT, async () => {
   }
   console.log('============================================================\n');
 });
-

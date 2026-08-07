@@ -1,0 +1,14 @@
+node_modules
+.git
+.gitignore
+yt-dlp.exe
+MusicFlow.exe
+MusicFlowLauncher.cs
+create-desktop-shortcut.bat
+create-shortcut.ps1
+start.bat
+start.sh
+android
+data/*.json
+*.log
+.DS_Store

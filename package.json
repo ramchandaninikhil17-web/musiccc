@@ -1,11 +1,16 @@
 {
   "name": "musicflow",
-  "version": "1.0.0",
-  "description": "MusicFlow — YouTube Audio Player (No API Required)",
+  "version": "2.0.0",
+  "description": "MusicFlow — High-Performance YouTube & Cloud Music Player",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build": "node prepare-binaries.js",
+    "postinstall": "node prepare-binaries.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "dependencies": {
     "@capacitor/android": "^8.5.0",

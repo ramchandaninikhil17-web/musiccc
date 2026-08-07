@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MusicFlow — Stream Music from YouTube</title>
-  <meta name="description" content="MusicFlow is a beautiful, free music player that streams high-quality audio directly from YouTube." />
+  <title>MusicFlow — High-Performance Cloud Music Player</title>
+  <meta name="description" content="MusicFlow is a beautiful, ultra-fast music player that streams high-quality audio with zero setup, Apple floating orb, and Picture-in-Picture productivity mode." />
   <meta name="theme-color" content="#6366f1" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -46,6 +46,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           <span>Library</span>
         </a></li>
+        <li><a href="#focus" class="nav-link" id="navFocus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>🧠 Focus Flow</span>
+        </a></li>
         <li><a href="#phone" class="nav-link" id="navPhone">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
           <span>📱 Connect Phone</span>
@@ -83,6 +87,14 @@
         </div>
 
         <div class="top-bar-actions">
+          <!-- Always-On-Top PiP Mini Player Button -->
+          <button class="top-btn" id="pipBtnTop" title="Always-On-Top Mini Player for Work (Key: P)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+          </button>
+          <!-- Focus / Pomodoro Mode Button -->
+          <button class="top-btn" id="focusModeBtn" title="Pomodoro Focus & Deep Work (Key: F)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
           <button class="top-btn" id="themeToggleBtn" title="Toggle theme">
             <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
@@ -243,7 +255,12 @@
 
         <!-- ===== LIBRARY PAGE ===== -->
         <section class="page" id="pageLibrary" style="display:none;">
-          <h1 class="page-title">Your Library</h1>
+          <div class="library-header-row">
+            <h1 class="page-title" style="margin-bottom:0;">Your Library</h1>
+            <button class="pill-action-btn" id="batchImportBtn" title="Import multiple songs from text">
+              <span>✨ Batch Import Songs</span>
+            </button>
+          </div>
 
           <!-- Liked Songs -->
           <div class="library-card liked-card" id="likedSongsCard">
@@ -252,47 +269,36 @@
               <h3>Liked Songs</h3>
               <p id="likedCount">0 songs</p>
             </div>
-            <button class="lib-card-play" id="playLikedBtn" title="Play liked songs">
+            <button class="lib-play-btn" id="playLikedBtn" title="Play Liked Songs">
               <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
             </button>
           </div>
 
-          <!-- Liked Songs List -->
-          <div class="liked-songs-list" id="likedSongsList" style="display:none;"></div>
-
-          <!-- Playlists -->
-          <div class="section-header" style="margin-top:24px;">
-            <h2>📂 Your Playlists</h2>
-            <div class="playlist-header-actions">
-              <button class="batch-import-btn" id="openBatchImportBtn" title="Batch add songs from text">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                <span>✨ Batch Import</span>
-              </button>
-              <button class="create-playlist-btn" id="createPlaylistBtn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                <span>New Playlist</span>
-              </button>
+          <!-- Custom Playlists Section -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>📁 Playlists</h2>
+              <button class="text-btn" id="createPlaylistBtn">+ New Playlist</button>
             </div>
-          </div>
-          <div class="playlists-grid" id="playlistsGrid">
-            <p class="empty-msg" id="noPlaylists">No playlists yet. Create one!</p>
+            <div class="playlist-grid" id="playlistGrid"></div>
           </div>
 
-          <!-- Playlist Detail View -->
-          <div class="playlist-detail" id="playlistDetail" style="display:none;">
-            <button class="back-btn" id="playlistBackBtn">← Back</button>
-            <div class="playlist-detail-header">
-              <h2 id="playlistDetailName"></h2>
-              <div class="playlist-detail-actions">
-                <button class="batch-add-btn" id="playlistBatchAddBtn" title="Add multiple songs from text to this playlist">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="18" x2="12" y2="12"/><line x1="9" y1="15" x2="15" y2="15"/></svg>
-                  <span>➕ Add from Text</span>
-                </button>
-                <button class="play-all-btn" id="playPlaylistBtn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg> Play All</button>
-                <button class="text-btn danger" id="deletePlaylistBtn">Delete</button>
-              </div>
+          <!-- Liked Songs List Section -->
+          <div class="home-section" id="likedSongsListSection" style="display:none;">
+            <div class="section-header">
+              <h2>❤️ Liked Songs</h2>
+              <button class="text-btn" id="hideLikedListBtn">Close</button>
             </div>
-            <div class="playlist-songs-list" id="playlistSongsList"></div>
+            <div class="results-grid" id="likedResultsGrid"></div>
+          </div>
+
+          <!-- Active Playlist Songs Section -->
+          <div class="home-section" id="activePlaylistSection" style="display:none;">
+            <div class="section-header">
+              <h2 id="activePlaylistTitle">Playlist</h2>
+              <button class="text-btn" id="hidePlaylistBtn">Close</button>
+            </div>
+            <div class="results-grid" id="activePlaylistGrid"></div>
           </div>
         </section>
 
@@ -399,6 +405,13 @@
 
       <!-- Right Controls -->
       <div class="np-right-controls">
+        <!-- Always-On-Top PiP Mini Player Button -->
+        <button class="np-btn" id="pipBtn" title="Always-On-Top Mini Player for Work (Key: P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+        </button>
+        <button class="np-btn" id="npFocusBtn" title="Pomodoro Focus & Study Mode (Key: F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
         <button class="np-btn" id="lyricsBtn" title="Lyrics">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
         </button>
@@ -420,6 +433,156 @@
             <div class="np-volume-fill" id="npVolumeFill"></div>
             <div class="np-volume-thumb" id="npVolumeThumb"></div>
           </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ APPLE FLOATING TRANSPARENT DYNAMIC ORB & CAPSULE ============ -->
+  <div class="apple-floating-orb" id="appleFloatingOrb" title="Drag to move • Click to open quick player">
+    <!-- Minimized Circular Transparent Apple Orb -->
+    <div class="orb-circle-core" id="orbCircleCore">
+      <div class="orb-disc-wrapper" id="orbDiscWrapper">
+        <img class="orb-art" id="orbArt" src="/icons/icon-192.png" alt="" />
+        <div class="orb-soundwaves" id="orbSoundwaves">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="orb-ring-pulse" id="orbRingPulse"></div>
+    </div>
+
+    <!-- Expanded Apple Dynamic Island Glass Capsule -->
+    <div class="orb-expanded-capsule" id="orbExpandedCapsule" style="display:none;">
+      <div class="capsule-header">
+        <div class="capsule-track-meta">
+          <img class="capsule-art" id="capsuleArt" src="/icons/icon-192.png" alt="" />
+          <div class="capsule-text-wrap">
+            <div class="capsule-title" id="capsuleTitle">MusicFlow Orb</div>
+            <div class="capsule-artist" id="capsuleArtist">Ready to Play</div>
+          </div>
+        </div>
+        <button class="capsule-icon-btn" id="orbCloseBtn" title="Collapse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Capsule Mini Progress Bar -->
+      <div class="capsule-progress-bar" id="capsuleProgressBar">
+        <div class="capsule-progress-fill" id="capsuleProgressFill"></div>
+      </div>
+
+      <!-- Capsule Controls Row -->
+      <div class="capsule-controls">
+        <button class="capsule-ctrl-btn" id="orbPrevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg></button>
+        <button class="capsule-ctrl-btn capsule-play-btn" id="orbPlayPauseBtn" title="Play/Pause">
+          <svg class="orb-play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg class="orb-pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="capsule-ctrl-btn" id="orbNextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg></button>
+        <button class="capsule-ctrl-btn capsule-quick-switch-btn" id="orbQuickSwitchBtn" title="⚡ Instant Switch to next track">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Quick Switch</span>
+        </button>
+      </div>
+
+      <!-- Capsule Bottom Quick Action Bar -->
+      <div class="capsule-bottom-bar">
+        <button class="capsule-action-pill" id="orbPipBtn" title="Always-On-Top Mini Player for Work">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+          <span>PiP Work Mini</span>
+        </button>
+        <button class="capsule-action-pill" id="orbFocusBtn" title="Pomodoro Productivity & Focus Mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Focus Mode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOCUS & POMODORO FLOW MODAL ============ -->
+  <div class="modal-overlay" id="focusModalOverlay" style="display:none;">
+    <div class="focus-modal-card">
+      <button class="modal-close-btn" id="focusModalCloseBtn">&times;</button>
+      
+      <div class="focus-header">
+        <span class="focus-badge">🧠 Deep Work & Productivity Flow</span>
+        <h2>Stay In The Zone</h2>
+        <p class="focus-subtitle">Distraction-free music with integrated Pomodoro timer & ambient sound layers.</p>
+      </div>
+
+      <!-- Pomodoro Timer Visual Ring -->
+      <div class="pomodoro-container">
+        <div class="pomodoro-circle">
+          <svg class="pomodoro-svg" viewBox="0 0 160 160">
+            <circle class="pomodoro-bg-ring" cx="80" cy="80" r="70" />
+            <circle class="pomodoro-progress-ring" id="pomodoroRing" cx="80" cy="80" r="70" />
+          </svg>
+          <div class="pomodoro-time-display">
+            <span class="pomodoro-digits" id="pomodoroDigits">25:00</span>
+            <span class="pomodoro-label" id="pomodoroStatusLabel">Focus Session</span>
+          </div>
+        </div>
+
+        <div class="pomodoro-controls">
+          <button class="pomodoro-btn pomodoro-primary" id="pomodoroStartBtn">Start Focus</button>
+          <button class="pomodoro-btn" id="pomodoroResetBtn">Reset</button>
+          <div class="pomodoro-presets">
+            <button class="pomo-preset active" data-mins="25" data-type="focus">25m Focus</button>
+            <button class="pomo-preset" data-mins="50" data-type="focus">50m Deep</button>
+            <button class="pomo-preset" data-mins="5" data-type="break">5m Break</button>
+            <button class="pomo-preset" data-mins="15" data-type="break">15m Break</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Focus Music Presets -->
+      <div class="focus-music-section">
+        <label class="focus-section-label">⚡ 1-Click Instant Productivity Music:</label>
+        <div class="focus-presets-grid">
+          <button class="focus-preset-card" data-query="lo-fi hip hop study beats chill mix">
+            <span class="fp-icon">☕</span>
+            <span class="fp-name">Lo-Fi Study Beats</span>
+          </button>
+          <button class="focus-preset-card" data-query="deep focus alpha waves study music">
+            <span class="fp-icon">🧠</span>
+            <span class="fp-name">Deep Alpha Waves</span>
+          </button>
+          <button class="focus-preset-card" data-query="peaceful classical piano study focus">
+            <span class="fp-icon">🎹</span>
+            <span class="fp-name">Classical Piano Flow</span>
+          </button>
+          <button class="focus-preset-card" data-query="cyberpunk coding synthwave beats focus">
+            <span class="fp-icon">⚡</span>
+            <span class="fp-name">Synthwave Coding</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ambient Sound Layer Mixer -->
+      <div class="ambient-mixer-section">
+        <label class="focus-section-label">🌧️ Ambient Background Atmosphere (Layer with music):</label>
+        <div class="ambient-cards-row">
+          <button class="ambient-chip" id="ambientRainBtn" data-sound="rain">🌧️ Gentle Rain</button>
+          <button class="ambient-chip" id="ambientCafeBtn" data-sound="cafe">☕ Cozy Cafe</button>
+          <button class="ambient-chip" id="ambientWavesBtn" data-sound="waves">🌊 Ocean Waves</button>
+          <button class="ambient-chip" id="ambientWhiteBtn" data-sound="whitenoise">💨 Soft White Noise</button>
+        </div>
+      </div>
+
+      <div class="focus-stats-row">
+        <div class="focus-stat-item">
+          <span class="f-stat-val" id="focusBlocksCompleted">0</span>
+          <span class="f-stat-lbl">Focus Blocks</span>
+        </div>
+        <div class="focus-stat-item">
+          <span class="f-stat-val" id="focusMinutesCompleted">0</span>
+          <span class="f-stat-lbl">Focus Minutes</span>
+        </div>
+        <div class="focus-stat-item">
+          <button class="focus-pip-launch-btn" id="focusLaunchPipBtn" title="Pop open Always-On-Top Mini Player">
+            🖼️ Pop Always-On-Top Mini
+          </button>
         </div>
       </div>
 
@@ -454,8 +617,16 @@
           <select class="setting-select" id="settingTheme"><option value="dark">Dark</option><option value="light">Light</option></select>
         </div>
         <div class="setting-row">
-          <div class="setting-info"><span class="setting-label">Audio Quality</span><span class="setting-desc">Higher quality uses more data</span></div>
+          <div class="setting-info"><span class="setting-label">Audio Quality</span><span class="setting-desc">Higher quality uses best stream</span></div>
           <select class="setting-select" id="settingQuality"><option value="high">High (Best)</option><option value="low">Low (Save Data)</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Apple Floating Transparent Orb</span><span class="setting-desc">Floating circular quick player widget</span></div>
+          <select class="setting-select" id="settingOrb"><option value="show">Enabled (Floating)</option><option value="hide">Hidden</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Work PiP Mini-Player</span><span class="setting-desc">Always-on-top desktop overlay</span></div>
+          <button class="pill-action-btn" id="settingLaunchPipBtn" style="padding:6px 14px; font-size:13px;">🖼️ Open PiP Window</button>
         </div>
       </div>
     </div>
@@ -492,11 +663,11 @@
     </div>
   </div>
 
-  <!-- ============ BATCH IMPORT FROM TEXT MODAL ============ -->
+  <!-- ============ BATCH IMPORT SONGS MODAL ============ -->
   <div class="modal-overlay" id="batchImportModal" style="display:none;">
-    <div class="modal modal-lg">
+    <div class="modal modal-large">
       <div class="modal-header">
-        <div class="modal-title-wrap">
+        <div>
           <h3 class="modal-gradient-title">✨ Batch Import Songs from Text</h3>
           <p class="modal-subtitle">Paste song names or lyrics queries to search & add famous official releases.</p>
         </div>
@@ -505,7 +676,6 @@
         </button>
       </div>
       <div class="modal-body">
-        <!-- Quick examples pill chips -->
         <div class="batch-examples">
           <span class="batch-example-label">Quick test presets:</span>
           <button class="batch-example-pill" type="button" data-text="siyara keshariya akhari ishk blinglight starboy">Bollywood & Pop Mix</button>
@@ -513,16 +683,14 @@
           <button class="batch-example-pill" type="button" data-text="Blinding Lights, Starboy, Save Your Tears, Die For You">The Weeknd Hits</button>
         </div>
 
-        <!-- Text input area -->
         <div class="batch-textarea-wrap">
-          <textarea class="batch-textarea" id="batchTextarea" rows="4" placeholder="Enter song names separated by lines, commas, or spaces (e.g. siyara keshariya akhari ishk blinglight starboy)..."></textarea>
+          <textarea class="batch-textarea" id="batchTextarea" rows="4" placeholder="Enter song names separated by lines, commas, or spaces..."></textarea>
           <div class="batch-textarea-footer">
             <span id="batchCountBadge" class="batch-count-badge">0 songs detected</span>
             <button class="text-btn text-xs" type="button" id="batchClearText">Clear</button>
           </div>
         </div>
 
-        <!-- Interactive Recognized Chips Preview -->
         <div class="batch-chips-section" id="batchChipsSection" style="display:none;">
           <div class="batch-section-header">
             <label class="batch-section-label">Recognized Songs (Click ✕ to remove):</label>
@@ -531,7 +699,6 @@
           <div class="batch-chips-container" id="batchChipsContainer"></div>
         </div>
 
-        <!-- Destination Selection -->
         <div class="batch-options-card">
           <label class="batch-section-label">Destination Playlist:</label>
           <div class="batch-dest-radios">
@@ -561,7 +728,6 @@
           </div>
         </div>
 
-        <!-- Live Progress Animated Box -->
         <div class="batch-progress-box" id="batchProgressBox" style="display:none;">
           <div class="batch-progress-header">
             <span id="batchProgressStatus">Searching & adding songs...</span>
@@ -572,10 +738,8 @@
           </div>
         </div>
 
-        <!-- Results / Summary Preview -->
         <div class="batch-results-preview" id="batchResultsPreview" style="display:none;"></div>
 
-        <!-- Modal Actions -->
         <div class="modal-actions">
           <button class="modal-cancel-btn" type="button" id="batchCancelBtn">Cancel</button>
           <button class="modal-submit-btn" type="button" id="batchStartBtn">✨ Import Songs to Playlist</button>
@@ -589,6 +753,10 @@
 
   <!-- Audio Element -->
   <audio id="audioPlayer" preload="auto"></audio>
+
+  <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
+  <video id="pipVideo" playsinline muted style="position:fixed; bottom:-9999px; left:-9999px; width:480px; height:270px; opacity:0; pointer-events:none;"></video>
+  <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
 
   <!-- Phone Connection Modal -->
   <div class="modal-overlay" id="phoneModalOverlay" style="display:none;">
@@ -607,8 +775,8 @@
         </div>
         <div style="text-align:left; background:rgba(99,102,241,0.1); border:1px solid rgba(99,102,241,0.3); border-radius:12px; padding:12px 16px; font-size:13px; color:#cbd5e1; line-height:1.6;">
           <strong>⚡ Quick 3-Step Setup:</strong><br/>
-          1. Connect your phone to the <strong>same Wi-Fi</strong> as your PC.<br/>
-          2. Scan the QR code or open the link above in your phone's browser.<br/>
+          1. Connect your phone or scan anywhere worldwide.<br/>
+          2. Open the link above in your phone's browser.<br/>
           3. Tap browser menu (<strong>⋮</strong> or <strong>Share</strong>) &rarr; <strong>"Add to Home Screen"</strong> or <strong>"Install App"</strong> to use as a full-screen app!
         </div>
       </div>
