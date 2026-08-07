@@ -1,7 +1,20 @@
 {
   "theme": "dark",
-  "lastSaved": "2026-08-07T14:50:43.406Z",
+  "lastSaved": "2026-08-07T15:02:39.678Z",
   "history": [
+    {
+      "song": {
+        "id": "uvFc_tcD",
+        "title": "Aakhri Ishq",
+        "channel": "Irshad Kamil, Shashwat Sachdev, Jubin Nautiyal",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/581/Dhurandhar-The-Revenge-Hindi-2026-20260409161002-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/581/oJICAFLG3LhPsKwXFYaVqpTMFd3U87DbhYxdK4_320.mp4"
+      },
+      "playedAt": "2026-08-07T15:02:35.608Z",
+      "listenedSec": 2
+    },
     {
       "song": {
         "id": "mAuIqv2dV18",
@@ -122,5 +135,14 @@
       "playedAt": "2026-08-06T15:09:43.990Z",
       "listenedSec": 226
     }
+  ],
+  "searchHistory": [
+    "akhari ishk",
+    "top bollywood songs 2026",
+    "top bollywood songs 2024",
+    "Arijit Singh best songs",
+    "english pop songs 2024",
+    "happy upbeat songs",
+    "electronic dance music"
   ]
 }
