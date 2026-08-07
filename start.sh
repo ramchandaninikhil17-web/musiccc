@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 # ============================================================
-#   🎵 MusicFlow Startup Script (macOS / Linux)
+#   🎵 MusicFlow v2.5 Startup Script (macOS / Linux)
 # ============================================================
 
 cd "$(dirname "$0")"
 
 echo "============================================================"
-echo "  🎵  Starting MusicFlow..."
+echo "  🎵  MusicFlow v2.5 — Premium Music Player"
 echo "============================================================"
+echo ""
+echo "  ✨ NEW in this update:"
+echo "    🍏 Apple Transparent Floating Orb & Dynamic Island"
+echo "    🖼️  Always-On-Top PiP Mini-Player for Multitasking"
+echo "    ⏱️  Pomodoro Focus Flow & Ambient Sound Mixer"
+echo "    🌐 MediaSession Lockscreen & Global Hotkeys"
+echo "    ☁️  1-Click Cloud Deploy (Render / Railway / Docker)"
 echo ""
 
 # 1. Check Node.js
@@ -30,6 +37,7 @@ if [ ! -d "node_modules" ]; then
 fi
 
 # 3. Open browser
+echo "[INFO] Opening MusicFlow in your browser..."
 if command -v xdg-open &> /dev/null; then
     xdg-open "http://localhost:3000" &
 elif command -v open &> /dev/null; then
@@ -37,5 +45,20 @@ elif command -v open &> /dev/null; then
 fi
 
 # 4. Start Server
-echo "[INFO] Starting MusicFlow backend server..."
+echo "[INFO] Starting MusicFlow backend server on port 3000..."
+echo ""
+echo "============================================================"
+echo "  Keyboard Shortcuts (when app is focused):"
+echo "    Space       Play / Pause"
+echo "    P           Always-On-Top PiP Mini Player"
+echo "    Shift+P     Previous Track"
+echo "    N           Next Track"
+echo "    F           Open Pomodoro Focus Mode"
+echo "    M           Mute / Unmute"
+echo "    D           Download MP3"
+echo "    L           Toggle Lyrics"
+echo "    Q           Toggle Queue"
+echo "    Arrows      Seek / Volume"
+echo "============================================================"
+echo ""
 node server.js

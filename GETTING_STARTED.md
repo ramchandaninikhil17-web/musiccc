@@ -1,6 +1,20 @@
-# 🚀 Getting Started with MusicFlow
+# 🚀 Getting Started with MusicFlow v2.5
 
-Welcome to **MusicFlow**! Follow this simple guide to get MusicFlow running on any computer, phone, or tablet in less than 2 minutes.
+Welcome to **MusicFlow v2.5**! A premium, ultra-fast music player with an Apple-style floating transparent orb, always-on-top PiP mini-player, Pomodoro focus mode, ambient sound mixer, and 1-click cloud deployment.
+
+---
+
+## ✨ What's New in v2.5
+
+| Feature | Description |
+| :--- | :--- |
+| 🍏 **Apple Floating Transparent Orb** | Draggable frosted-glass orb with live disc spin, soundwave equalizer, and expandable Dynamic Island capsule for instant play/pause/skip/seek. |
+| 🖼️ **Always-On-Top PiP Mini-Player** | Pop out a floating mini-player that stays visible over VS Code, Word, Excel, or any other app while MusicFlow is minimized. |
+| ⏱️ **Pomodoro Focus Flow** | Built-in 25/50/5/15 minute timer with SVG progress ring and session stats tracking. |
+| 🌧️ **Ambient Sound Mixer** | Layer Rain, Cafe, Ocean Waves, or White Noise over your music using Web Audio API (100% offline). |
+| ⚡ **Instant Switch** | 1-click button in the orb capsule to instantly jump to the next hit track. |
+| 🌐 **MediaSession Integration** | Desktop notification bar and mobile lockscreen controls (play, pause, next, prev, seek). |
+| ☁️ **Cloud Deploy Ready** | Render, Railway, Docker, and Vercel configs included. See `DEPLOY_GUIDE.md`. |
 
 ---
 
@@ -39,6 +53,58 @@ Welcome to **MusicFlow**! Follow this simple guide to get MusicFlow running on a
 
 ---
 
+## ⌨️ Keyboard Shortcuts
+
+| Key | Action |
+| :--- | :--- |
+| `Space` | Play / Pause |
+| `P` | Pop out / close Always-On-Top PiP Mini-Player |
+| `Shift + P` | Previous Track |
+| `N` | Next Track |
+| `F` | Open Pomodoro Focus Mode |
+| `M` | Mute / Unmute |
+| `D` | Download current song as MP3 |
+| `L` | Toggle Lyrics panel |
+| `Q` | Toggle Queue sidebar |
+| `Arrow Left / Right` | Seek 5 seconds backward / forward |
+| `Arrow Up / Down` | Volume up / down |
+
+---
+
+## 🍏 Apple Floating Orb — How It Works
+
+1. The translucent orb appears in the bottom-right corner of the screen by default.
+2. **Drag** it anywhere — it snaps to the nearest edge when released.
+3. **Click** the orb to expand it into a Dynamic Island-style capsule with:
+   - Album artwork, title, and artist
+   - Interactive seek progress bar
+   - Play/Pause, Previous, Next buttons
+   - ⚡ **Quick Switch** — instantly skip to a fresh track
+   - **PiP Work Mini** — launch Always-On-Top mini-player
+   - **Focus Mode** — open Pomodoro timer
+4. Toggle visibility in **Settings > Apple Floating Transparent Orb**.
+
+---
+
+## 🖼️ PiP Mini-Player — Multitask Like a Pro
+
+1. Click the **PiP button** (🖼️) in the top bar, now-playing bar, or floating orb capsule.
+2. A small floating window pops out showing album art, live visualizer bars, track info, and progress.
+3. This window stays on top of all other apps — keep it visible while you code, study, or work!
+4. Press `P` to toggle it on/off instantly.
+
+---
+
+## ⏱️ Pomodoro Focus Flow
+
+1. Press `F` or click the **Focus Flow** button to open the timer.
+2. Choose a preset: **25m Focus**, **50m Deep**, **5m Break**, or **15m Break**.
+3. Hit **Start Focus** to begin the countdown with a visual SVG ring.
+4. Layer ambient sounds (Rain 🌧️, Cafe ☕, Waves 🌊, White Noise 💨) over your music.
+5. Launch focus playlists instantly: Lo-Fi Study Beats, Deep Alpha Waves, Classical Piano, Synthwave Coding.
+
+---
+
 ## 📱 How to Use on Your Phone / Tablet (Same Wi-Fi)
 
 You can use MusicFlow on your iPhone, iPad, Android phone, or Smart TV connected to your home Wi-Fi:
@@ -50,6 +116,15 @@ You can use MusicFlow on your iPhone, iPad, Android phone, or Smart TV connected
    - **Android (Chrome)**: Tap **⋮ Menu** (top right) → **"Install app"** or **"Add to Home screen"**.
    - **iPhone (Safari)**: Tap the **Share** button → **"Add to Home Screen"**.
 5. 🎉 You now have MusicFlow on your phone with background audio, lock screen media controls, and lyrics!
+
+---
+
+## ☁️ Deploy to the Cloud (Free, 24/7 Access)
+
+See **[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)** for step-by-step instructions to deploy MusicFlow on:
+- **Render.com** (Recommended, free tier)
+- **Railway.app**
+- **Docker / Fly.io / DigitalOcean**
 
 ---
 
@@ -94,6 +169,20 @@ Then open **[http://localhost:3000](http://localhost:3000)** in any modern web b
 - If Windows Firewall blocks incoming connections, allow Node.js through Windows Defender Firewall (Private Networks).
 </details>
 
+<details>
+<summary><strong>4. PiP Mini-Player doesn't open</strong></summary>
+
+- Picture-in-Picture requires **Chrome 70+**, **Edge 79+**, or **Opera**. Firefox has limited support.
+- Make sure no other PiP window is active. Close it first, then try again.
+- Some browser privacy extensions block PiP — try disabling them temporarily.
+</details>
+
+<details>
+<summary><strong>5. Floating Orb is not visible</strong></summary>
+
+- Open **Settings** (gear icon in sidebar) and ensure **"Apple Floating Transparent Orb"** is set to **"Enabled (Floating)"**.
+</details>
+
 ---
 
-Enjoy streaming your music with MusicFlow! 🎧✨
+Enjoy streaming your music with MusicFlow v2.5! 🎧✨

@@ -1,11 +1,18 @@
 @echo off
 setlocal enabledelayedexpansion
-title MusicFlow — Music Player
+title MusicFlow — Music Player v2.5
 cd /d "%~dp0"
 
 echo ============================================================
-echo   🎵  Starting MusicFlow Player...
+echo   🎵  MusicFlow v2.5 — Premium Music Player
 echo ============================================================
+echo.
+echo   ✨ NEW in this update:
+echo     🍏 Apple Transparent Floating Orb ^& Dynamic Island
+echo     🖼️  Always-On-Top PiP Mini-Player for Multitasking
+echo     ⏱️  Pomodoro Focus Flow ^& Ambient Sound Mixer
+echo     🌐 MediaSession Lockscreen ^& Global Hotkeys
+echo     ☁️  1-Click Cloud Deploy (Render / Railway / Docker)
 echo.
 
 :: 1. Check if Node.js is installed
@@ -41,10 +48,26 @@ if not exist "node_modules\" (
 )
 
 :: 3. Launch browser / app
+echo [INFO] Opening MusicFlow in your browser...
 start "" "http://localhost:3000"
 
 :: 4. Start Server
-echo [INFO] Starting MusicFlow backend server...
+echo [INFO] Starting MusicFlow backend server on port 3000...
+echo.
+echo ============================================================
+echo   Keyboard Shortcuts (when app is focused):
+echo     Space       Play / Pause
+echo     P           Always-On-Top PiP Mini Player
+echo     Shift+P     Previous Track
+echo     N           Next Track
+echo     F           Open Pomodoro Focus Mode
+echo     M           Mute / Unmute
+echo     D           Download MP3
+echo     L           Toggle Lyrics
+echo     Q           Toggle Queue
+echo     Arrows      Seek / Volume
+echo ============================================================
+echo.
 node server.js
 if %errorlevel% neq 0 (
     echo.

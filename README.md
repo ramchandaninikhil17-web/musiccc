@@ -1,7 +1,7 @@
-# 🎵 MusicFlow — High-Performance Music Streaming Player
+# 🎵 MusicFlow v2.5 — High-Performance Music Streaming Player
 
 <p align="center">
-  <strong>Stream, search, batch-import, and download high-quality music across any device with zero setup.</strong>
+  <strong>Stream, search, multitask, and focus with an Apple-style floating dynamic orb, PiP mini-player, and Pomodoro flow.</strong>
   <br />
   <em>Zero Database Required • Zero API Keys Required • Works on Windows, Mac, Linux, Android & iOS</em>
 </p>
@@ -27,7 +27,7 @@ Simply choose **ONE** of these 1-click methods:
 - 🚀 **Method B (App Mode)**: Double-click **`MusicFlow.exe`**  
   *Ultra-lite desktop launcher (5.6 KB) that runs MusicFlow in a dedicated, distraction-free desktop window.*
 - 🖥️ **Method C (Desktop Shortcut)**: Double-click **`create-desktop-shortcut.bat`**  
-  *Creates a MusicFlow shortcut icon directly on your Windows desktop.*
+  *Creates or updates the MusicFlow shortcut icon directly on your Windows desktop.*
 
 #### 🍏 On macOS / Linux:
 1. Open Terminal in the project folder.
@@ -47,12 +47,44 @@ Then visit **[http://localhost:3000](http://localhost:3000)**.
 
 ---
 
+## ✨ What's New in v2.5
+
+| Feature | Description |
+| :--- | :--- |
+| 🍏 **Apple Floating Transparent Orb** | Draggable translucent glass circle with real-time vinyl artwork spinning, soundwaves equalizer, and edge-snapping physics. Expands into an Apple Dynamic Island capsule for instant play/pause/skip and ⚡ **Instant Switch**. |
+| 🖼️ **Always-On-Top PiP Mini-Player** | 60fps canvas-streamed Picture-in-Picture window that stays on top of VS Code, Word, Excel, and games while MusicFlow is minimized. |
+| ⏱️ **Pomodoro Focus Flow** | Integrated 25m Focus / 50m Deep / 5m Break / 15m Rest countdown timer with interactive SVG progress ring and session tracking. |
+| 🌧️ **Ambient Sound Mixer** | 100% offline Web Audio API atmospheric layers (Gentle Rain 🌧️, Cozy Cafe ☕, Ocean Waves 🌊, Soft White Noise 💨) with volume mixing. |
+| ⚡ **Instant Switch** | 1-click button inside the floating orb to jump straight to the next recommended hit track. |
+| 🌐 **MediaSession & Global Hotkeys** | Native Windows/Mac media keys, lockscreen playback status, and in-app single-key shortcuts. |
+| ☁️ **1-Click Cloud Deployment** | Pre-configured `render.yaml`, `Dockerfile`, `railway.json`, and automated build-time binary downloader in `prepare-binaries.js`. |
+
+---
+
+## ⌨️ Global Keyboard Shortcuts
+
+| Shortcut | Action |
+| :--- | :--- |
+| `Space` | Play / Pause |
+| `P` | Toggle Always-On-Top PiP Mini-Player |
+| `Shift + P` | Previous Track |
+| `N` | Next Track |
+| `F` | Open Pomodoro Focus & Ambient Mixer |
+| `M` | Mute / Unmute |
+| `D` | Download MP3 of current track |
+| `L` | Toggle Synchronized Lyrics Panel |
+| `Q` | Toggle Up Next Queue |
+| `Arrow Left / Right` | Seek 5 seconds backward / forward |
+| `Arrow Up / Down` | Volume adjust up / down |
+
+---
+
 ## 📱 How to Use on Your Phone / Tablet (Same Wi-Fi)
 
 MusicFlow is a full **Progressive Web App (PWA)** with background audio playback, lock screen media controls, and offline caching.
 
 1. Start MusicFlow on your computer.
-2. In MusicFlow, click the **📱 Phone** icon in the sidebar / top bar.
+2. In MusicFlow, click the **📱 Connect Phone** icon in the sidebar or top bar.
 3. Your PC's Wi-Fi network address (e.g. `http://192.168.1.15:3000`) and a **live QR code** will appear.
 4. Scan the QR code with your phone camera or type the address into **Chrome** (Android) or **Safari** (iPhone):
    - **Android (Chrome)**: Tap **⋮ Menu** &rarr; **"Add to Home Screen"** or **"Install App"**.
@@ -61,30 +93,15 @@ MusicFlow is a full **Progressive Web App (PWA)** with background audio playback
 
 ---
 
-## ✨ Key Features
+## ☁️ Cloud Deployment (Free 24/7 Hosting)
 
-- 📜 **Smart Batch Text Song Importer**:
-  - Add multiple songs to playlists using raw text strings, space-separated song names, line breaks, or comma-separated lists.
-  - Interactive tokenized chip editor to preview, edit, and refine detected terms before importing.
+Deploy MusicFlow online with zero infrastructure costs:
 
-- 🏆 **Official Release Prioritization Engine**:
-  - Intelligent scoring engine prioritizing official record labels (**T-Series**, **Sony Music**, **YRF**, **Zee Music**, **Saregama**, **The Weeknd**, etc.).
-  - Filters out amateur covers, ringtones, and pitch-shifted edits.
+- **Render.com (Recommended)**: Connect your GitHub repo; Render detects [`render.yaml`](render.yaml) and deploys automatically.
+- **Railway.app**: Deploy with 1-click via [`railway.json`](railway.json) or [`Dockerfile`](Dockerfile).
+- **Docker / VPS**: Run `docker build -t musicflow .` and `docker run -d -p 3000:3000 musicflow`.
 
-- 📻 **Personalized Home Recommendations & Radio**:
-  - Dynamically builds personalized music mixes based on your liked songs and listening history.
-  - 1-click **Personalized Radio Mix** for continuous playback matching your musical taste.
-
-- ⚡ **Database-Free & Auto-Setup**:
-  - Automatically manages background stream dependencies (`yt-dlp` auto-installer).
-  - Uses `localStorage` and optional local JSON sync for zero-database persistence.
-  - In-memory LRU/TTL caching for fast search responses.
-
-- 📥 **Direct MP3 Audio Downloader**:
-  - Integrated high-speed MP3 audio download endpoint for offline listening.
-
-- 🎨 **Modern Dark Glassmorphism Design**:
-  - Sleek visual aesthetics, smooth animations, dark/light themes, dynamic synchronized lyrics, and responsive layouts for desktop and mobile.
+See **[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)** for step-by-step instructions.
 
 ---
 
@@ -94,46 +111,30 @@ MusicFlow is a full **Progressive Web App (PWA)** with background audio playback
 musicflow/
 ├── public/
 │   ├── css/
-│   │   └── style.css            # Glassmorphism design system & UI styles
+│   │   └── style.css            # Glassmorphism design system, Orb & Focus styles
 │   ├── js/
-│   │   └── app.js               # Frontend SPA player logic & state management
+│   │   └── app.js               # Frontend player, Orb controller, PiP canvas & Pomodoro
 │   ├── icons/                   # App icons for Desktop, PWA & Mobile
-│   ├── index.html               # Main application interface
-│   ├── manifest.json            # Web App Manifest for PWA installation
-│   └── sw.js                    # Service Worker for offline audio caching
-├── server.js                    # Express backend, auto-downloader & streaming API
-├── MusicFlow.exe                # Native Windows desktop app launcher
-├── MusicFlowLauncher.cs         # C# source code for the Windows launcher
-├── start.bat                    # 1-Click Windows startup script (auto-checks dependencies)
-├── start.sh                     # 1-Click macOS/Linux startup script
+│   ├── manifest.json            # PWA Web App Manifest
+│   └── index.html               # Main Single Page Application interface
+├── server.js                    # High-performance Node.js Express backend & streaming engine
+├── prepare-binaries.js          # Automated multi-platform binary downloader for cloud builds
+├── render.yaml                  # Render.com 1-click cloud configuration
+├── railway.json                 # Railway.app cloud deployment configuration
+├── Dockerfile                   # Lightweight production Alpine Linux container
+├── MusicFlow.exe                # C# .NET desktop launcher wrapper
+├── MusicFlowLauncher.cs         # Source code for the desktop launcher
+├── start.bat                    # Windows 1-click startup script
+├── start.sh                     # macOS / Linux startup script
+├── create-desktop-shortcut.bat  # Windows desktop shortcut creator
 ├── create-shortcut.ps1          # PowerShell shortcut generator
-├── create-desktop-shortcut.bat  # 1-Click desktop icon creator
-├── capacitor.config.json        # Capacitor configuration for mobile builds
-├── android/                     # Pre-configured native Android Studio project
-├── GETTING_STARTED.md           # Step-by-step beginner guide
-├── BUILD_APPS.md                # Mobile APK & native apps build guide
-├── package.json                 # Dependencies and scripts
-└── README.md                    # Project documentation
+├── DEPLOY_GUIDE.md              # Cloud deployment guide
+├── GETTING_STARTED.md           # User quick-start guide
+└── package.json                 # Project dependencies and npm scripts
 ```
-
----
-
-## 🛠️ Tech Stack
-
-- **Backend**: Node.js, Express.js, `yt-dlp`
-- **Frontend**: Vanilla Modern JavaScript (ES6+), HTML5 Semantic Elements, Custom Glassmorphism CSS3
-- **Mobile / Desktop**: PWA (Service Workers + Web App Manifest), Capacitor (Android Native), Edge App Mode (Windows)
-- **Storage**: Client `localStorage` with server-side JSON backup (No external database required)
-
----
-
-## 📖 Additional Guides
-
-- 📘 **[GETTING_STARTED.md](GETTING_STARTED.md)** — Step-by-step guide for first-time users.
-- 📱 **[BUILD_APPS.md](BUILD_APPS.md)** — Guide on building native Android APKs and cross-device setups.
 
 ---
 
 ## 📄 License
 
-This project is open source and available under the [MIT License](LICENSE).
+Open-source under the **MIT License**. Created with ❤️ for music lovers.

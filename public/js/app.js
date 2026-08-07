@@ -329,11 +329,16 @@
     $('#playlistModal').addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
     $('#playlistSaveBtn').addEventListener('click', savePlaylist);
     $('#playlistNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') savePlaylist(); });
-    $('#playlistBackBtn').addEventListener('click', () => { $('#playlistDetail').style.display = 'none'; renderLibrary(); });
-    $('#playPlaylistBtn').addEventListener('click', playCurrentPlaylist);
-    $('#deletePlaylistBtn').addEventListener('click', deleteCurrentPlaylist);
-    $('#addToPlaylistClose').addEventListener('click', () => { $('#addToPlaylistModal').style.display = 'none'; });
-    $('#addToPlaylistModal').addEventListener('click', (e) => { if (e.target === $('#addToPlaylistModal')) $('#addToPlaylistModal').style.display = 'none'; });
+    const plBackBtn = $('#playlistBackBtn');
+    if (plBackBtn) plBackBtn.addEventListener('click', () => { $('#playlistDetail').style.display = 'none'; renderLibrary(); });
+    const plPlayBtn = $('#playPlaylistBtn');
+    if (plPlayBtn) plPlayBtn.addEventListener('click', playCurrentPlaylist);
+    const plDeleteBtn = $('#deletePlaylistBtn');
+    if (plDeleteBtn) plDeleteBtn.addEventListener('click', deleteCurrentPlaylist);
+    const atpClose = $('#addToPlaylistClose');
+    if (atpClose) atpClose.addEventListener('click', () => { $('#addToPlaylistModal').style.display = 'none'; });
+    const atpModal = $('#addToPlaylistModal');
+    if (atpModal) atpModal.addEventListener('click', (e) => { if (e.target === atpModal) atpModal.style.display = 'none'; });
 
     // Batch Text Importer
     const openBatchBtn = $('#openBatchImportBtn');
