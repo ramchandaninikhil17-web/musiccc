@@ -8,13 +8,15 @@ Welcome to **MusicFlow v2.5**! A premium, ultra-fast music player with an Apple-
 
 | Feature | Description |
 | :--- | :--- |
-| 🍏 **Apple Floating Transparent Orb** | Draggable frosted-glass orb with live disc spin, soundwave equalizer, and expandable Dynamic Island capsule for instant play/pause/skip/seek. |
+| 🎛️ **10-Band Graphic Equalizer** | Web Audio DSP with 10 frequency sliders, Bass Boost dial, 3D Spatial Audio expander, and instant genre presets (*Rock, Pop, EDM, Vocal, Acoustic*). |
+| 📁 **Local Music Drag & Drop** | Import and play local `.mp3`, `.flac`, `.wav`, `.m4a` files directly in high fidelity. |
+| ⏲️ **Smart Sleep Timer** | Set 15m, 30m, 45m, 60m, or "Track End" timers with an automatic 30-second volume fade out. |
+| 🎨 **Accent Color Studio & OLED Mode** | Switch accent highlights (*Indigo, Cyan, Emerald, Orange, Pink, Purple*) and OLED Pitch Black mode. |
+| ♾️ **Endless Auto-Queue** | Intelligent auto-queue that automatically loads matching recommendation tracks when your queue ends. |
+| 🍏 **Apple Floating Transparent Orb** | Draggable frosted-glass orb with live disc spin, soundwave equalizer, and expandable Dynamic Island capsule. |
 | 🖼️ **Always-On-Top PiP Mini-Player** | Pop out a floating mini-player that stays visible over VS Code, Word, Excel, or any other app while MusicFlow is minimized. |
 | ⏱️ **Pomodoro Focus Flow** | Built-in 25/50/5/15 minute timer with SVG progress ring and session stats tracking. |
-| 🌧️ **Ambient Sound Mixer** | Layer Rain, Cafe, Ocean Waves, or White Noise over your music using Web Audio API (100% offline). |
-| ⚡ **Instant Switch** | 1-click button in the orb capsule to instantly jump to the next hit track. |
-| 🌐 **MediaSession Integration** | Desktop notification bar and mobile lockscreen controls (play, pause, next, prev, seek). |
-| ☁️ **Cloud Deploy Ready** | Render, Railway, Docker, and Vercel configs included. See `DEPLOY_GUIDE.md`. |
+| 🌧️ **Ambient Sound Mixer** | Layer Rain, Ocean Waves, or White Noise sound synthesis over your music (100% offline). |
 
 ---
 

@@ -2280,4 +2280,238 @@ a { text-decoration: none; color: inherit; }
   color: #fff;
 }
 
+/* ================================================================
+   OLED PITCH BLACK THEME & ACCENT COLOR STUDIO
+   ================================================================ */
+[data-theme="oled"] {
+  --bg-dark: #000000;
+  --bg-sidebar: #050505;
+  --bg-card: #0a0a0a;
+  --bg-card-hover: #121212;
+  --bg-surface: #0f0f0f;
+  --border-color: rgba(255, 255, 255, 0.08);
+  --border-subtle: rgba(255, 255, 255, 0.04);
+}
+
+.accent-color-picker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.accent-dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.accent-dot:hover {
+  transform: scale(1.15);
+}
+
+.accent-dot.active {
+  border-color: #ffffff;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
+}
+
+/* ================================================================
+   10-BAND EQUALIZER MODAL STYLES
+   ================================================================ */
+.eq-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.eq-preset-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.eq-preset-btn {
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: var(--radius-full);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.eq-preset-btn:hover, .eq-preset-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  box-shadow: 0 4px 14px var(--primary-glow);
+}
+
+.eq-sliders-grid {
+  display: grid;
+  grid-template-columns: repeat(10, 1fr);
+  gap: 12px;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--border-color);
+  padding: 20px 12px;
+  border-radius: 16px;
+  margin-bottom: 20px;
+}
+
+.eq-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.eq-slider {
+  writing-mode: bt-lr;
+  -webkit-appearance: slider-vertical;
+  width: 10px;
+  height: 140px;
+  cursor: pointer;
+  accent-color: var(--primary);
+}
+
+.eq-freq {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.eq-val {
+  font-size: 11px;
+  font-family: monospace;
+  color: var(--primary-hover);
+}
+
+.eq-fx-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.eq-fx-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 14px 18px;
+}
+
+.eq-fx-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+.eq-fx-range {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+/* ================================================================
+   SLEEP TIMER MODAL STYLES
+   ================================================================ */
+.sleep-options-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.sleep-option-btn {
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sleep-option-btn:hover, .sleep-option-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--primary-glow);
+}
+
+.sleep-status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(99, 102, 241, 0.15);
+  border: 1px solid rgba(99, 102, 241, 0.3);
+  padding: 12px 18px;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #cbd5e1;
+}
+
+.sleep-badge {
+  font-size: 10px;
+  font-weight: 700;
+  background: var(--primary);
+  color: #fff;
+  padding: 2px 6px;
+  border-radius: 10px;
+  margin-left: 4px;
+}
+
+/* ================================================================
+   LOCAL MUSIC DROPZONE CARD STYLES
+   ================================================================ */
+.local-dropzone-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 2px dashed rgba(99, 102, 241, 0.35);
+  border-radius: 18px;
+  padding: 20px 24px;
+  margin-bottom: 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.local-dropzone-card:hover, .local-dropzone-card.dragover {
+  background: rgba(99, 102, 241, 0.18);
+  border-color: var(--primary);
+  transform: scale(1.01);
+  box-shadow: 0 10px 25px var(--primary-glow);
+}
+
+.dropzone-icon {
+  font-size: 36px;
+}
+
+.dropzone-text strong {
+  display: block;
+  font-size: 15px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+
+.dropzone-text p {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+
 

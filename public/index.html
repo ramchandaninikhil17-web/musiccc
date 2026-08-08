@@ -253,9 +253,24 @@
         <section class="page" id="pageLibrary" style="display:none;">
           <div class="library-header-row">
             <h1 class="page-title" style="margin-bottom:0;">Your Library</h1>
-            <button class="pill-action-btn" id="batchImportBtn" title="Import multiple songs from text">
-              <span>✨ Batch Import Songs</span>
-            </button>
+            <div style="display:flex; gap:10px;">
+              <button class="pill-action-btn" id="localImportBtn" title="Drag & drop or import local MP3/FLAC files">
+                <span>📁 Import Local Music</span>
+              </button>
+              <button class="pill-action-btn" id="batchImportBtn" title="Import multiple songs from text">
+                <span>✨ Batch Import Songs</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Local Music Drag & Drop Area -->
+          <div class="local-dropzone-card" id="localDropzone" title="Drag & drop audio files here (.mp3, .flac, .wav, .m4a)">
+            <div class="dropzone-icon">🎵</div>
+            <div class="dropzone-text">
+              <strong>Drag & Drop Local Music Files Here</strong>
+              <p>Supports MP3, FLAC, WAV, AAC, M4A — Plays 100% offline in high fidelity</p>
+            </div>
+            <input type="file" id="localFileInput" multiple accept="audio/*" style="display:none;" />
           </div>
 
           <!-- Liked Songs -->
@@ -410,6 +425,13 @@
         </button>
         <button class="np-btn" id="lyricsBtn" title="Lyrics">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+        <button class="np-btn" id="eqBtn" title="10-Band Equalizer & Bass Boost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+        <button class="np-btn" id="sleepTimerBtn" title="Sleep Timer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 15 15"/></svg>
+          <span class="sleep-badge" id="sleepBadge" style="display:none;"></span>
         </button>
         <button class="np-btn" id="shareBtn" title="Share">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
@@ -609,8 +631,23 @@
       </div>
       <div class="modal-body">
         <div class="setting-row">
-          <div class="setting-info"><span class="setting-label">Theme</span><span class="setting-desc">Switch between dark and light mode</span></div>
-          <select class="setting-select" id="settingTheme"><option value="dark">Dark</option><option value="light">Light</option></select>
+          <div class="setting-info"><span class="setting-label">Theme Mode</span><span class="setting-desc">Switch between dark, light, and OLED black</span></div>
+          <select class="setting-select" id="settingTheme"><option value="dark">Dark Glass</option><option value="light">Light Glass</option><option value="oled">OLED Pitch Black</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Accent Color Studio</span><span class="setting-desc">Customize primary UI highlight colors</span></div>
+          <div class="accent-color-picker">
+            <button class="accent-dot active" data-color="indigo" style="background:#6366f1;" title="Indigo"></button>
+            <button class="accent-dot" data-color="cyan" style="background:#06b6d4;" title="Cyberpunk Cyan"></button>
+            <button class="accent-dot" data-color="emerald" style="background:#10b981;" title="Emerald Green"></button>
+            <button class="accent-dot" data-color="orange" style="background:#f97316;" title="Sunset Orange"></button>
+            <button class="accent-dot" data-color="pink" style="background:#ec4899;" title="Rose Pink"></button>
+            <button class="accent-dot" data-color="purple" style="background:#a855f7;" title="Electric Purple"></button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Endless Auto-Queue</span><span class="setting-desc">Auto-append recommendations when queue ends</span></div>
+          <input type="checkbox" id="settingAutoQueue" checked style="width:20px; height:20px; cursor:pointer;" />
         </div>
         <div class="setting-row">
           <div class="setting-info"><span class="setting-label">Audio Quality</span><span class="setting-desc">Higher quality uses best stream</span></div>
@@ -739,6 +776,103 @@
         <div class="modal-actions">
           <button class="modal-cancel-btn" type="button" id="batchCancelBtn">Cancel</button>
           <button class="modal-submit-btn" type="button" id="batchStartBtn">✨ Import Songs to Playlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 10-BAND GRAPHIC EQUALIZER MODAL ============ -->
+  <div class="modal-overlay" id="eqModal" style="display:none;">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🎛️ 10-Band Audio Equalizer & Sound FX</h3>
+          <p class="modal-subtitle">Web Audio DSP — Adjust frequencies, Bass Boost, and 3D Spatial Surround Audio.</p>
+        </div>
+        <button class="modal-close" id="eqCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- EQ Presets Bar -->
+        <div class="eq-presets-bar">
+          <span class="eq-preset-label">Presets:</span>
+          <button class="eq-preset-btn active" data-preset="flat">Flat</button>
+          <button class="eq-preset-btn" data-preset="bassboost">🔥 Bass Boost</button>
+          <button class="eq-preset-btn" data-preset="vocal">🎤 Vocal Enhancer</button>
+          <button class="eq-preset-btn" data-preset="rock">🎸 Rock</button>
+          <button class="eq-preset-btn" data-preset="pop">🎤 Pop</button>
+          <button class="eq-preset-btn" data-preset="edm">🎹 EDM</button>
+          <button class="eq-preset-btn" data-preset="acoustic">🎻 Acoustic</button>
+        </div>
+
+        <!-- 10-Band Sliders Grid -->
+        <div class="eq-sliders-grid" id="eqSlidersGrid">
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="0" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">60Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="1" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">170Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="2" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">310Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="3" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">600Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="4" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">1kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="5" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">3kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="6" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">6kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="7" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">12kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="8" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">14kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="9" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">16kHz</span><span class="eq-val">0dB</span></div>
+        </div>
+
+        <!-- Bass Boost & Sound FX Card -->
+        <div class="eq-fx-row">
+          <div class="eq-fx-card">
+            <div class="eq-fx-header">
+              <span>💥 Deep Bass Multiplier</span>
+              <span id="bassBoostVal">0 dB</span>
+            </div>
+            <input type="range" class="eq-fx-range" id="bassBoostRange" min="0" max="15" value="0" step="0.5" />
+          </div>
+
+          <div class="eq-fx-card">
+            <div class="eq-fx-header">
+              <span>🎧 3D Spatial Audio Expander</span>
+              <label class="checkbox-label" style="margin:0;">
+                <input type="checkbox" id="spatialAudioToggle" />
+                <span>Enable 3D</span>
+              </label>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">Simulates immersive headphones surround acoustics.</p>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="eqResetBtn">Reset to Flat</button>
+          <button class="modal-submit-btn" type="button" id="eqDoneBtn">✓ Apply Sound Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SMART SLEEP TIMER MODAL ============ -->
+  <div class="modal-overlay" id="sleepModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>⏲️ Smart Sleep Timer</h3>
+        <button class="modal-close" id="sleepCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle" style="margin-bottom:15px;">Automatically stop music playback with a smooth 30-second volume fade out.</p>
+
+        <div class="sleep-options-grid">
+          <button class="sleep-option-btn" data-mins="15">⏱️ 15 Minutes</button>
+          <button class="sleep-option-btn" data-mins="30">⏱️ 30 Minutes</button>
+          <button class="sleep-option-btn" data-mins="45">⏱️ 45 Minutes</button>
+          <button class="sleep-option-btn" data-mins="60">⏱️ 1 Hour</button>
+          <button class="sleep-option-btn" data-mins="track">🎵 End of Current Track</button>
+        </div>
+
+        <div class="sleep-status-bar" id="sleepStatusBar" style="display:none;">
+          <span>Active Timer: <strong id="sleepTimerDisplay">00:00</strong></span>
+          <button class="text-btn" id="cancelSleepTimerBtn">Turn Off</button>
         </div>
       </div>
     </div>

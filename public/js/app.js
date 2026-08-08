@@ -189,6 +189,12 @@
     PomodoroManager.init();
     setupMediaSessionHandlers();
 
+    // Advanced Audio DSP Equalizer, Local Files, Sleep Timer & Theme Studio
+    EqualizerManager.init();
+    LocalFileManager.init();
+    SleepTimerManager.init();
+    ThemeStudioManager.init();
+
     // Auto-restore saved likes and playlists from disk database
     Storage.syncFromServer();
   }
@@ -690,8 +696,28 @@
       playSong(queue[n]);
     } else {
       const n = currentIndex + 1;
-      if (n < queue.length) playSong(queue[n]);
-      else if (repeatMode === 'all') playSong(queue[0]);
+      if (n < queue.length) {
+        playSong(queue[n]);
+      } else {
+        const autoQueueCheck = $('#settingAutoQueue')?.checked !== false;
+        if (autoQueueCheck && currentSong) {
+          toast('♾️ Endless Auto-Queue: Loading next tracks...');
+          loadRecommendations(true).then(() => {
+            if (recommendedSongs.length > 0) {
+              const freshSongs = recommendedSongs.filter(s => !queue.some(q => q.id === s.id));
+              if (freshSongs.length > 0) {
+                queue.push(...freshSongs);
+                updateQueueUI();
+                playSong(queue[n]);
+                return;
+              }
+            }
+            if (repeatMode === 'all') playSong(queue[0]);
+          });
+          return;
+        }
+        if (repeatMode === 'all') playSong(queue[0]);
+      }
     }
   }
 
@@ -2425,6 +2451,401 @@
     toastContainer.appendChild(t);
     setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, dur);
   }
+
+  /* ================================================================
+     10-BAND AUDIO EQUALIZER, BASS BOOST & SPATIAL AUDIO DSP
+     ================================================================ */
+  const EqualizerManager = {
+    audioCtx: null,
+    sourceNode: null,
+    filters: [],
+    bassNode: null,
+    pannerNode: null,
+    modal: null,
+    bands: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
+    presets: {
+      flat: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+      bassboost: [7, 6, 4, 2, 0, 0, 1, 2, 3, 4],
+      vocal: [-2, -1, 1, 3, 5, 4, 3, 1, 0, -1],
+      rock: [5, 3, 1, -1, -2, 1, 3, 4, 5, 5],
+      pop: [-1, 2, 4, 5, 3, -1, -2, 1, 2, 3],
+      edm: [8, 6, 3, 0, -2, 2, 4, 6, 7, 8],
+      acoustic: [4, 3, 2, 1, 2, 3, 4, 4, 3, 2]
+    },
+
+    init() {
+      this.modal = $('#eqModal');
+      if (!this.modal) return;
+
+      $('#eqBtn')?.addEventListener('click', () => this.openModal());
+      $('#eqCloseBtn')?.addEventListener('click', () => this.closeModal());
+      $('#eqDoneBtn')?.addEventListener('click', () => this.closeModal());
+      this.modal.addEventListener('click', (e) => { if (e.target === this.modal) this.closeModal(); });
+
+      $$('.eq-preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          $$('.eq-preset-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const presetKey = btn.dataset.preset;
+          if (this.presets[presetKey]) this.applyPreset(this.presets[presetKey]);
+        });
+      });
+
+      $$('.eq-slider').forEach(slider => {
+        slider.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.band);
+          const val = parseFloat(e.target.value);
+          const valSpan = e.target.parentElement.querySelector('.eq-val');
+          if (valSpan) valSpan.textContent = (val > 0 ? '+' : '') + val + 'dB';
+          this.setFilterGain(idx, val);
+          $$('.eq-preset-btn').forEach(b => b.classList.remove('active'));
+        });
+      });
+
+      $('#bassBoostRange')?.addEventListener('input', (e) => {
+        const val = parseFloat(e.target.value);
+        $('#bassBoostVal').textContent = val + ' dB';
+        this.setBassBoost(val);
+      });
+
+      $('#spatialAudioToggle')?.addEventListener('change', (e) => {
+        this.setSpatialAudio(e.target.checked);
+        toast(e.target.checked ? '🎧 3D Spatial Audio Active' : '3D Spatial Audio Off');
+      });
+
+      $('#eqResetBtn')?.addEventListener('click', () => {
+        this.applyPreset(this.presets.flat);
+        $$('.eq-preset-btn').forEach(b => b.classList.remove('active'));
+        $('.eq-preset-btn[data-preset="flat"]')?.classList.add('active');
+      });
+    },
+
+    ensureAudioContext() {
+      if (this.audioCtx) return;
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      try {
+        this.audioCtx = new AudioCtx();
+        this.sourceNode = this.audioCtx.createMediaElementSource(audioPlayer);
+
+        let lastNode = this.sourceNode;
+        this.filters = this.bands.map((freq, i) => {
+          const filter = this.audioCtx.createBiquadFilter();
+          filter.type = i === 0 ? 'lowshelf' : i === this.bands.length - 1 ? 'highshelf' : 'peaking';
+          filter.frequency.value = freq;
+          filter.gain.value = 0;
+          lastNode.connect(filter);
+          lastNode = filter;
+          return filter;
+        });
+
+        this.bassNode = this.audioCtx.createBiquadFilter();
+        this.bassNode.type = 'lowshelf';
+        this.bassNode.frequency.value = 80;
+        this.bassNode.gain.value = 0;
+        lastNode.connect(this.bassNode);
+        lastNode = this.bassNode;
+
+        if (this.audioCtx.createStereoPanner) {
+          this.pannerNode = this.audioCtx.createStereoPanner();
+          this.pannerNode.pan.value = 0;
+          lastNode.connect(this.pannerNode);
+          lastNode = this.pannerNode;
+        }
+
+        lastNode.connect(this.audioCtx.destination);
+      } catch (e) {
+        console.warn('Web Audio EQ Init Note:', e);
+      }
+    },
+
+    openModal() {
+      this.ensureAudioContext();
+      if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
+      if (this.modal) this.modal.style.display = 'flex';
+    },
+
+    closeModal() {
+      if (this.modal) this.modal.style.display = 'none';
+    },
+
+    setFilterGain(index, val) {
+      this.ensureAudioContext();
+      if (this.filters[index]) {
+        this.filters[index].gain.value = val;
+      }
+    },
+
+    setBassBoost(val) {
+      this.ensureAudioContext();
+      if (this.bassNode) {
+        this.bassNode.gain.value = val;
+      }
+    },
+
+    setSpatialAudio(enabled) {
+      this.ensureAudioContext();
+      if (this.pannerNode) {
+        this.pannerNode.pan.value = enabled ? 0.35 : 0;
+      }
+    },
+
+    applyPreset(gains) {
+      this.ensureAudioContext();
+      gains.forEach((g, i) => {
+        this.setFilterGain(i, g);
+        const slider = $(`.eq-slider[data-band="${i}"]`);
+        if (slider) {
+          slider.value = g;
+          const valSpan = slider.parentElement.querySelector('.eq-val');
+          if (valSpan) valSpan.textContent = (g > 0 ? '+' : '') + g + 'dB';
+        }
+      });
+    }
+  };
+
+  /* ================================================================
+     LOCAL MUSIC FILE PLAYER & DRAG & DROP MANAGER
+     ================================================================ */
+  const LocalFileManager = {
+    localSongs: Storage.get('local_songs', []),
+
+    init() {
+      const dropzone = $('#localDropzone');
+      const input = $('#localFileInput');
+      const importBtn = $('#localImportBtn');
+
+      if (importBtn && input) {
+        importBtn.addEventListener('click', () => input.click());
+      }
+      if (dropzone && input) {
+        dropzone.addEventListener('click', () => input.click());
+
+        ['dragenter', 'dragover'].forEach(name => {
+          document.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropzone.classList.add('dragover');
+          });
+        });
+
+        ['dragleave', 'drop'].forEach(name => {
+          document.addEventListener(name, (e) => {
+            e.preventDefault();
+            dropzone.classList.remove('dragover');
+          });
+        });
+
+        document.addEventListener('drop', (e) => {
+          if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            this.handleFiles(e.dataTransfer.files);
+          }
+        });
+
+        input.addEventListener('change', (e) => {
+          if (e.target.files && e.target.files.length > 0) {
+            this.handleFiles(e.target.files);
+          }
+        });
+      }
+    },
+
+    handleFiles(fileList) {
+      const audioFiles = Array.from(fileList).filter(f => f.type.startsWith('audio/') || /\.(mp3|flac|wav|m4a|aac|ogg)$/i.test(f.name));
+      if (!audioFiles.length) {
+        toast('No audio files detected');
+        return;
+      }
+
+      let added = 0;
+      audioFiles.forEach(file => {
+        const objectUrl = URL.createObjectURL(file);
+        const cleanName = file.name.replace(/\.[^/.]+$/, '');
+        const parts = cleanName.split('-');
+        const title = parts.length > 1 ? parts.slice(1).join('-').trim() : cleanName.trim();
+        const channel = parts.length > 1 ? parts[0].trim() : 'Local Audio File';
+
+        const song = {
+          id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+          title: title || file.name,
+          channel: channel || 'Local File',
+          duration: 180,
+          thumbnail: '/icons/icon-192.png',
+          streamUrl: objectUrl,
+          isLocal: true
+        };
+
+        this.localSongs.unshift(song);
+        addToQueue(song);
+        added++;
+      });
+
+      Storage.set('local_songs', this.localSongs.slice(0, 100));
+      toast(`🎵 Added ${added} local tracks to playlist!`);
+      if (queue.length > 0 && !isPlaying) playSong(queue[queue.length - added]);
+    }
+  };
+
+  /* ================================================================
+     SMART SLEEP TIMER MANAGER
+     ================================================================ */
+  const SleepTimerManager = {
+    modal: null,
+    timer: null,
+    remainingSeconds: 0,
+    isFadeStarted: false,
+
+    init() {
+      this.modal = $('#sleepModal');
+      if (!this.modal) return;
+
+      $('#sleepTimerBtn')?.addEventListener('click', () => this.openModal());
+      $('#sleepCloseBtn')?.addEventListener('click', () => this.closeModal());
+      $('#cancelSleepTimerBtn')?.addEventListener('click', () => this.cancelTimer());
+      this.modal.addEventListener('click', (e) => { if (e.target === this.modal) this.closeModal(); });
+
+      $$('.sleep-option-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          $$('.sleep-option-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          const mins = btn.dataset.mins;
+          if (mins === 'track') {
+            this.setTimerTrackEnd();
+          } else {
+            this.startTimer(parseInt(mins));
+          }
+          this.closeModal();
+        });
+      });
+    },
+
+    openModal() {
+      if (this.modal) this.modal.style.display = 'flex';
+    },
+
+    closeModal() {
+      if (this.modal) this.modal.style.display = 'none';
+    },
+
+    startTimer(minutes) {
+      this.cancelTimer();
+      this.remainingSeconds = minutes * 60;
+      this.isFadeStarted = false;
+      this.updateUI();
+
+      this.timer = setInterval(() => {
+        if (this.remainingSeconds > 0) {
+          this.remainingSeconds--;
+          this.updateUI();
+
+          if (this.remainingSeconds <= 30 && !this.isFadeStarted) {
+            this.isFadeStarted = true;
+            this.fadeVolumeOut();
+          }
+        } else {
+          this.cancelTimer();
+          audioPlayer.pause();
+          toast('🌙 Sleep Timer ended. Goodnight!');
+        }
+      }, 1000);
+
+      toast(`🌙 Sleep timer set for ${minutes} minutes`);
+    },
+
+    setTimerTrackEnd() {
+      this.cancelTimer();
+      const onTrackEnded = () => {
+        audioPlayer.pause();
+        audioPlayer.removeEventListener('ended', onTrackEnded);
+        toast('🌙 Track ended. Sleep timer activated.');
+      };
+      audioPlayer.addEventListener('ended', onTrackEnded);
+      $('#sleepBadge').style.display = 'inline-block';
+      $('#sleepBadge').textContent = 'End';
+      toast('🌙 Music will stop after this track ends');
+    },
+
+    fadeVolumeOut() {
+      const initialVol = audioPlayer.volume;
+      let steps = 30;
+      const interval = setInterval(() => {
+        if (steps > 0 && audioPlayer.volume > 0.02) {
+          audioPlayer.volume = Math.max(0, audioPlayer.volume - (initialVol / 30));
+          steps--;
+        } else {
+          clearInterval(interval);
+        }
+      }, 1000);
+    },
+
+    cancelTimer() {
+      if (this.timer) clearInterval(this.timer);
+      this.timer = null;
+      this.remainingSeconds = 0;
+      $('#sleepBadge').style.display = 'none';
+      $('#sleepStatusBar').style.display = 'none';
+      $$('.sleep-option-btn').forEach(b => b.classList.remove('active'));
+    },
+
+    updateUI() {
+      const mins = Math.floor(this.remainingSeconds / 60);
+      const secs = this.remainingSeconds % 60;
+      const str = `${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}`;
+
+      const badge = $('#sleepBadge');
+      if (badge) {
+        badge.style.display = '';
+        badge.textContent = `${mins}m`;
+      }
+      const display = $('#sleepTimerDisplay');
+      if (display) display.textContent = str;
+      const bar = $('#sleepStatusBar');
+      if (bar) bar.style.display = 'flex';
+    }
+  };
+
+  /* ================================================================
+     ACCENT COLOR STUDIO & CUSTOM THEME ENGINE
+     ================================================================ */
+  const ThemeStudioManager = {
+    colorMap: {
+      indigo: { primary: '#6366f1', glow: 'rgba(99, 102, 241, 0.35)', hover: '#4f46e5' },
+      cyan: { primary: '#06b6d4', glow: 'rgba(6, 182, 212, 0.35)', hover: '#0891b2' },
+      emerald: { primary: '#10b981', glow: 'rgba(16, 185, 129, 0.35)', hover: '#059669' },
+      orange: { primary: '#f97316', glow: 'rgba(249, 115, 22, 0.35)', hover: '#ea580c' },
+      pink: { primary: '#ec4899', glow: 'rgba(236, 72, 153, 0.35)', hover: '#db2777' },
+      purple: { primary: '#a855f7', glow: 'rgba(168, 85, 247, 0.35)', hover: '#9333ea' }
+    },
+
+    init() {
+      const savedColor = Storage.get('accent_color', 'indigo');
+      this.applyAccent(savedColor);
+
+      $$('.accent-dot').forEach(dot => {
+        dot.addEventListener('click', () => {
+          $$('.accent-dot').forEach(d => d.classList.remove('active'));
+          dot.classList.add('active');
+          const colorKey = dot.dataset.color;
+          this.applyAccent(colorKey);
+          Storage.set('accent_color', colorKey);
+          toast(`🎨 Accent color updated to ${colorKey.toUpperCase()}`);
+        });
+      });
+    },
+
+    applyAccent(key) {
+      const c = this.colorMap[key] || this.colorMap.indigo;
+      const root = document.documentElement;
+      root.style.setProperty('--primary', c.primary);
+      root.style.setProperty('--primary-glow', c.glow);
+      root.style.setProperty('--primary-hover', c.hover);
+
+      const activeDot = $(`.accent-dot[data-color="${key}"]`);
+      if (activeDot) {
+        $$('.accent-dot').forEach(d => d.classList.remove('active'));
+        activeDot.classList.add('active');
+      }
+    }
+  };
 
   /* ----- Start ----- */
   init();
