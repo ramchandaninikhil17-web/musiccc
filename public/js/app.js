@@ -194,6 +194,7 @@
     LocalFileManager.init();
     SleepTimerManager.init();
     ThemeStudioManager.init();
+    DynamicIslandHeaderManager.init();
 
     // Auto-restore saved likes and playlists from disk database
     Storage.syncFromServer();
@@ -658,8 +659,9 @@
     highlightResults();
     toast(`▶ ${song.title}`);
 
-    // Update Floating Orb, PiP & MediaSession
+    // Update Floating Orb, Dynamic Island, PiP & MediaSession
     AppleOrbController.updateSong(song, isPlaying);
+    DynamicIslandHeaderManager.updateSong(song, isPlaying);
     CanvasPiPManager.updateSong(song);
     updateMediaSession(song);
 
@@ -682,8 +684,9 @@
     playPauseBtn.title = playing ? 'Pause' : 'Play';
     nowPlayingBar.classList.toggle('playing', playing);
     
-    // Sync with Apple Orb & MediaSession
+    // Sync with Apple Orb, Dynamic Island & MediaSession
     AppleOrbController.setPlaying(playing);
+    DynamicIslandHeaderManager.setPlaying(playing);
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
     }
@@ -2844,6 +2847,60 @@
         $$('.accent-dot').forEach(d => d.classList.remove('active'));
         activeDot.classList.add('active');
       }
+    }
+  };
+
+  /* ================================================================
+     APPLE DYNAMIC ISLAND HEADER CAPSULE MANAGER
+     ================================================================ */
+  const DynamicIslandHeaderManager = {
+    pill: null,
+    artThumb: null,
+    titleEl: null,
+    artistEl: null,
+    playIcon: null,
+    pauseIcon: null,
+    soundwaves: null,
+
+    init() {
+      this.pill = $('#dynamicIslandHeader');
+      if (!this.pill) return;
+
+      this.artThumb = $('#diArtThumb');
+      this.titleEl = $('#diTitle');
+      this.artistEl = $('#diArtist');
+      this.playIcon = $('.di-play-icon');
+      this.pauseIcon = $('.di-pause-icon');
+      this.soundwaves = $('#diSoundwaves');
+
+      $('#diPlayPauseBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+
+      $('#diNextBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        playNext();
+      });
+
+      $('#diEqBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        EqualizerManager.openModal();
+      });
+    },
+
+    updateSong(song, playing) {
+      if (!song) return;
+      if (this.artThumb) this.artThumb.src = thumb(song);
+      if (this.titleEl) this.titleEl.textContent = song.title || 'MusicFlow';
+      if (this.artistEl) this.artistEl.textContent = song.channel || 'Now Playing';
+      this.setPlaying(playing);
+    },
+
+    setPlaying(playing) {
+      if (this.playIcon) this.playIcon.style.display = playing ? 'none' : '';
+      if (this.pauseIcon) this.pauseIcon.style.display = playing ? '' : 'none';
+      if (this.soundwaves) this.soundwaves.style.display = playing ? 'flex' : 'none';
     }
   };
 

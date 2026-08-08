@@ -1,7 +1,33 @@
 {
   "theme": "dark",
-  "lastSaved": "2026-08-07T15:02:39.678Z",
+  "lastSaved": "2026-08-08T18:55:35.006Z",
   "history": [
+    {
+      "song": {
+        "id": "DF6eazs2",
+        "title": "Winning Speech",
+        "channel": "Karan Aujla, MXRCI, Seshnolan",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/089/Winning-Speech-Punjabi-2024-20260626013220-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/089/GLhLA6ptsiEq8GeBhoid2CA9c0nIWvv8i4n7hp3MrvEk_320.mp4"
+      },
+      "playedAt": "2026-08-08T18:55:17.051Z",
+      "listenedSec": 10
+    },
+    {
+      "song": {
+        "id": "gwX71Dmc",
+        "title": "Wavy",
+        "channel": "Karan Aujla, Jay Trak",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/178/Wavy-Punjabi-2024-20250523044332-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/178/oz3yl7CCZcAlnTAyO2cMO9eznj2Xv8JD7wJ7VJ_320.mp4"
+      },
+      "playedAt": "2026-08-08T18:55:03.679Z",
+      "listenedSec": 2
+    },
     {
       "song": {
         "id": "uvFc_tcD",

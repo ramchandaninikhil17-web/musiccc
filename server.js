@@ -948,12 +948,29 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-app.listen(PORT, HOST, async () => {
-  await ensureYtDlp();
-  console.log('\n============================================================');
-  console.log('  🎵  MusicFlow v2.5 Desktop — High-Performance Music Engine');
-  console.log('============================================================');
-  console.log(`  💻  Local Desktop App:       http://localhost:${PORT}`);
-  console.log(`  🌐  Network Host:            http://${HOST}:${PORT}`);
-  console.log('============================================================\n');
-});
+const initialPort = parseInt(process.env.PORT || '3000', 10);
+
+function listenOnPort(port, maxTries = 10) {
+  const server = http.createServer(app);
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE' && maxTries > 0) {
+      console.warn(`[MusicFlow] ⚠️ Port ${port} in use. Trying fallback port ${port + 1}...`);
+      listenOnPort(port + 1, maxTries - 1);
+    } else {
+      console.error('[MusicFlow Server Error]', err.message);
+    }
+  });
+
+  server.listen(port, HOST, async () => {
+    await ensureYtDlp();
+    console.log('\n============================================================');
+    console.log(`  🎵  MusicFlow v2.5 Desktop — High-Performance Music Engine`);
+    console.log('============================================================');
+    console.log(`  💻  Local Desktop App:       http://localhost:${port}`);
+    console.log(`  🌐  Network Host:            http://${HOST}:${port}`);
+    console.log('============================================================\n');
+  });
+}
+
+listenOnPort(initialPort);

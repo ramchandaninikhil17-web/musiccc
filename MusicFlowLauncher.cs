@@ -60,12 +60,11 @@ namespace MusicFlow
                     }
                 }
 
-                // 3. Check if server is already running
-                bool isRunning = IsServerRunning(AppUrl);
+                // 3. Find active server port (3000-3005)
+                string activeUrl = GetActiveServerUrl();
 
-                if (!isRunning)
+                if (string.IsNullOrEmpty(activeUrl))
                 {
-                    // Start Node.js server.js silently in background
                     ProcessStartInfo serverStart = new ProcessStartInfo
                     {
                         FileName = nodePath,
@@ -78,20 +77,22 @@ namespace MusicFlow
 
                     Process.Start(serverStart);
 
-                    // Wait for server to be responsive
                     int retries = 40;
-                    while (retries-- > 0 && !IsServerRunning(AppUrl))
+                    while (retries-- > 0 && string.IsNullOrEmpty(activeUrl))
                     {
                         Thread.Sleep(250);
+                        activeUrl = GetActiveServerUrl();
                     }
                 }
+
+                if (string.IsNullOrEmpty(activeUrl)) activeUrl = AppUrl;
 
                 // 4. Launch Edge App Mode or Chrome App Mode or Default Browser
                 string browserPath = FindBrowserExecutable();
                 if (!string.IsNullOrEmpty(browserPath))
                 {
                     string userDataDir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "MusicFlowAppData");
-                    string args = string.Format("--app=\"{0}\" --user-data-dir=\"{1}\" --app-id=MusicFlowPlayer", AppUrl, userDataDir);
+                    string args = string.Format("--app=\"{0}\" --user-data-dir=\"{1}\" --app-id=MusicFlowPlayer", activeUrl, userDataDir);
 
                     ProcessStartInfo browserStart = new ProcessStartInfo
                     {
@@ -103,7 +104,7 @@ namespace MusicFlow
                 }
                 else
                 {
-                    Process.Start(AppUrl);
+                    Process.Start(activeUrl);
                 }
             }
             catch (Exception ex)
@@ -183,6 +184,16 @@ namespace MusicFlow
             chrome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe");
             if (File.Exists(chrome)) return chrome;
 
+            return null;
+        }
+
+        private static string GetActiveServerUrl()
+        {
+            for (int port = 3000; port <= 3005; port++)
+            {
+                string url = string.Format("http://localhost:{0}", port);
+                if (IsServerRunning(url)) return url;
+            }
             return null;
         }
 
