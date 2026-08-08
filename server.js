@@ -116,6 +116,10 @@ function runYtDlp(args, timeout = 30000) {
   });
 }
 
+function isYouTubeId(id) {
+  return typeof id === 'string' && /^[a-zA-Z0-9_-]{11}$/.test(id.trim());
+}
+
 /* ------------------------------------------------------------------ */
 /*  In-Memory LRU/TTL Cache & Concurrency Helper                      */
 /* ------------------------------------------------------------------ */
@@ -511,9 +515,13 @@ app.get('/api/suggestions', async (req, res) => {
 /*  GET /api/info/:videoId                                            */
 /* ------------------------------------------------------------------ */
 app.get('/api/info/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  if (!isYouTubeId(videoId)) {
+    return res.status(400).json({ error: 'Invalid YouTube ID' });
+  }
   try {
     const stdout = await runYtDlp([
-      `https://www.youtube.com/watch?v=${req.params.videoId}`,
+      `https://www.youtube.com/watch?v=${videoId}`,
       '--dump-json', '--no-warnings', '--skip-download',
     ], 15000);
 
@@ -548,6 +556,10 @@ const httpsAgent = new https.Agent({
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';
+
+  if (!isYouTubeId(videoId)) {
+    return res.status(400).json({ error: 'Invalid YouTube ID for yt-dlp stream' });
+  }
 
   const formatMap = {
     low: 'worstaudio[ext=m4a]/worstaudio/worst',
@@ -746,6 +758,10 @@ async function streamViaServerlessApi(videoId, res) {
 app.get('/api/lyrics/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
+  if (!isYouTubeId(videoId)) {
+    return res.json({ title: '', artist: '', synced: false, lines: [] });
+  }
+
   try {
     const stdout = await runYtDlp([
       `https://www.youtube.com/watch?v=${videoId}`,
@@ -813,6 +829,10 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
 /* ------------------------------------------------------------------ */
 app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
+
+  if (!isYouTubeId(videoId)) {
+    return res.status(400).json({ error: 'Invalid YouTube ID' });
+  }
 
   try {
     const infoStdout = await runYtDlp([

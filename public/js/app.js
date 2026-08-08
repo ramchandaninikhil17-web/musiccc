@@ -307,6 +307,8 @@
     // Library
     $('#likedSongsCard').addEventListener('click', showLikedSongs);
     $('#playLikedBtn').addEventListener('click', (e) => { e.stopPropagation(); playLikedSongs(); });
+    $('#hideLikedListBtn')?.addEventListener('click', () => { $('#likedSongsListSection').style.display = 'none'; });
+    $('#hidePlaylistBtn')?.addEventListener('click', () => { $('#activePlaylistSection').style.display = 'none'; });
     $('#createPlaylistBtn').addEventListener('click', openCreatePlaylist);
     $('#playlistModalClose').addEventListener('click', () => { $('#playlistModal').style.display = 'none'; });
     $('#playlistModal').addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
@@ -324,7 +326,7 @@
     if (atpModal) atpModal.addEventListener('click', (e) => { if (e.target === atpModal) atpModal.style.display = 'none'; });
 
     // Batch Text Importer
-    const openBatchBtn = $('#openBatchImportBtn');
+    const openBatchBtn = $('#batchImportBtn');
     if (openBatchBtn) openBatchBtn.addEventListener('click', () => openBatchImport());
     const plBatchBtn = $('#playlistBatchAddBtn');
     if (plBatchBtn) plBatchBtn.addEventListener('click', () => openBatchImport(currentPlaylistId));
@@ -869,12 +871,14 @@
   }
 
   function showLikedSongs() {
-    const list = $('#likedSongsList');
-    if (list.style.display === 'none') {
-      list.style.display = '';
-      renderSongList(list, likedSongs, 'liked');
+    const section = $('#likedSongsListSection');
+    const grid = $('#likedResultsGrid');
+    if (!section || !grid) return;
+    if (section.style.display === 'none') {
+      section.style.display = '';
+      renderRecommendationCards(grid, likedSongs);
     } else {
-      list.style.display = 'none';
+      section.style.display = 'none';
     }
   }
 
@@ -934,11 +938,14 @@
     if (!pl) return;
     currentPlaylistId = plId;
 
-    // Hide main library, show detail
-    $$('#pageLibrary > *:not(.playlist-detail)').forEach(el => el.style.display = 'none');
-    $('#playlistDetail').style.display = '';
-    $('#playlistDetailName').textContent = pl.name;
-    renderSongList($('#playlistSongsList'), pl.songs, 'playlist');
+    const sec = $('#activePlaylistSection');
+    const title = $('#activePlaylistTitle');
+    const grid = $('#activePlaylistGrid');
+    if (sec && title && grid) {
+      sec.style.display = '';
+      title.textContent = '📂 ' + pl.name;
+      renderRecommendationCards(grid, pl.songs);
+    }
   }
 
   function playCurrentPlaylist() {
@@ -951,27 +958,29 @@
   function deleteCurrentPlaylist() {
     playlists = playlists.filter(p => p.id !== currentPlaylistId);
     Storage.set('playlists', playlists);
-    $('#playlistDetail').style.display = 'none';
+    const sec = $('#activePlaylistSection');
+    if (sec) sec.style.display = 'none';
     renderLibrary();
     toast('Playlist deleted');
   }
 
   function renderLibrary() {
-    // Show all main items, hide detail
-    $$('#pageLibrary > *:not(.playlist-detail)').forEach(el => el.style.display = '');
-    $('#playlistDetail').style.display = 'none';
-
     $('#likedCount').textContent = likedSongs.length + ' songs';
-    $('#likedSongsList').style.display = 'none';
+    const likedSec = $('#likedSongsListSection');
+    if (likedSec) likedSec.style.display = 'none';
+    const activePlSec = $('#activePlaylistSection');
+    if (activePlSec) activePlSec.style.display = 'none';
 
-    const grid = $('#playlistsGrid');
-    if (!playlists.length) {
-      grid.innerHTML = '<p class="empty-msg" id="noPlaylists">No playlists yet. Create one!</p>';
-    } else {
-      grid.innerHTML = playlists.map(pl => `<div class="playlist-card" data-plid="${pl.id}"><div class="pc-icon">📂</div><div class="pc-name">${esc(pl.name)}</div><div class="pc-count">${pl.songs.length} songs</div></div>`).join('');
-      grid.querySelectorAll('.playlist-card').forEach(c => {
-        c.addEventListener('click', () => showPlaylistDetail(c.dataset.plid));
-      });
+    const grid = $('#playlistGrid');
+    if (grid) {
+      if (!playlists.length) {
+        grid.innerHTML = '<p class="empty-msg" id="noPlaylists">No playlists yet. Create one!</p>';
+      } else {
+        grid.innerHTML = playlists.map(pl => `<div class="playlist-card" data-plid="${pl.id}"><div class="pc-icon">📂</div><div class="pc-name">${esc(pl.name)}</div><div class="pc-count">${pl.songs.length} songs</div></div>`).join('');
+        grid.querySelectorAll('.playlist-card').forEach(c => {
+          c.addEventListener('click', () => showPlaylistDetail(c.dataset.plid));
+        });
+      }
     }
   }
 
@@ -1640,6 +1649,11 @@
 
   async function fetchLyrics(videoId) {
     const content = $('#lyricsContent');
+    if (!videoId || videoId.length !== 11) {
+      content.innerHTML = '<p class="lyrics-placeholder">No lyrics available for this track</p>';
+      lyricsData = null;
+      return;
+    }
     content.innerHTML = '<p class="lyrics-placeholder">Loading lyrics...</p>';
     lyricsData = null;
 
