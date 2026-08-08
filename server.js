@@ -950,16 +950,10 @@ app.get('*', (req, res) => {
 
 app.listen(PORT, HOST, async () => {
   await ensureYtDlp();
-  const networkIps = getLocalNetworkAddresses();
   console.log('\n============================================================');
-  console.log('  🎵  MusicFlow v2.0 is running successfully!');
+  console.log('  🎵  MusicFlow v2.5 Desktop — High-Performance Music Engine');
   console.log('============================================================');
-  console.log(`  💻  Local PC / Server:       http://localhost:${PORT}`);
-  console.log(`  🌐  Bound to Network Host:   http://${HOST}:${PORT}`);
-  if (networkIps.length > 0) {
-    networkIps.forEach(ip => {
-      console.log(`  📱  Mobile / Other Devices:  http://${ip}:${PORT}`);
-    });
-  }
+  console.log(`  💻  Local Desktop App:       http://localhost:${PORT}`);
+  console.log(`  🌐  Network Host:            http://${HOST}:${PORT}`);
   console.log('============================================================\n');
 });

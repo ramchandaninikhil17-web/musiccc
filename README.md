@@ -79,17 +79,13 @@ Then visit **[http://localhost:3000](http://localhost:3000)**.
 
 ---
 
-## 📱 How to Use on Your Phone / Tablet (Same Wi-Fi)
+## 💻 High-Performance Desktop Experience
 
-MusicFlow is a full **Progressive Web App (PWA)** with background audio playback, lock screen media controls, and offline caching.
-
-1. Start MusicFlow on your computer.
-2. In MusicFlow, click the **📱 Connect Phone** icon in the sidebar or top bar.
-3. Your PC's Wi-Fi network address (e.g. `http://192.168.1.15:3000`) and a **live QR code** will appear.
-4. Scan the QR code with your phone camera or type the address into **Chrome** (Android) or **Safari** (iPhone):
-   - **Android (Chrome)**: Tap **⋮ Menu** &rarr; **"Add to Home Screen"** or **"Install App"**.
-   - **iOS / iPhone (Safari)**: Tap **Share** &rarr; **"Add to Home Screen"**.
-5. 🎉 **Done!** You now have MusicFlow installed as an app on your phone with background audio and media controls!
+MusicFlow provides a native, desktop-grade music experience with:
+- **Always-On-Top PiP Mini Player**: Multitask without losing sight of your playing track.
+- **Apple Transparent Floating Orb**: Drag-and-drop dynamic quick controls on your desktop.
+- **Pomodoro Focus Flow & Ambient Sound Mixer**: Built-in rain, ocean, and white noise sound generators for study and focus.
+- **Global Keyboard Hotkeys**: Control playback instantly using keyboard shortcuts.
 
 ---
 

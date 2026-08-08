@@ -105,17 +105,12 @@ Welcome to **MusicFlow v2.5**! A premium, ultra-fast music player with an Apple-
 
 ---
 
-## 📱 How to Use on Your Phone / Tablet (Same Wi-Fi)
+## 🖥️ Desktop Player Modes
 
-You can use MusicFlow on your iPhone, iPad, Android phone, or Smart TV connected to your home Wi-Fi:
-
-1. Start MusicFlow on your computer.
-2. In MusicFlow, click the **📱 Phone** icon in the sidebar or top bar.
-3. A modal will pop up with your computer's local Wi-Fi address (e.g. `http://192.168.1.15:3000`) and a **QR code**.
-4. **Scan the QR code** with your phone's camera:
-   - **Android (Chrome)**: Tap **⋮ Menu** (top right) → **"Install app"** or **"Add to Home screen"**.
-   - **iPhone (Safari)**: Tap the **Share** button → **"Add to Home Screen"**.
-5. 🎉 You now have MusicFlow on your phone with background audio, lock screen media controls, and lyrics!
+MusicFlow offers multiple ways to enjoy your music on desktop:
+- **Floating Orb Window**: Drag-and-drop dynamic transparent controls.
+- **Picture-in-Picture Mini Player**: Keep your music player always-on-top above all windows (`P` shortcut).
+- **Focus Flow Pomodoro**: Ambient sound mixer with timer (`F` shortcut).
 
 ---
 

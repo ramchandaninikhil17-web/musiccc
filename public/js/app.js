@@ -73,11 +73,25 @@
         }
 
         if (serverData.history && Array.isArray(serverData.history) && serverData.history.length > 0) {
-          if (!history.length) {
-            history = serverData.history;
-            localStorage.setItem('mf_history', JSON.stringify(history));
-            needsUpdate = true;
-          }
+          const localHist = Storage.get('history', []);
+          const histMap = new Map();
+          [...serverData.history, ...localHist].forEach(h => {
+            if (h && h.song && h.song.id) {
+              const k = h.song.id + '_' + (h.playedAt || '');
+              if (!histMap.has(k)) histMap.set(k, h);
+            }
+          });
+          history = Array.from(histMap.values());
+          localStorage.setItem('mf_history', JSON.stringify(history));
+          needsUpdate = true;
+        }
+
+        if (serverData.searchHistory && Array.isArray(serverData.searchHistory) && serverData.searchHistory.length > 0) {
+          const localSh = Storage.get('searchHistory', []);
+          const set = new Set([...serverData.searchHistory, ...localSh]);
+          searchHistory = Array.from(set);
+          localStorage.setItem('mf_searchHistory', JSON.stringify(searchHistory));
+          needsUpdate = true;
         }
 
         if (needsUpdate) {
@@ -269,45 +283,7 @@
       });
     }
 
-    // Phone modal
-    async function updatePhoneModal() {
-      const urlEl = $('#phoneModalUrl');
-      const qrEl = $('#phoneModalQrImg');
-      let targetUrl = window.location.origin;
 
-      if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-        try {
-          const res = await fetch('/api/network-info');
-          if (res.ok) {
-            const data = await res.json();
-            if (data && data.primaryNetworkUrl) {
-              targetUrl = data.primaryNetworkUrl;
-            }
-          }
-        } catch (e) { /* fallback to origin */ }
-      }
-
-      if (urlEl) {
-        urlEl.textContent = targetUrl;
-        urlEl.onclick = () => {
-          if (navigator.clipboard && navigator.clipboard.writeText) {
-            navigator.clipboard.writeText(targetUrl);
-            toast('📋 Network link copied to clipboard!');
-          }
-        };
-      }
-      if (qrEl && targetUrl) {
-        qrEl.src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(targetUrl)}`;
-      }
-    }
-
-    $('#navPhone').addEventListener('click', (e) => {
-      e.preventDefault();
-      $('#phoneModalOverlay').style.display = '';
-      updatePhoneModal();
-    });
-    $('#phoneModalCloseBtn').addEventListener('click', () => { $('#phoneModalOverlay').style.display = 'none'; });
-    $('#phoneModalOverlay').addEventListener('click', (e) => { if (e.target === $('#phoneModalOverlay')) $('#phoneModalOverlay').style.display = 'none'; });
 
     // Quality button
     $('#qualityBtn').addEventListener('click', () => { audioQuality = audioQuality === 'high' ? 'low' : 'high'; Storage.set('quality', audioQuality); updateQualityLabel(); $('#settingQuality').value = audioQuality; toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
@@ -644,9 +620,26 @@
     npChannel.textContent = song.channel;
     updateLikeBtn();
 
-    if (song.streamUrl) {
-      audioPlayer.src = song.streamUrl;
-      audioPlayer.play().catch(() => {});
+    if (song.isCloud) {
+      if (song.streamUrl) {
+        audioPlayer.src = song.streamUrl;
+        audioPlayer.play().catch(async () => {
+          const freshUrl = await CloudMusicEngine.getStreamUrl(song.id);
+          if (freshUrl) {
+            song.streamUrl = freshUrl;
+            audioPlayer.src = freshUrl;
+            audioPlayer.play().catch(() => {});
+          }
+        });
+      } else {
+        CloudMusicEngine.getStreamUrl(song.id).then(url => {
+          if (url) {
+            song.streamUrl = url;
+            audioPlayer.src = url;
+            audioPlayer.play().catch(() => {});
+          }
+        });
+      }
     } else {
       audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
       audioPlayer.play().catch(() => {});
@@ -716,7 +709,16 @@
     else playNext();
   }
 
-  function onAudioError() {
+  async function onAudioError() {
+    if (currentSong && currentSong.isCloud) {
+      const freshUrl = await CloudMusicEngine.getStreamUrl(currentSong.id);
+      if (freshUrl) {
+        currentSong.streamUrl = freshUrl;
+        audioPlayer.src = freshUrl;
+        audioPlayer.play().catch(() => {});
+        return;
+      }
+    }
     if (currentSong && audioRetryCount < 2) {
       audioRetryCount++;
       const fallbackQuality = audioRetryCount === 1 ? 'low' : 'high';
@@ -1594,47 +1596,7 @@
     }
   }
 
-  /* ================================================================
-     HOME PAGE
-     ================================================================ */
-  function renderHomePage() {
-    // Greeting based on time
-    const hour = new Date().getHours();
-    let greeting = 'Good Evening';
-    if (hour < 12) greeting = 'Good Morning';
-    else if (hour < 17) greeting = 'Good Afternoon';
-    $('#homeGreeting h1').textContent = greeting;
 
-    // Recently Played
-    const recent = [];
-    const seen = new Set();
-    for (const h of history) {
-      if (!seen.has(h.song.id)) { seen.add(h.song.id); recent.push(h.song); }
-      if (recent.length >= 12) break;
-    }
-
-    const rSection = $('#recentlyPlayedSection');
-    if (recent.length > 0) {
-      rSection.style.display = '';
-      const grid = $('#recentlyPlayedGrid');
-      grid.innerHTML = recent.map(s => `
-        <div class="result-card" data-id="${s.id}">
-          <div class="card-thumbnail">
-            <img src="${thumb(s)}" alt="" loading="lazy" />
-            <span class="card-duration">${fmtDur(s.duration)}</span>
-            <div class="card-play-overlay"><div class="overlay-play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
-          </div>
-          <div class="card-info"><div class="card-title">${esc(s.title)}</div><div class="card-meta"><span class="card-channel">${esc(s.channel)}</span></div></div>
-        </div>
-      `).join('');
-      grid.querySelectorAll('.result-card').forEach(c => c.addEventListener('click', () => {
-        const s = recent.find(r => r.id === c.dataset.id);
-        if (s) playSong(s);
-      }));
-    } else {
-      rSection.style.display = 'none';
-    }
-  }
 
   /* ================================================================
      LYRICS
