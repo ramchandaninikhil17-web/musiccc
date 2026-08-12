@@ -223,60 +223,60 @@
      ================================================================ */
   function bindEvents() {
     // Search
-    searchInput.addEventListener('input', onSearchInput);
-    searchInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(searchTimeout); doSearch(searchInput.value.trim()); searchSuggestions.classList.remove('active'); } });
-    searchInput.addEventListener('focus', () => { if (searchInput.value.trim().length >= 2) fetchSuggestions(searchInput.value.trim()); });
-    document.addEventListener('click', (e) => { if (!$('#searchBarWrap').contains(e.target)) searchSuggestions.classList.remove('active'); });
-    searchClear.addEventListener('click', clearSearch);
+    searchInput?.addEventListener('input', onSearchInput);
+    searchInput?.addEventListener('keydown', (e) => { if (e.key === 'Enter') { clearTimeout(searchTimeout); doSearch(searchInput.value.trim()); searchSuggestions?.classList.remove('active'); } });
+    searchInput?.addEventListener('focus', () => { if (searchInput.value.trim().length >= 2) fetchSuggestions(searchInput.value.trim()); });
+    document.addEventListener('click', (e) => { if ($('#searchBarWrap') && !$('#searchBarWrap').contains(e.target)) searchSuggestions?.classList.remove('active'); });
+    searchClear?.addEventListener('click', clearSearch);
 
     // Quick tags & genre cards
-    $$('.tag').forEach(t => t.addEventListener('click', () => { searchInput.value = t.dataset.query; navigateTo('search'); doSearch(t.dataset.query); }));
-    $$('.genre-card').forEach(c => c.addEventListener('click', () => { searchInput.value = c.dataset.query; navigateTo('search'); doSearch(c.dataset.query); }));
+    $$('.tag').forEach(t => t.addEventListener('click', () => { if (searchInput) searchInput.value = t.dataset.query; navigateTo('search'); doSearch(t.dataset.query); }));
+    $$('.genre-card').forEach(c => c.addEventListener('click', () => { if (searchInput) searchInput.value = c.dataset.query; navigateTo('search'); doSearch(c.dataset.query); }));
 
     // Nav
     navLinks.forEach(l => l.addEventListener('click', (e) => { e.preventDefault(); navigateTo(l.dataset.page); }));
 
     // Sidebar mobile
-    $('#mobileMenuBtn').addEventListener('click', toggleMobileSidebar);
+    $('#mobileMenuBtn')?.addEventListener('click', toggleMobileSidebar);
 
     // Queue
-    $('#queueToggleBtn').addEventListener('click', toggleQueue);
-    $('#queueCloseBtn').addEventListener('click', toggleQueue);
-    $('#queueClearBtn').addEventListener('click', clearQueue);
+    $('#queueToggleBtn')?.addEventListener('click', toggleQueue);
+    $('#queueCloseBtn')?.addEventListener('click', toggleQueue);
+    $('#queueClearBtn')?.addEventListener('click', clearQueue);
 
     // Player
-    playPauseBtn.addEventListener('click', togglePlayPause);
-    $('#prevBtn').addEventListener('click', playPrev);
-    $('#nextBtn').addEventListener('click', playNext);
-    $('#shuffleBtn').addEventListener('click', toggleShuffle);
-    $('#repeatBtn').addEventListener('click', toggleRepeat);
-    $('#muteBtn').addEventListener('click', toggleMute);
-    $('#npLikeBtn').addEventListener('click', () => { if (currentSong) toggleLike(currentSong); });
-    playAllBtn.addEventListener('click', playAllResults);
+    playPauseBtn?.addEventListener('click', togglePlayPause);
+    $('#prevBtn')?.addEventListener('click', playPrev);
+    $('#nextBtn')?.addEventListener('click', playNext);
+    $('#shuffleBtn')?.addEventListener('click', toggleShuffle);
+    $('#repeatBtn')?.addEventListener('click', toggleRepeat);
+    $('#muteBtn')?.addEventListener('click', toggleMute);
+    $('#npLikeBtn')?.addEventListener('click', () => { if (currentSong) toggleLike(currentSong); });
+    playAllBtn?.addEventListener('click', playAllResults);
 
     // Progress
-    npProgressBar.addEventListener('mousedown', startSeek);
-    npProgressBar.addEventListener('touchstart', startSeek, { passive: true });
-    npVolumeBar.addEventListener('mousedown', startVolChange);
-    npVolumeBar.addEventListener('touchstart', startVolChange, { passive: true });
+    npProgressBar?.addEventListener('mousedown', startSeek);
+    npProgressBar?.addEventListener('touchstart', startSeek, { passive: true });
+    npVolumeBar?.addEventListener('mousedown', startVolChange);
+    npVolumeBar?.addEventListener('touchstart', startVolChange, { passive: true });
 
     // Audio events
-    audioPlayer.addEventListener('timeupdate', onTimeUpdate);
-    audioPlayer.addEventListener('loadedmetadata', onMeta);
-    audioPlayer.addEventListener('ended', onEnd);
-    audioPlayer.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); });
-    audioPlayer.addEventListener('pause', () => { setPlayState(false); recordListenTime(); });
-    audioPlayer.addEventListener('error', onAudioError);
+    audioPlayer?.addEventListener('timeupdate', onTimeUpdate);
+    audioPlayer?.addEventListener('loadedmetadata', onMeta);
+    audioPlayer?.addEventListener('ended', onEnd);
+    audioPlayer?.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); });
+    audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); });
+    audioPlayer?.addEventListener('error', onAudioError);
 
     // Theme
-    $('#themeToggleBtn').addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
+    $('#themeToggleBtn')?.addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
 
     // Settings
-    $('#settingsBtn').addEventListener('click', () => { $('#settingsModal').style.display = ''; });
-    $('#settingsCloseBtn').addEventListener('click', () => { $('#settingsModal').style.display = 'none'; });
-    $('#settingsModal').addEventListener('click', (e) => { if (e.target === $('#settingsModal')) $('#settingsModal').style.display = 'none'; });
-    $('#settingTheme').addEventListener('change', (e) => applyTheme(e.target.value));
-    $('#settingQuality').addEventListener('change', (e) => { audioQuality = e.target.value; Storage.set('quality', audioQuality); updateQualityLabel(); toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
+    $('#settingsBtn')?.addEventListener('click', () => { if ($('#settingsModal')) $('#settingsModal').style.display = ''; });
+    $('#settingsCloseBtn')?.addEventListener('click', () => { if ($('#settingsModal')) $('#settingsModal').style.display = 'none'; });
+    $('#settingsModal')?.addEventListener('click', (e) => { if (e.target === $('#settingsModal')) $('#settingsModal').style.display = 'none'; });
+    $('#settingTheme')?.addEventListener('change', (e) => applyTheme(e.target.value));
+    $('#settingQuality')?.addEventListener('change', (e) => { audioQuality = e.target.value; Storage.set('quality', audioQuality); updateQualityLabel(); toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
     
     // Orb Setting
     const settingOrbEl = $('#settingOrb');
@@ -290,91 +290,72 @@
       });
     }
 
-
-
     // Quality button
-    $('#qualityBtn').addEventListener('click', () => { audioQuality = audioQuality === 'high' ? 'low' : 'high'; Storage.set('quality', audioQuality); updateQualityLabel(); $('#settingQuality').value = audioQuality; toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
+    $('#qualityBtn')?.addEventListener('click', () => { audioQuality = audioQuality === 'high' ? 'low' : 'high'; Storage.set('quality', audioQuality); updateQualityLabel(); if ($('#settingQuality')) $('#settingQuality').value = audioQuality; toast('Quality: ' + (audioQuality === 'high' ? 'High' : 'Low')); });
 
     // Share & Download
-    $('#shareBtn').addEventListener('click', shareSong);
-    const dlBtn = $('#downloadBtn');
-    if (dlBtn) dlBtn.addEventListener('click', () => { if (currentSong) downloadSong(currentSong); else toast('No song playing'); });
+    $('#shareBtn')?.addEventListener('click', shareSong);
+    $('#downloadBtn')?.addEventListener('click', () => { if (currentSong) downloadSong(currentSong); else toast('No song playing'); });
 
     // Lyrics
-    $('#lyricsBtn').addEventListener('click', toggleLyrics);
-    $('#lyricsCloseBtn').addEventListener('click', toggleLyrics);
+    $('#lyricsBtn')?.addEventListener('click', toggleLyrics);
+    $('#lyricsCloseBtn')?.addEventListener('click', toggleLyrics);
 
     // Library
-    $('#likedSongsCard').addEventListener('click', showLikedSongs);
-    $('#playLikedBtn').addEventListener('click', (e) => { e.stopPropagation(); playLikedSongs(); });
-    $('#hideLikedListBtn')?.addEventListener('click', () => { $('#likedSongsListSection').style.display = 'none'; });
-    $('#hidePlaylistBtn')?.addEventListener('click', () => { $('#activePlaylistSection').style.display = 'none'; });
-    $('#createPlaylistBtn').addEventListener('click', openCreatePlaylist);
-    $('#playlistModalClose').addEventListener('click', () => { $('#playlistModal').style.display = 'none'; });
-    $('#playlistModal').addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
-    $('#playlistSaveBtn').addEventListener('click', savePlaylist);
-    $('#playlistNameInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') savePlaylist(); });
-    const plBackBtn = $('#playlistBackBtn');
-    if (plBackBtn) plBackBtn.addEventListener('click', () => { $('#playlistDetail').style.display = 'none'; renderLibrary(); });
-    const plPlayBtn = $('#playPlaylistBtn');
-    if (plPlayBtn) plPlayBtn.addEventListener('click', playCurrentPlaylist);
-    const plDeleteBtn = $('#deletePlaylistBtn');
-    if (plDeleteBtn) plDeleteBtn.addEventListener('click', deleteCurrentPlaylist);
-    const atpClose = $('#addToPlaylistClose');
-    if (atpClose) atpClose.addEventListener('click', () => { $('#addToPlaylistModal').style.display = 'none'; });
-    const atpModal = $('#addToPlaylistModal');
-    if (atpModal) atpModal.addEventListener('click', (e) => { if (e.target === atpModal) atpModal.style.display = 'none'; });
+    $('#likedSongsCard')?.addEventListener('click', showLikedSongs);
+    $('#playLikedBtn')?.addEventListener('click', (e) => { e.stopPropagation(); playLikedSongs(); });
+    $('#hideLikedListBtn')?.addEventListener('click', () => { if ($('#likedSongsListSection')) $('#likedSongsListSection').style.display = 'none'; });
+    $('#hidePlaylistBtn')?.addEventListener('click', () => { if ($('#activePlaylistSection')) $('#activePlaylistSection').style.display = 'none'; });
+    $('#createPlaylistBtn')?.addEventListener('click', openCreatePlaylist);
+    $('#playlistModalClose')?.addEventListener('click', () => { if ($('#playlistModal')) $('#playlistModal').style.display = 'none'; });
+    $('#playlistModal')?.addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
+    $('#playlistSaveBtn')?.addEventListener('click', savePlaylist);
+    $('#playlistNameInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePlaylist(); });
+    $('#playlistBackBtn')?.addEventListener('click', () => { if ($('#playlistDetail')) $('#playlistDetail').style.display = 'none'; renderLibrary(); });
+    $('#playPlaylistBtn')?.addEventListener('click', playCurrentPlaylist);
+    $('#deletePlaylistBtn')?.addEventListener('click', deleteCurrentPlaylist);
+    $('#addToPlaylistClose')?.addEventListener('click', () => { if ($('#addToPlaylistModal')) $('#addToPlaylistModal').style.display = 'none'; });
+    $('#addToPlaylistModal')?.addEventListener('click', (e) => { if (e.target === $('#addToPlaylistModal')) $('#addToPlaylistModal').style.display = 'none'; });
 
     // Batch Text Importer
-    const openBatchBtn = $('#batchImportBtn');
-    if (openBatchBtn) openBatchBtn.addEventListener('click', () => openBatchImport());
-    const plBatchBtn = $('#playlistBatchAddBtn');
-    if (plBatchBtn) plBatchBtn.addEventListener('click', () => openBatchImport(currentPlaylistId));
-    const batchCloseBtn = $('#batchImportClose');
-    if (batchCloseBtn) batchCloseBtn.addEventListener('click', closeBatchImport);
-    const batchCancelBtn = $('#batchCancelBtn');
-    if (batchCancelBtn) batchCancelBtn.addEventListener('click', closeBatchImport);
-    const batchModal = $('#batchImportModal');
-    if (batchModal) batchModal.addEventListener('click', (e) => { if (e.target === batchModal) closeBatchImport(); });
-    const batchArea = $('#batchTextarea');
-    if (batchArea) batchArea.addEventListener('input', onBatchTextChange);
-    const batchClearBtn = $('#batchClearText');
-    if (batchClearBtn) batchClearBtn.addEventListener('click', () => { if (batchArea) batchArea.value = ''; onBatchTextChange(); });
+    $('#batchImportBtn')?.addEventListener('click', () => openBatchImport());
+    $('#playlistBatchAddBtn')?.addEventListener('click', () => openBatchImport(currentPlaylistId));
+    $('#batchImportClose')?.addEventListener('click', closeBatchImport);
+    $('#batchCancelBtn')?.addEventListener('click', closeBatchImport);
+    $('#batchImportModal')?.addEventListener('click', (e) => { if (e.target === $('#batchImportModal')) closeBatchImport(); });
+    $('#batchTextarea')?.addEventListener('input', onBatchTextChange);
+    $('#batchClearText')?.addEventListener('click', () => { if ($('#batchTextarea')) $('#batchTextarea').value = ''; onBatchTextChange(); });
     $$('.batch-example-pill').forEach(pill => {
       pill.addEventListener('click', () => {
-        if (batchArea) {
-          batchArea.value = pill.dataset.text;
+        if ($('#batchTextarea')) {
+          $('#batchTextarea').value = pill.dataset.text;
           onBatchTextChange();
         }
       });
     });
-    $('#destRadioNew').addEventListener('change', () => {
-      $('#batchNewPlaylistWrap').style.display = '';
-      $('#batchExistingPlaylistWrap').style.display = 'none';
+    $('#destRadioNew')?.addEventListener('change', () => {
+      if ($('#batchNewPlaylistWrap')) $('#batchNewPlaylistWrap').style.display = '';
+      if ($('#batchExistingPlaylistWrap')) $('#batchExistingPlaylistWrap').style.display = 'none';
     });
-    $('#destRadioExisting').addEventListener('change', () => {
-      $('#batchNewPlaylistWrap').style.display = 'none';
-      $('#batchExistingPlaylistWrap').style.display = '';
+    $('#destRadioExisting')?.addEventListener('change', () => {
+      if ($('#batchNewPlaylistWrap')) $('#batchNewPlaylistWrap').style.display = 'none';
+      if ($('#batchExistingPlaylistWrap')) $('#batchExistingPlaylistWrap').style.display = '';
     });
-    $('#batchStartBtn').addEventListener('click', executeBatchImport);
+    $('#batchStartBtn')?.addEventListener('click', executeBatchImport);
 
     // Home Recommendations & Smart Radio
-    const startRadioBtn = $('#startRadioBtn');
-    if (startRadioBtn) startRadioBtn.addEventListener('click', startPersonalizedRadio);
-    const playAllRecBtn = $('#playAllRecBtn');
-    if (playAllRecBtn) playAllRecBtn.addEventListener('click', startPersonalizedRadio);
-    const refreshRecBtn = $('#refreshRecBtn');
-    if (refreshRecBtn) refreshRecBtn.addEventListener('click', () => loadRecommendations(true));
+    $('#startRadioBtn')?.addEventListener('click', startPersonalizedRadio);
+    $('#playAllRecBtn')?.addEventListener('click', startPersonalizedRadio);
+    $('#refreshRecBtn')?.addEventListener('click', () => loadRecommendations(true));
 
     // Profile
-    $('#clearHistoryBtn').addEventListener('click', () => { history = []; Storage.set('history', []); renderProfile(); toast('History cleared'); });
+    $('#clearHistoryBtn')?.addEventListener('click', () => { history = []; Storage.set('history', []); renderProfile(); toast('History cleared'); });
 
     // Search history
-    $('#clearSearchHistory').addEventListener('click', () => { searchHistory = []; Storage.set('searchHistory', []); renderSearchHistory(); });
+    $('#clearSearchHistory')?.addEventListener('click', () => { searchHistory = []; Storage.set('searchHistory', []); renderSearchHistory(); });
 
     // Retry
-    const retryBtn = document.getElementById('retryBtn');
-    if (retryBtn) retryBtn.addEventListener('click', () => doSearch(lastQuery));
+    document.getElementById('retryBtn')?.addEventListener('click', () => doSearch(lastQuery));
 
     // Keyboard
     document.addEventListener('keydown', onKeyboard);
@@ -743,14 +724,14 @@
   async function onAudioError() {
     if (currentSong && currentSong.isCloud) {
       const freshUrl = await CloudMusicEngine.getStreamUrl(currentSong.id);
-      if (freshUrl) {
+      if (freshUrl && freshUrl !== audioPlayer.src) {
         currentSong.streamUrl = freshUrl;
         audioPlayer.src = freshUrl;
         audioPlayer.play().catch(() => {});
         return;
       }
     }
-    if (currentSong && audioRetryCount < 2) {
+    if (currentSong && audioRetryCount < 3) {
       audioRetryCount++;
       const fallbackQuality = audioRetryCount === 1 ? 'low' : 'high';
       audioPlayer.src = `/api/stream/${currentSong.id}?quality=${fallbackQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
@@ -758,8 +739,8 @@
       return;
     }
     audioRetryCount = 0;
-    toast('⚠️ Playback issue on this track, skipping...');
-    setTimeout(playNext, 1200);
+    toast(`⚠️ Playback issue on "${(currentSong?.title || 'track').slice(0, 20)}", skipping to next...`);
+    setTimeout(playNext, 1000);
   }
 
   function onTimeUpdate() {
@@ -1712,19 +1693,23 @@
     }
   }
 
-  function downloadSong(song) {
+  async function downloadSong(song) {
     if (!song || !song.id) { toast('No song selected'); return; }
-    toast(`⏳ Preparing MP3 download for "${song.title.slice(0, 25)}..."`);
-    
-    // Create an invisible anchor tag to trigger browser download directly from backend
-    const a = document.createElement('a');
-    a.href = `/api/download/${song.id}`;
-    a.download = `${song.title || 'song'}.mp3`;
-    document.body.appendChild(a);
-    a.click();
-    setTimeout(() => {
-      document.body.removeChild(a);
-    }, 1000);
+    toast(`⏳ Preparing MP3 download for "${(song.title || 'track').slice(0, 25)}..."`);
+
+    try {
+      const downloadUrl = (song.isCloud && song.streamUrl) ? song.streamUrl : `/api/download/${song.id}`;
+      const a = document.createElement('a');
+      a.href = downloadUrl;
+      a.download = `${(song.title || 'MusicTrack').replace(/[/\\?%*:|"<>]/g, '')}.mp3`;
+      a.target = '_blank';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => a.remove(), 1000);
+      toast(`✅ MP3 download started! Check downloads folder.`);
+    } catch (err) {
+      toast(`⚠️ Download error: ${err.message || 'Server busy'}`);
+    }
   }
 
   /* ================================================================

@@ -19,6 +19,18 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
 
+process.on('uncaughtException', (err) => {
+  if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
+    // Ignore EPIPE and ECONNRESET which happen when clients disconnect mid-stream
+    return;
+  }
+  console.error('[Uncaught Exception]', err);
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('[Unhandled Rejection]', reason);
+});
+
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
@@ -27,10 +39,11 @@ app.use(express.static(path.join(__dirname, 'public')));
 /*  Standard Extractor & User-Agent Arguments for Cloud Anti-Bot Bypass*/
 /* ------------------------------------------------------------------ */
 const BASE_YTDLP_ARGS = [
-  '--extractor-args', 'youtube:player_client=ios,mweb,android,web,tv_embedded',
   '--geo-bypass',
   '--no-check-certificates',
   '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  '--no-playlist',
+  '--format-sort', 'ext:mp4:m4a'
 ];
 
 /* ------------------------------------------------------------------ */
@@ -102,7 +115,7 @@ async function ensureYtDlp() {
 /* ------------------------------------------------------------------ */
 /*  Helper: run yt-dlp with cloud anti-bot args                       */
 /* ------------------------------------------------------------------ */
-function runYtDlp(args, timeout = 30000) {
+function runYtDlp(args, timeout = 60000) {
   return new Promise((resolve, reject) => {
     const fullArgs = [...BASE_YTDLP_ARGS, ...args];
     execFile(ytDlpPath, fullArgs, {
@@ -572,7 +585,7 @@ app.get('/api/stream/:videoId', async (req, res) => {
       `https://www.youtube.com/watch?v=${videoId}`,
       '-f', formatMap[quality] || formatMap.high,
       '-g', '--no-warnings',
-    ], 15000);
+    ], 45000);
 
     if (audioUrl && audioUrl.startsWith('http')) {
       return fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
@@ -701,6 +714,16 @@ function streamViaPipeFallback(videoId, req, res) {
       }
     });
 
+    streamProcess.on('close', (code) => {
+      if (code !== 0 && !res.headersSent && !headersSet) {
+        console.warn(`[Pipe Process Close] Non-zero exit ${code}`);
+        streamViaServerlessApi(videoId, res);
+      } else if (!res.headersSent && !headersSet) {
+         streamViaServerlessApi(videoId, res);
+      }
+      res.end();
+    });
+
     res.on('close', () => {
       try { streamProcess.kill('SIGTERM'); } catch (e) {}
     });
@@ -827,6 +850,11 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
 /* ------------------------------------------------------------------ */
 /*  GET /api/download/:videoId — download as MP3                      */
 /* ------------------------------------------------------------------ */
+const tempDownloadsDir = path.join(__dirname, 'temp_downloads');
+if (!fs.existsSync(tempDownloadsDir)) {
+  try { fs.mkdirSync(tempDownloadsDir, { recursive: true }); } catch (e) {}
+}
+
 app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
@@ -835,58 +863,66 @@ app.get('/api/download/:videoId', async (req, res) => {
   }
 
   try {
-    const infoStdout = await runYtDlp([
-      `https://www.youtube.com/watch?v=${videoId}`,
-      '--dump-json', '--no-warnings', '--skip-download',
-    ], 15000);
+    let info = { title: 'Track', channel: '' };
+    try {
+      const infoStdout = await runYtDlp([
+        `https://www.youtube.com/watch?v=${videoId}`,
+        '--dump-json', '--no-warnings', '--skip-download',
+      ], 10000);
+      if (infoStdout) info = JSON.parse(infoStdout);
+    } catch (e) {}
 
-    const info = JSON.parse(infoStdout);
-    const safeTitle = (info.title || 'download').replace(/[^a-zA-Z0-9\s\-_.()\[\]]/g, '').trim();
+    const safeTitle = (info.title || 'MusicFlow_Track')
+      .replace(/[^a-zA-Z0-9\s\-_.()\[\]]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim() || 'Track';
 
-    const audioUrl = await runYtDlp([
-      `https://www.youtube.com/watch?v=${videoId}`,
-      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio',
-      '-g', '--no-warnings',
-    ], 15000);
+    const tempPrefix = path.join(tempDownloadsDir, `dl_${videoId}_${Date.now()}`);
+    const dlArgs = [
+      '--geo-bypass',
+      '--no-check-certificates',
+      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      '--no-playlist',
+      '--ffmpeg-location', ffmpegPath,
+      '-x', '--audio-format', 'mp3',
+      '--audio-quality', '192K',
+      '-o', `${tempPrefix}.%(ext)s`,
+      `https://www.youtube.com/watch?v=${videoId}`
+    ];
 
-    if (!audioUrl) return res.status(404).json({ error: 'No audio found' });
+    execFile(ytDlpPath, dlArgs, { timeout: 120000 }, (err) => {
+      const targetMp3 = `${tempPrefix}.mp3`;
 
-    res.setHeader('Content-Type', 'audio/mpeg');
-    res.setHeader('Content-Disposition', `attachment; filename="${encodeURIComponent(safeTitle)}.mp3"`);
-
-    const ffmpeg = spawn(ffmpegPath, [
-      '-i', audioUrl,
-      '-vn',
-      '-ab', '192k',
-      '-ar', '44100',
-      '-f', 'mp3',
-      '-metadata', `title=${info.title || ''}`,
-      '-metadata', `artist=${info.channel || info.uploader || ''}`,
-      'pipe:1',
-    ], {
-      windowsHide: true,
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
-
-    ffmpeg.stdout.pipe(res);
-    ffmpeg.stderr.on('data', () => {});
-
-    ffmpeg.on('error', (err) => {
-      console.error('[Download ffmpeg error]', err.message);
-      if (!res.headersSent) res.status(500).json({ error: 'Conversion failed' });
-    });
-
-    ffmpeg.on('close', (code) => {
-      if (code !== 0 && !res.headersSent) {
-        res.status(500).json({ error: 'Conversion failed' });
+      if (err || !fs.existsSync(targetMp3)) {
+        console.error('[Download Error]', err ? err.message : 'File creation failed');
+        if (!res.headersSent) res.status(500).json({ error: 'MP3 download failed' });
+        return;
       }
-    });
 
-    req.on('close', () => {
-      ffmpeg.kill('SIGTERM');
+      const stat = fs.statSync(targetMp3);
+      const encodedFilename = encodeURIComponent(safeTitle);
+      
+      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Length', stat.size);
+      res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}.mp3"; filename*=UTF-8''${encodedFilename}.mp3`);
+      res.setHeader('Access-Control-Allow-Origin', '*');
+
+      const stream = fs.createReadStream(targetMp3);
+      stream.pipe(res);
+
+      const cleanup = () => {
+        try { if (fs.existsSync(targetMp3)) fs.unlinkSync(targetMp3); } catch (e) {}
+      };
+
+      stream.on('end', cleanup);
+      stream.on('error', (sErr) => {
+        console.error('[Stream Error]', sErr.message);
+        cleanup();
+      });
+      req.on('close', cleanup);
     });
   } catch (err) {
-    console.error('[Download]', err.message);
+    console.error('[Download Exception]', err.message);
     if (!res.headersSent) res.status(500).json({ error: 'Download failed' });
   }
 });

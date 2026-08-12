@@ -20,7 +20,7 @@ namespace MusicFlow
                 Directory.SetCurrentDirectory(appDir);
 
                 // 1. Find Node.js executable
-                string nodePath = FindNodeExecutable();
+                string nodePath = FindNodeExecutable(appDir);
                 if (string.IsNullOrEmpty(nodePath))
                 {
                     DialogResult result = MessageBox.Show(
@@ -60,7 +60,7 @@ namespace MusicFlow
                     }
                 }
 
-                // 3. Find active server port (3000-3005)
+                // 3. Find active server port (3000-3010)
                 string activeUrl = GetActiveServerUrl();
 
                 if (string.IsNullOrEmpty(activeUrl))
@@ -77,10 +77,10 @@ namespace MusicFlow
 
                     Process.Start(serverStart);
 
-                    int retries = 40;
+                    int retries = 50;
                     while (retries-- > 0 && string.IsNullOrEmpty(activeUrl))
                     {
-                        Thread.Sleep(250);
+                        Thread.Sleep(200);
                         activeUrl = GetActiveServerUrl();
                     }
                 }
@@ -113,8 +113,11 @@ namespace MusicFlow
             }
         }
 
-        private static string FindNodeExecutable()
+        private static string FindNodeExecutable(string appDir)
         {
+            string localNode = Path.Combine(appDir, "node.exe");
+            if (File.Exists(localNode)) return localNode;
+
             string[] possiblePaths = new string[]
             {
                 "node.exe",
@@ -126,26 +129,25 @@ namespace MusicFlow
 
             foreach (string p in possiblePaths)
             {
-                if (File.Exists(p) || p == "node.exe")
+                try
                 {
-                    try
+                    ProcessStartInfo psi = new ProcessStartInfo
                     {
-                        ProcessStartInfo psi = new ProcessStartInfo
+                        FileName = p,
+                        Arguments = "--version",
+                        CreateNoWindow = true,
+                        UseShellExecute = false
+                    };
+                    using (Process proc = Process.Start(psi))
+                    {
+                        if (proc != null)
                         {
-                            FileName = p,
-                            Arguments = "--version",
-                            CreateNoWindow = true,
-                            UseShellExecute = false,
-                            RedirectStandardOutput = true
-                        };
-                        using (Process proc = Process.Start(psi))
-                        {
-                            proc.WaitForExit(2000);
+                            proc.WaitForExit(1500);
                             if (proc.ExitCode == 0) return p;
                         }
                     }
-                    catch { }
                 }
+                catch { }
             }
             return null;
         }
@@ -189,7 +191,7 @@ namespace MusicFlow
 
         private static string GetActiveServerUrl()
         {
-            for (int port = 3000; port <= 3005; port++)
+            for (int port = 3000; port <= 3010; port++)
             {
                 string url = string.Format("http://localhost:{0}", port);
                 if (IsServerRunning(url)) return url;
@@ -201,8 +203,8 @@ namespace MusicFlow
         {
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                request.Timeout = 1000;
+                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "/health");
+                request.Timeout = 800;
                 request.Method = "GET";
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {
