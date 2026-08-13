@@ -19,26 +19,21 @@ namespace MusicFlow
                 string appDir = AppDomain.CurrentDomain.BaseDirectory;
                 Directory.SetCurrentDirectory(appDir);
 
-                // 1. Fast Server Health Check: If already running, launch instantly!
-                string activeUrl = GetActiveServerUrl();
+                // 1. Instant Health Check: If server is already running, open app window IMMEDIATELY (< 50ms)!
+                string activeUrl = IsServerRunning(AppUrl) ? AppUrl : null;
 
                 if (string.IsNullOrEmpty(activeUrl))
                 {
                     // Find Node.js executable
                     string nodePath = FindNodeExecutable(appDir);
-                    if (string.IsNullOrEmpty(nodePath))
-                    {
-                        nodePath = "node";
-                    }
 
-                    // Check if node_modules exists; if not, run npm install
+                    // Ensure node_modules exists
                     string nodeModulesDir = Path.Combine(appDir, "node_modules");
                     if (!Directory.Exists(nodeModulesDir))
                     {
-                        string npmPath = FindNpmExecutable();
                         ProcessStartInfo npmStart = new ProcessStartInfo
                         {
-                            FileName = npmPath,
+                            FileName = "npm.cmd",
                             Arguments = "install",
                             WorkingDirectory = appDir,
                             CreateNoWindow = false,
@@ -49,7 +44,7 @@ namespace MusicFlow
                         if (npmProcess != null) npmProcess.WaitForExit();
                     }
 
-                    // Spawn node server.js silently
+                    // Spawn node server.js in hidden background mode
                     ProcessStartInfo serverStart = new ProcessStartInfo
                     {
                         FileName = nodePath,
@@ -62,12 +57,15 @@ namespace MusicFlow
 
                     Process.Start(serverStart);
 
-                    // Poll health endpoint every 50ms up to 60 times (3s max)
-                    int retries = 60;
-                    while (retries-- > 0 && string.IsNullOrEmpty(activeUrl))
+                    // Poll http://localhost:3000/health every 30ms for up to 3 seconds
+                    for (int i = 0; i < 100; i++)
                     {
-                        Thread.Sleep(50);
-                        activeUrl = GetActiveServerUrl();
+                        Thread.Sleep(30);
+                        if (IsServerRunning(AppUrl))
+                        {
+                            activeUrl = AppUrl;
+                            break;
+                        }
                     }
                 }
 
@@ -115,11 +113,6 @@ namespace MusicFlow
             return "node";
         }
 
-        private static string FindNpmExecutable()
-        {
-            return "npm.cmd";
-        }
-
         private static string FindBrowserExecutable()
         {
             string edge86 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe");
@@ -137,22 +130,12 @@ namespace MusicFlow
             return null;
         }
 
-        private static string GetActiveServerUrl()
-        {
-            for (int port = 3000; port <= 3005; port++)
-            {
-                string url = string.Format("http://localhost:{0}", port);
-                if (IsServerRunning(url)) return url;
-            }
-            return null;
-        }
-
         private static bool IsServerRunning(string url)
         {
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "/health");
-                request.Timeout = 150;
+                request.Timeout = 100;
                 request.Method = "GET";
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {

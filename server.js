@@ -1018,8 +1018,8 @@ function listenOnPort(port, maxTries = 10) {
     }
   });
 
-  server.listen(port, HOST, async () => {
-    await ensureYtDlp();
+  server.listen(port, HOST, () => {
+    ensureYtDlp().catch(() => {});
     console.log('\n============================================================');
     console.log(`  🎵  MusicFlow v2.5 Desktop — High-Performance Music Engine`);
     console.log('============================================================');
