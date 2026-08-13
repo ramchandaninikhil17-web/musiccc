@@ -67,6 +67,20 @@ async function prepareBinaries() {
     try { fs.chmodSync(binaryPath, '755'); } catch (e) {}
   }
   console.log(`[MusicFlow Build] ✅ Direct download complete: ${binaryPath}`);
+  if (isWin) {
+    const cscPath = 'C:\\Windows\\Microsoft.NET\\Framework64\\v4.0.30319\\csc.exe';
+    const launcherCs = path.join(__dirname, 'MusicFlowLauncher.cs');
+    const launcherExe = path.join(__dirname, 'MusicFlow.exe');
+    if (fs.existsSync(cscPath) && fs.existsSync(launcherCs)) {
+      try {
+        console.log('[MusicFlow Build] ⚡ Compiling instant launcher MusicFlow.exe...');
+        execSync(`"${cscPath}" /target:winexe /optimize+ /out:"${launcherExe}" "${launcherCs}"`, { stdio: 'inherit' });
+        console.log('[MusicFlow Build] ✅ MusicFlow.exe compiled successfully!');
+      } catch (e) {
+        console.warn('[MusicFlow Build] ⚠️ Could not compile C# launcher:', e.message);
+      }
+    }
+  }
 }
 
 function downloadFileWithRedirects(url, destPath) {

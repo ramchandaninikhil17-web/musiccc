@@ -19,30 +19,23 @@ namespace MusicFlow
                 string appDir = AppDomain.CurrentDomain.BaseDirectory;
                 Directory.SetCurrentDirectory(appDir);
 
-                // 1. Find Node.js executable
-                string nodePath = FindNodeExecutable(appDir);
-                if (string.IsNullOrEmpty(nodePath))
-                {
-                    DialogResult result = MessageBox.Show(
-                        "Node.js was not found on your PC.\n\nMusicFlow requires Node.js (LTS version) to run.\n\nWould you like to download and install Node.js now?",
-                        "MusicFlow — Node.js Required",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Information
-                    );
-                    if (result == DialogResult.Yes)
-                    {
-                        Process.Start("https://nodejs.org/");
-                    }
-                    return;
-                }
+                // 1. Fast Server Health Check: If already running, launch instantly!
+                string activeUrl = GetActiveServerUrl();
 
-                // 2. Check if node_modules exists; if not, run npm install
-                string nodeModulesDir = Path.Combine(appDir, "node_modules");
-                if (!Directory.Exists(nodeModulesDir))
+                if (string.IsNullOrEmpty(activeUrl))
                 {
-                    string npmPath = FindNpmExecutable();
-                    if (!string.IsNullOrEmpty(npmPath))
+                    // Find Node.js executable
+                    string nodePath = FindNodeExecutable(appDir);
+                    if (string.IsNullOrEmpty(nodePath))
                     {
+                        nodePath = "node";
+                    }
+
+                    // Check if node_modules exists; if not, run npm install
+                    string nodeModulesDir = Path.Combine(appDir, "node_modules");
+                    if (!Directory.Exists(nodeModulesDir))
+                    {
+                        string npmPath = FindNpmExecutable();
                         ProcessStartInfo npmStart = new ProcessStartInfo
                         {
                             FileName = npmPath,
@@ -53,18 +46,10 @@ namespace MusicFlow
                             WindowStyle = ProcessWindowStyle.Normal
                         };
                         Process npmProcess = Process.Start(npmStart);
-                        if (npmProcess != null)
-                        {
-                            npmProcess.WaitForExit();
-                        }
+                        if (npmProcess != null) npmProcess.WaitForExit();
                     }
-                }
 
-                // 3. Find active server port (3000-3010)
-                string activeUrl = GetActiveServerUrl();
-
-                if (string.IsNullOrEmpty(activeUrl))
-                {
+                    // Spawn node server.js silently
                     ProcessStartInfo serverStart = new ProcessStartInfo
                     {
                         FileName = nodePath,
@@ -77,17 +62,18 @@ namespace MusicFlow
 
                     Process.Start(serverStart);
 
-                    int retries = 50;
+                    // Poll health endpoint every 50ms up to 60 times (3s max)
+                    int retries = 60;
                     while (retries-- > 0 && string.IsNullOrEmpty(activeUrl))
                     {
-                        Thread.Sleep(200);
+                        Thread.Sleep(50);
                         activeUrl = GetActiveServerUrl();
                     }
                 }
 
                 if (string.IsNullOrEmpty(activeUrl)) activeUrl = AppUrl;
 
-                // 4. Launch Edge App Mode or Chrome App Mode or Default Browser
+                // 2. Launch Edge App Mode or Chrome App Mode or Default Browser
                 string browserPath = FindBrowserExecutable();
                 if (!string.IsNullOrEmpty(browserPath))
                 {
@@ -118,80 +104,42 @@ namespace MusicFlow
             string localNode = Path.Combine(appDir, "node.exe");
             if (File.Exists(localNode)) return localNode;
 
-            string[] possiblePaths = new string[]
-            {
-                "node.exe",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"nodejs\node.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"nodejs\node.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), @"Programs\node\node.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"npm\node.exe")
-            };
+            string pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+            string pfNode = Path.Combine(pf, @"nodejs\node.exe");
+            if (File.Exists(pfNode)) return pfNode;
 
-            foreach (string p in possiblePaths)
-            {
-                try
-                {
-                    ProcessStartInfo psi = new ProcessStartInfo
-                    {
-                        FileName = p,
-                        Arguments = "--version",
-                        CreateNoWindow = true,
-                        UseShellExecute = false
-                    };
-                    using (Process proc = Process.Start(psi))
-                    {
-                        if (proc != null)
-                        {
-                            proc.WaitForExit(1500);
-                            if (proc.ExitCode == 0) return p;
-                        }
-                    }
-                }
-                catch { }
-            }
-            return null;
+            string pfx86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+            string pfxNode = Path.Combine(pfx86, @"nodejs\node.exe");
+            if (File.Exists(pfxNode)) return pfxNode;
+
+            return "node";
         }
 
         private static string FindNpmExecutable()
         {
-            string[] possiblePaths = new string[]
-            {
-                "npm.cmd",
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"nodejs\npm.cmd"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"nodejs\npm.cmd"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), @"npm\npm.cmd")
-            };
-
-            foreach (string p in possiblePaths)
-            {
-                if (File.Exists(p) || p == "npm.cmd")
-                {
-                    return p;
-                }
-            }
             return "npm.cmd";
         }
 
         private static string FindBrowserExecutable()
         {
-            string edge = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe");
-            if (File.Exists(edge)) return edge;
+            string edge86 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Microsoft\Edge\Application\msedge.exe");
+            if (File.Exists(edge86)) return edge86;
 
-            edge = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Microsoft\Edge\Application\msedge.exe");
+            string edge = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Microsoft\Edge\Application\msedge.exe");
             if (File.Exists(edge)) return edge;
 
             string chrome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), @"Google\Chrome\Application\chrome.exe");
             if (File.Exists(chrome)) return chrome;
 
-            chrome = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe");
-            if (File.Exists(chrome)) return chrome;
+            string chrome86 = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), @"Google\Chrome\Application\chrome.exe");
+            if (File.Exists(chrome86)) return chrome86;
 
             return null;
         }
 
         private static string GetActiveServerUrl()
         {
-            for (int port = 3000; port <= 3010; port++)
+            for (int port = 3000; port <= 3005; port++)
             {
                 string url = string.Format("http://localhost:{0}", port);
                 if (IsServerRunning(url)) return url;
@@ -204,7 +152,7 @@ namespace MusicFlow
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url + "/health");
-                request.Timeout = 800;
+                request.Timeout = 150;
                 request.Method = "GET";
                 using (HttpWebResponse response = (HttpWebResponse)request.GetResponse())
                 {

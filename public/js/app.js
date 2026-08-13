@@ -174,10 +174,10 @@
   function init() {
     createOrbs();
     applyTheme(currentTheme);
-    audioPlayer.volume = volume;
+    if (audioPlayer) audioPlayer.volume = volume;
     updateVolumeUI();
-    if (isShuffle) $('#shuffleBtn').classList.add('active');
-    if (repeatMode !== 'off') { $('#repeatBtn').classList.add('active'); updateRepeatIcon(); }
+    if (isShuffle && $('#shuffleBtn')) $('#shuffleBtn').classList.add('active');
+    if (repeatMode !== 'off' && $('#repeatBtn')) { $('#repeatBtn').classList.add('active'); updateRepeatIcon(); }
     updateQualityLabel();
     bindEvents();
     navigateTo('home');
@@ -201,6 +201,7 @@
   }
 
   function createOrbs() {
+    if (!bgAnimation) return;
     for (let i = 0; i < 3; i++) { const o = document.createElement('div'); o.classList.add('orb'); bgAnimation.appendChild(o); }
   }
 
@@ -213,9 +214,11 @@
     Storage.set('theme', theme);
     const sun = $('.icon-sun');
     const moon = $('.icon-moon');
-    if (theme === 'dark') { sun.style.display = ''; moon.style.display = 'none'; }
-    else { sun.style.display = 'none'; moon.style.display = ''; }
-    $('#settingTheme').value = theme;
+    if (sun && moon) {
+      if (theme === 'dark') { sun.style.display = ''; moon.style.display = 'none'; }
+      else { sun.style.display = 'none'; moon.style.display = ''; }
+    }
+    if ($('#settingTheme')) $('#settingTheme').value = theme;
   }
 
   /* ================================================================
@@ -662,10 +665,12 @@
 
   function setPlayState(playing) {
     isPlaying = playing;
-    $('.play-icon').style.display = playing ? 'none' : '';
-    $('.pause-icon').style.display = playing ? '' : 'none';
-    playPauseBtn.title = playing ? 'Pause' : 'Play';
-    nowPlayingBar.classList.toggle('playing', playing);
+    const playIcon = $('.play-icon');
+    const pauseIcon = $('.pause-icon');
+    if (playIcon) playIcon.style.display = playing ? 'none' : '';
+    if (pauseIcon) pauseIcon.style.display = playing ? '' : 'none';
+    if (playPauseBtn) playPauseBtn.title = playing ? 'Pause' : 'Play';
+    if (nowPlayingBar) nowPlayingBar.classList.toggle('playing', playing);
     
     // Sync with Apple Orb, Dynamic Island & MediaSession
     AppleOrbController.setPlaying(playing);

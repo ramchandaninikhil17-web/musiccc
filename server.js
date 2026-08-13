@@ -33,7 +33,7 @@ process.on('unhandledRejection', (reason, promise) => {
 
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 
 /* ------------------------------------------------------------------ */
 /*  Standard Extractor & User-Agent Arguments for Cloud Anti-Bot Bypass*/
@@ -686,7 +686,7 @@ function streamViaPipeFallback(videoId, req, res) {
     const streamProcess = spawn(ytDlpPath, [
       ...BASE_YTDLP_ARGS,
       `https://www.youtube.com/watch?v=${videoId}`,
-      '-f', 'bestaudio[ext=m4a]/bestaudio/worst',
+      '-f', 'bestaudio[ext=webm]/bestaudio/worst',
       '-o', '-',
       '--no-warnings',
     ], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
@@ -697,7 +697,7 @@ function streamViaPipeFallback(videoId, req, res) {
       if (!headersSet && !res.headersSent) {
         headersSet = true;
         res.writeHead(200, {
-          'Content-Type': 'audio/mp4',
+          'Content-Type': 'audio/webm',
           'Accept-Ranges': 'bytes',
           'Cache-Control': 'no-cache',
           'Access-Control-Allow-Origin': '*',

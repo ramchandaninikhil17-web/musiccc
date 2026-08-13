@@ -17,7 +17,7 @@ $WshShell = New-Object -ComObject WScript.Shell
 $Shortcut = $WshShell.CreateShortcut($ShortcutPath)
 $Shortcut.TargetPath = $TargetPath
 $Shortcut.WorkingDirectory = $ScriptDir
-$Shortcut.Description = 'MusicFlow v2.5 — Apple Orb, PiP Mini-Player, Pomodoro Focus, Ambient Sounds & Cloud Deploy'
+$Shortcut.Description = 'MusicFlow v2.5 — Premium Desktop Music Engine'
 $Shortcut.IconLocation = 'shell32.dll,168'
 $Shortcut.WindowStyle = 1
 $Shortcut.Save()
