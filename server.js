@@ -44,7 +44,7 @@ const BASE_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
   '--no-playlist',
-  '--extractor-args', 'youtube:player_client=android'
+  '--extractor-args', 'youtube:player_client=android,web,tv'
 ];
 
 /* ------------------------------------------------------------------ */
@@ -100,17 +100,57 @@ async function ensureYtDlp() {
 
     // Not found locally or in PATH -> auto-download from official GitHub releases
     if (YTDlpWrap && typeof YTDlpWrap.downloadFromGithub === 'function') {
-      console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release from GitHub...');
-      await YTDlpWrap.downloadFromGithub(rootBinary);
-      if (!isWin) {
-        try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
+      try {
+        console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release from GitHub...');
+        await YTDlpWrap.downloadFromGithub(rootBinary);
+        if (!isWin) {
+          try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
+        }
+        ytDlpPath = rootBinary;
+        console.log(`[MusicFlow] ✅ yt-dlp downloaded successfully: ${ytDlpPath}`);
+        return;
+      } catch (wrapErr) {
+        console.warn(`[MusicFlow] ⚠️ YTDlpWrap download failed, trying direct HTTPS fallback: ${wrapErr.message}`);
       }
-      ytDlpPath = rootBinary;
-      console.log(`[MusicFlow] ✅ yt-dlp downloaded successfully: ${ytDlpPath}`);
     }
+
+    // Direct HTTPS fallback download
+    let downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
+    if (isWin) downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+    else if (process.platform === 'darwin') downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+
+    await downloadBinaryDirect(downloadUrl, rootBinary);
+    if (!isWin) {
+      try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
+    }
+    ytDlpPath = rootBinary;
+    console.log(`[MusicFlow] ✅ Direct download of yt-dlp successful: ${ytDlpPath}`);
   } catch (err) {
     console.warn(`[MusicFlow] ⚠️ Auto-download of yt-dlp note: ${err.message}`);
   }
+}
+
+function downloadBinaryDirect(url, destPath) {
+  return new Promise((resolve, reject) => {
+    https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 MusicFlow-Server' } }, (res) => {
+      if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        return downloadBinaryDirect(res.headers.location, destPath).then(resolve).catch(reject);
+      }
+      if (res.statusCode !== 200) {
+        return reject(new Error(`Download failed with HTTP ${res.statusCode}`));
+      }
+      const fileStream = fs.createWriteStream(destPath);
+      res.pipe(fileStream);
+      fileStream.on('finish', () => {
+        fileStream.close();
+        resolve();
+      });
+      fileStream.on('error', (err) => {
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+    }).on('error', reject);
+  });
 }
 
 /* ------------------------------------------------------------------ */

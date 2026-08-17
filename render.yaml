@@ -1,11 +1,10 @@
 services:
   - type: web
     name: musicflow
-    env: node
+    env: docker
     plan: free
     region: oregon
-    buildCommand: npm install && npm run build
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
     healthCheckPath: /health
     autoDeploy: true
     envVars:
