@@ -2664,4 +2664,367 @@ a { text-decoration: none; color: inherit; }
 }
 
 
+/* ================================================================
+   MOOD FLOW — Quick Cards, Questionnaire Modal & Results
+   ================================================================ */
 
+/* Quick Mood Grid */
+.mood-quick-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 14px;
+  margin-bottom: 30px;
+}
+
+.mood-quick-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 24px 16px;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(135deg, var(--mq1, #6366f1), var(--mq2, #ec4899));
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all var(--transition);
+  position: relative;
+  overflow: hidden;
+}
+
+.mood-quick-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.mood-quick-card:hover {
+  transform: translateY(-4px) scale(1.03);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+}
+
+.mood-quick-card:hover::before {
+  opacity: 1;
+}
+
+.mood-quick-card:active {
+  transform: scale(0.97);
+}
+
+.mqc-emoji {
+  font-size: 36px;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.3));
+}
+
+.mqc-label {
+  font-size: 14px;
+  font-weight: 600;
+  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Advanced Mood Button */
+.mood-advanced-launch {
+  margin-bottom: 30px;
+}
+
+.mood-advanced-btn {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 22px 20px;
+  border-radius: var(--radius-lg);
+  border: 2px dashed var(--border-hover);
+  background: var(--bg-glass);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font);
+  transition: all var(--transition);
+}
+
+.mood-advanced-btn span {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.mood-advanced-btn small {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.mood-advanced-btn:hover {
+  border-color: var(--accent);
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-glow);
+}
+
+/* Mood Modal Specific */
+.mood-modal .modal-body {
+  min-height: 380px;
+}
+
+/* Step Indicator Bar */
+.mood-steps-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 28px;
+  padding: 0 20px;
+}
+
+.mood-step-dot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+}
+
+.mood-step-dot span {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-glass);
+  border: 2px solid var(--border);
+  color: var(--text-muted);
+  font-size: 14px;
+  font-weight: 700;
+  transition: all 0.3s ease;
+}
+
+.mood-step-dot.active span {
+  background: var(--accent-gradient);
+  border-color: transparent;
+  color: #fff;
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.mood-step-dot.completed span {
+  background: #10b981;
+  border-color: transparent;
+  color: #fff;
+}
+
+.mood-step-dot small {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.mood-step-dot.active small {
+  color: var(--text-primary);
+}
+
+.mood-step-line {
+  width: 50px;
+  height: 2px;
+  background: var(--border);
+  margin: 0 8px;
+  margin-bottom: 18px;
+  transition: background 0.3s ease;
+}
+
+/* Step Panels */
+.mood-step-panel {
+  animation: moodFadeIn 0.3s ease;
+}
+
+@keyframes moodFadeIn {
+  from { opacity: 0; transform: translateX(20px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.mood-question {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+/* Options Grid */
+.mood-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.mood-option-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  border: 2px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.mood-option-chip:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--border-hover);
+  transform: translateY(-2px);
+}
+
+.mood-option-chip.selected {
+  background: var(--accent-glow);
+  border-color: var(--accent);
+  color: var(--text-primary);
+  box-shadow: 0 0 20px var(--accent-glow);
+}
+
+.moc-emoji {
+  font-size: 22px;
+  flex-shrink: 0;
+}
+
+/* Energy Slider */
+.mood-energy-slider-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 30px 20px;
+}
+
+.mood-energy-labels {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 500px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.mood-energy-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  max-width: 500px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(90deg, #6366f1, #ec4899, #ef4444, #f97316);
+  outline: none;
+  cursor: pointer;
+}
+
+.mood-energy-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #fff;
+  border: 3px solid var(--accent);
+  box-shadow: 0 0 12px var(--accent-glow);
+  cursor: grab;
+  transition: transform 0.2s ease;
+}
+
+.mood-energy-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.mood-energy-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Generating Spinner */
+.mood-generating {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  padding: 50px 20px;
+}
+
+.mood-gen-spinner {
+  width: 48px;
+  height: 48px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.mood-gen-text {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary);
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.mood-nav-actions {
+  margin-top: 24px;
+}
+
+/* Saved Mood Presets */
+.mood-presets-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.mood-preset-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font);
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.mood-preset-pill:hover {
+  background: var(--bg-glass-hover);
+  border-color: var(--accent);
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .mood-quick-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 10px;
+  }
+  .mood-quick-card { padding: 18px 12px; }
+  .mqc-emoji { font-size: 28px; }
+  .mqc-label { font-size: 12px; }
+  .mood-options-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+  }
+  .mood-option-chip { padding: 10px 12px; font-size: 13px; }
+  .mood-step-line { width: 24px; }
+}

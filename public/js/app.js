@@ -146,7 +146,7 @@
   const bgAnimation = $('#bgAnimation');
 
   // Pages
-  const pages = { home: $('#pageHome'), search: $('#pageSearch'), library: $('#pageLibrary'), profile: $('#pageProfile') };
+  const pages = { home: $('#pageHome'), search: $('#pageSearch'), library: $('#pageLibrary'), profile: $('#pageProfile'), mood: $('#pageMood') };
   const navLinks = $$('.nav-link');
 
   // Now playing
@@ -197,6 +197,15 @@
     SleepTimerManager.init();
     ThemeStudioManager.init();
     DynamicIslandHeaderManager.init();
+    MoodFlowManager.init();
+
+    // Instant cache hydration: render home from localStorage before network
+    const cachedRecs = Storage.get('cached_recommendations', null);
+    if (cachedRecs && Array.isArray(cachedRecs) && cachedRecs.length > 0) {
+      recommendedSongs = cachedRecs;
+      const grid = $('#recommendedGrid');
+      if (grid) renderRecommendationCards(grid, recommendedSongs);
+    }
 
     // Auto-restore saved likes and playlists from disk database
     Storage.syncFromServer();
@@ -390,6 +399,7 @@
     if (page === 'library') renderLibrary();
     if (page === 'profile') renderProfile();
     if (page === 'search') renderSearchHistory();
+    if (page === 'mood') MoodFlowManager.renderPage();
 
     closeMobileSidebar();
   }
@@ -1301,6 +1311,7 @@
       }
 
       recommendedSongs = data;
+      Storage.set('cached_recommendations', data.slice(0, 24));
       renderRecommendationCards(grid, recommendedSongs);
 
       if (topArtists[0]) renderTasteSection(topArtists[0]);
@@ -2986,6 +2997,458 @@
       if (this.playIcon) this.playIcon.style.display = playing ? 'none' : '';
       if (this.pauseIcon) this.pauseIcon.style.display = playing ? '' : 'none';
       if (this.soundwaves) this.soundwaves.style.display = playing ? 'flex' : 'none';
+    }
+  };
+
+  /* ================================================================
+     AI MOOD & VIBE QUESTIONNAIRE ENGINE
+     ================================================================ */
+  const MoodFlowManager = {
+    currentStep: 1,
+    answers: { emotion: null, activity: null, style: null, energy: 2 },
+    moodSongs: [],
+    savedPresets: Storage.get('mood_presets', []),
+
+    // Search query mapping for mood combinations
+    moodQueries: {
+      happy: ['happy upbeat songs', 'feel good music playlist', 'uplifting songs 2024'],
+      sad: ['sad emotional songs', 'heartbreak songs playlist', 'emotional ballads'],
+      chill: ['chill relaxing music', 'lofi chill beats', 'calm vibes playlist'],
+      energetic: ['energetic workout music', 'high energy songs', 'pump up music'],
+      focus: ['focus study music', 'deep concentration beats', 'alpha waves study'],
+      romantic: ['romantic love songs', 'love songs playlist', 'romantic hindi songs'],
+      party: ['party dance music', 'club bangers 2024', 'party anthems'],
+      nostalgia: ['90s hits playlist', 'retro classic songs', 'old is gold songs'],
+      sleep: ['sleep ambient music', 'calm sleep sounds', 'peaceful night music']
+    },
+    activityQueries: {
+      coding: ['coding music beats', 'programming focus music'],
+      driving: ['night driving songs', 'drive playlist songs'],
+      workout: ['gym workout music', 'beast mode playlist'],
+      morning: ['morning vibes music', 'good morning songs'],
+      hangout: ['chill hangout songs', 'friends party playlist'],
+      rainy: ['rainy day songs', 'monsoon songs playlist'],
+      study: ['study music instrumental', 'exam study focus'],
+      cooking: ['cooking vibes music', 'kitchen playlist happy']
+    },
+    styleQueries: {
+      global_pop: ['top global pop hits 2024', 'billboard hot 100'],
+      bollywood: ['latest bollywood songs 2024', 'hindi hit songs'],
+      punjabi: ['punjabi songs latest hits', 'punjabi bhangra mix'],
+      lofi: ['lofi hip hop beats study', 'lo-fi chill instrumental'],
+      edm: ['edm festival music 2024', 'synthwave retro beats'],
+      rock: ['rock music greatest hits', 'indie rock playlist'],
+      rnb: ['r&b soul music playlist', 'smooth rnb vibes'],
+      kpop: ['kpop hits 2024', 'best kpop songs playlist']
+    },
+    energyLabels: { 1: '\ud83c\udf19 Mellow', 2: '\u2600\ufe0f Balanced', 3: '\u26a1 Upbeat', 4: '\ud83d\udd25 Ultra Hype' },
+
+    init() {
+      // Quick mood cards on page
+      $$('.mood-quick-card').forEach(card => {
+        card.addEventListener('click', () => {
+          const mood = card.dataset.mood;
+          this.quickMoodPlay(mood);
+        });
+      });
+
+      // Advanced questionnaire
+      $('#openMoodQuestionnaireBtn')?.addEventListener('click', () => this.openModal());
+      $('#moodModalCloseBtn')?.addEventListener('click', () => this.closeModal());
+      $('#moodQuestionnaireModal')?.addEventListener('click', (e) => {
+        if (e.target === $('#moodQuestionnaireModal')) this.closeModal();
+      });
+      $('#moodNextBtn')?.addEventListener('click', () => this.nextStep());
+      $('#moodBackBtn')?.addEventListener('click', () => this.prevStep());
+      $('#moodRandomBtn')?.addEventListener('click', () => this.randomize());
+
+      // Energy slider
+      $('#moodEnergySlider')?.addEventListener('input', (e) => {
+        const val = parseInt(e.target.value);
+        this.answers.energy = val;
+        $('#moodEnergyValue').textContent = this.energyLabels[val] || '';
+      });
+
+      // Option chip selection
+      document.addEventListener('click', (e) => {
+        const chip = e.target.closest('.mood-option-chip');
+        if (!chip) return;
+        const panel = chip.closest('.mood-step-panel');
+        if (!panel) return;
+        panel.querySelectorAll('.mood-option-chip').forEach(c => c.classList.remove('selected'));
+        chip.classList.add('selected');
+      });
+
+      // Result action buttons
+      $('#playAllMoodBtn')?.addEventListener('click', () => this.playMoodMix());
+      $('#saveMoodPlaylistBtn')?.addEventListener('click', () => this.saveAsPlaylist());
+    },
+
+    renderPage() {
+      // Render saved presets
+      const sec = $('#savedMoodPresetsSection');
+      const list = $('#savedMoodPresetsList');
+      if (sec && list && this.savedPresets.length > 0) {
+        sec.style.display = '';
+        list.innerHTML = this.savedPresets.map((p, i) => `
+          <button class="mood-preset-pill" data-idx="${i}">
+            <span>${p.emoji || '\ud83c\udfad'}</span>
+            <span>${esc(p.label)}</span>
+          </button>
+        `).join('');
+        list.querySelectorAll('.mood-preset-pill').forEach(pill => {
+          pill.addEventListener('click', () => {
+            const idx = parseInt(pill.dataset.idx);
+            const preset = this.savedPresets[idx];
+            if (preset) this.executePreset(preset);
+          });
+        });
+      } else if (sec) {
+        sec.style.display = 'none';
+      }
+
+      // Show last mood results if any
+      if (this.moodSongs.length > 0) {
+        const resSec = $('#moodResultsSection');
+        if (resSec) resSec.style.display = '';
+        renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
+      }
+    },
+
+    openModal() {
+      this.currentStep = 1;
+      this.answers = { emotion: null, activity: null, style: null, energy: 2 };
+      this.updateStepUI();
+      $('#moodQuestionnaireModal').style.display = 'flex';
+      $('#moodGenerating').style.display = 'none';
+      $('#moodNavActions').style.display = '';
+      // Reset selections
+      $$('.mood-option-chip').forEach(c => c.classList.remove('selected'));
+      $('#moodEnergySlider').value = 2;
+      $('#moodEnergyValue').textContent = this.energyLabels[2];
+    },
+
+    closeModal() {
+      $('#moodQuestionnaireModal').style.display = 'none';
+    },
+
+    updateStepUI() {
+      for (let i = 1; i <= 4; i++) {
+        const panel = $(`#moodStep${i}`);
+        if (panel) panel.style.display = i === this.currentStep ? '' : 'none';
+      }
+      // Update step dots
+      $$('.mood-step-dot').forEach(dot => {
+        const s = parseInt(dot.dataset.step);
+        dot.classList.toggle('active', s === this.currentStep);
+        dot.classList.toggle('completed', s < this.currentStep);
+      });
+      // Back button
+      const backBtn = $('#moodBackBtn');
+      if (backBtn) backBtn.style.display = this.currentStep > 1 ? '' : 'none';
+      // Next button text
+      const nextBtn = $('#moodNextBtn');
+      if (nextBtn) nextBtn.textContent = this.currentStep === 4 ? '\u26a1 Generate Mood Mix' : 'Next \u2192';
+    },
+
+    getSelectedValue(stepNum) {
+      const panel = $(`#moodStep${stepNum}`);
+      if (!panel) return null;
+      const sel = panel.querySelector('.mood-option-chip.selected');
+      return sel ? sel.dataset.value : null;
+    },
+
+    nextStep() {
+      // Collect answer from current step
+      if (this.currentStep === 1) {
+        this.answers.emotion = this.getSelectedValue(1);
+        if (!this.answers.emotion) { toast('Please select your mood'); return; }
+      } else if (this.currentStep === 2) {
+        this.answers.activity = this.getSelectedValue(2);
+        if (!this.answers.activity) { toast('Please select your activity'); return; }
+      } else if (this.currentStep === 3) {
+        this.answers.style = this.getSelectedValue(3);
+        if (!this.answers.style) { toast('Please select a music style'); return; }
+      }
+
+      if (this.currentStep < 4) {
+        this.currentStep++;
+        this.updateStepUI();
+      } else {
+        // Step 4 done — generate!
+        this.answers.energy = parseInt($('#moodEnergySlider')?.value || 2);
+        this.generateMoodMix();
+      }
+    },
+
+    prevStep() {
+      if (this.currentStep > 1) {
+        this.currentStep--;
+        this.updateStepUI();
+      }
+    },
+
+    randomize() {
+      // Randomly select options for all steps
+      const steps = [1, 2, 3];
+      steps.forEach(s => {
+        const panel = $(`#moodStep${s}`);
+        if (!panel) return;
+        const chips = panel.querySelectorAll('.mood-option-chip');
+        if (!chips.length) return;
+        chips.forEach(c => c.classList.remove('selected'));
+        const rand = chips[Math.floor(Math.random() * chips.length)];
+        rand.classList.add('selected');
+      });
+      // Random energy
+      const randEnergy = Math.floor(Math.random() * 4) + 1;
+      $('#moodEnergySlider').value = randEnergy;
+      $('#moodEnergyValue').textContent = this.energyLabels[randEnergy];
+      this.answers.energy = randEnergy;
+      toast('\ud83c\udfb2 Randomized! Click Generate when ready.');
+
+      // Collect all answers
+      this.answers.emotion = this.getSelectedValue(1);
+      this.answers.activity = this.getSelectedValue(2);
+      this.answers.style = this.getSelectedValue(3);
+
+      // Jump to last step
+      this.currentStep = 4;
+      this.updateStepUI();
+    },
+
+    buildSearchQueries() {
+      const queries = [];
+      const e = this.answers.emotion;
+      const a = this.answers.activity;
+      const s = this.answers.style;
+      const nrg = this.answers.energy;
+
+      // Primary mood queries
+      if (e && this.moodQueries[e]) {
+        queries.push(...this.moodQueries[e]);
+      }
+      // Activity blend
+      if (a && this.activityQueries[a]) {
+        queries.push(this.activityQueries[a][0]);
+      }
+      // Style blend
+      if (s && this.styleQueries[s]) {
+        queries.push(this.styleQueries[s][0]);
+      }
+      // Energy modifier
+      const energySuffix = nrg <= 1 ? 'slow calm' : nrg === 2 ? '' : nrg === 3 ? 'upbeat' : 'high energy bass';
+      if (energySuffix && queries.length > 0) {
+        queries.push(`${queries[0]} ${energySuffix}`);
+      }
+      return queries.slice(0, 5);
+    },
+
+    async generateMoodMix() {
+      // Show loading
+      $('#moodNavActions').style.display = 'none';
+      for (let i = 1; i <= 4; i++) {
+        $(`#moodStep${i}`).style.display = 'none';
+      }
+      $('#moodGenerating').style.display = 'flex';
+
+      const queries = this.buildSearchQueries();
+
+      try {
+        // Try server-side mood endpoint first
+        let songs = [];
+        try {
+          const res = await fetch('/api/mood-mix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ queries, energy: this.answers.energy })
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (data.results && data.results.length > 0) {
+              songs = data.results;
+            }
+          }
+        } catch (e) {}
+
+        // Fallback: client-side search
+        if (songs.length === 0) {
+          for (const q of queries.slice(0, 3)) {
+            try {
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 12000);
+              const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+              clearTimeout(timeoutId);
+              if (res.ok) {
+                const data = await res.json();
+                if (Array.isArray(data)) songs.push(...data);
+              }
+            } catch {}
+          }
+        }
+
+        // Deduplicate
+        const seen = new Set();
+        const unique = [];
+        songs.forEach(s => {
+          if (s && s.id && !seen.has(s.id)) {
+            seen.add(s.id);
+            const dur = Number(s.duration) || 0;
+            if (dur >= 60 && dur <= 600) unique.push(s);
+          }
+        });
+
+        // Shuffle
+        for (let i = unique.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [unique[i], unique[j]] = [unique[j], unique[i]];
+        }
+
+        this.moodSongs = unique.slice(0, 20);
+        this.closeModal();
+
+        if (this.moodSongs.length > 0) {
+          // Navigate to mood page and show results
+          navigateTo('mood');
+          const resSec = $('#moodResultsSection');
+          if (resSec) resSec.style.display = '';
+          const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
+          const emoji = emojiMap[this.answers.emotion] || '\ud83c\udfad';
+          $('#moodResultsTitle').textContent = `${emoji} Your ${(this.answers.emotion || 'Mood').charAt(0).toUpperCase() + (this.answers.emotion || 'Mood').slice(1)} Mix`;
+          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
+
+          // Auto play
+          this.playMoodMix();
+          toast(`${emoji} Playing your mood mix (${this.moodSongs.length} tracks)`);
+        } else {
+          toast('Could not find songs for your mood. Try different options.');
+        }
+      } catch (err) {
+        console.error('[MoodFlow Error]', err);
+        this.closeModal();
+        toast('\u26a0\ufe0f Error generating mood mix. Please try again.');
+      }
+    },
+
+    async quickMoodPlay(mood) {
+      const queries = this.moodQueries[mood] || [`${mood} music playlist`];
+      toast(`\ud83c\udfad Generating ${mood} mix...`);
+
+      try {
+        let songs = [];
+        for (const q of queries.slice(0, 2)) {
+          try {
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), 12000);
+            const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+            clearTimeout(tid);
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data)) songs.push(...data);
+            }
+          } catch {}
+        }
+
+        const seen = new Set();
+        const unique = [];
+        songs.forEach(s => {
+          if (s && s.id && !seen.has(s.id)) {
+            seen.add(s.id);
+            const dur = Number(s.duration) || 0;
+            if (dur >= 60 && dur <= 600) unique.push(s);
+          }
+        });
+
+        for (let i = unique.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [unique[i], unique[j]] = [unique[j], unique[i]];
+        }
+
+        this.moodSongs = unique.slice(0, 15);
+
+        if (this.moodSongs.length > 0) {
+          const resSec = $('#moodResultsSection');
+          if (resSec) resSec.style.display = '';
+          const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
+          const emoji = emojiMap[mood] || '\ud83c\udfad';
+          $('#moodResultsTitle').textContent = `${emoji} ${mood.charAt(0).toUpperCase() + mood.slice(1)} Mix`;
+          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
+          this.playMoodMix();
+          toast(`${emoji} Playing ${mood} mix (${this.moodSongs.length} tracks)`);
+        } else {
+          toast('No songs found. Try again.');
+        }
+      } catch {
+        toast('\u26a0\ufe0f Error loading mood mix');
+      }
+    },
+
+    playMoodMix() {
+      if (!this.moodSongs.length) { toast('No mood songs to play'); return; }
+      queue = [...this.moodSongs];
+      currentIndex = -1;
+      updateQueueUI();
+      playSong(queue[0]);
+    },
+
+    saveAsPlaylist() {
+      if (!this.moodSongs.length) { toast('No songs to save'); return; }
+      const name = `Mood: ${(this.answers.emotion || 'Mix').charAt(0).toUpperCase() + (this.answers.emotion || 'Mix').slice(1)} ${new Date().toLocaleDateString()}`;
+      const pl = { id: 'pl_' + Date.now(), name, songs: [...this.moodSongs] };
+      playlists.push(pl);
+      Storage.set('playlists', playlists);
+
+      // Save as preset
+      const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
+      this.savedPresets.unshift({
+        label: name,
+        emoji: emojiMap[this.answers.emotion] || '\ud83c\udfad',
+        answers: { ...this.answers },
+        timestamp: Date.now()
+      });
+      if (this.savedPresets.length > 10) this.savedPresets = this.savedPresets.slice(0, 10);
+      Storage.set('mood_presets', this.savedPresets);
+
+      toast(`\ud83d\udcbe Saved "${name}" to playlists!`);
+    },
+
+    async executePreset(preset) {
+      if (preset.answers) {
+        this.answers = { ...preset.answers };
+        toast(`\u26a1 Replaying ${preset.label}...`);
+        const queries = this.buildSearchQueries();
+        // Quick search
+        let songs = [];
+        for (const q of queries.slice(0, 3)) {
+          try {
+            const controller = new AbortController();
+            const tid = setTimeout(() => controller.abort(), 12000);
+            const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
+            clearTimeout(tid);
+            if (res.ok) {
+              const data = await res.json();
+              if (Array.isArray(data)) songs.push(...data);
+            }
+          } catch {}
+        }
+        const seen = new Set();
+        this.moodSongs = songs.filter(s => {
+          if (!s || !s.id || seen.has(s.id)) return false;
+          seen.add(s.id);
+          const dur = Number(s.duration) || 0;
+          return dur >= 60 && dur <= 600;
+        }).slice(0, 15);
+
+        if (this.moodSongs.length > 0) {
+          const resSec = $('#moodResultsSection');
+          if (resSec) resSec.style.display = '';
+          $('#moodResultsTitle').textContent = `${preset.emoji} ${preset.label}`;
+          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
+          this.playMoodMix();
+        } else {
+          toast('No songs found for this preset');
+        }
+      }
     }
   };
 

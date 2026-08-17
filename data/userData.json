@@ -1,6 +1,6 @@
 {
   "theme": "dark",
-  "lastSaved": "2026-08-16T09:34:07.538Z",
+  "lastSaved": "2026-08-17T12:53:51.389Z",
   "history": [
     {
       "song": {
@@ -2943,5 +2943,31 @@
   "volume": 1,
   "quality": "high",
   "repeat": "off",
-  "shuffle": false
+  "shuffle": false,
+  "cached_recommendations": [
+    {
+      "id": "orYf6VDtj_k",
+      "title": "Raataan Lambiyan - Lyric Video | Shershaah | Sidharth, Kiara | Tanishk B. | Jubin | Asees",
+      "channel": "Sony Music India",
+      "duration": 234,
+      "thumbnail": "https://i.ytimg.com/vi/orYf6VDtj_k/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDgglhc3dnaFFIPHqWJ7Jn2p2REbg",
+      "views": 789292760
+    },
+    {
+      "id": "hoNb6HuNmU0",
+      "title": "Full Song: KHAIRIYAT (BONUS TRACK) | CHHICHHORE | Sushant, Shraddha | Pritam, Amitabh B|Arijit Singh",
+      "channel": "T-Series",
+      "duration": 239,
+      "thumbnail": "https://i.ytimg.com/vi/hoNb6HuNmU0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDsU3QXdn5X-JJWvqTKaFddxDLkkA",
+      "views": 1276112785
+    },
+    {
+      "id": "meVTfMpy0xU",
+      "title": "🔥𝐀 𝐏𝐋𝐀𝐘𝐋𝐈𝐒𝐓 𝐅𝐎𝐑 𝐖𝐇𝐄𝐍 𝐘𝐎𝐔’𝐑𝐄 𝐀𝐋𝐎𝐍𝐄 𝐖𝐈𝐓𝐇 𝐘𝐎𝐔𝐑 𝐓𝐇𝐎𝐔𝐆𝐇𝐓𝐒 :)#fyp #trending #viral #video #songs #playlist",
+      "channel": "𝙏𝙖𝙣𝙭 𝙀𝙙𝙞𝙩𝙯 🌷",
+      "duration": 587,
+      "thumbnail": "https://i.ytimg.com/vi/meVTfMpy0xU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCSuwldBzFLODyJ1T5m3nC0gQfFyw",
+      "views": 2291511
+    }
+  ]
 }

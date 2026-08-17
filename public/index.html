@@ -46,6 +46,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
           <span>Library</span>
         </a></li>
+        <li><a href="#mood" class="nav-link" data-page="mood" id="navMood">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <span>🎭 Mood Flow</span>
+        </a></li>
         <li><a href="#focus" class="nav-link" id="navFocus">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span>🧠 Focus Flow</span>
@@ -370,6 +374,58 @@
               <button class="text-btn" id="clearHistoryBtn">Clear History</button>
             </div>
             <div class="history-list" id="historyList"><p class="empty-msg">No listening history yet.</p></div>
+          </div>
+        </section>
+
+        <!-- ===== MOOD FLOW PAGE ===== -->
+        <section class="page" id="pageMood" style="display:none;">
+          <div class="home-greeting">
+            <h1>🎭 Mood Flow DJ</h1>
+            <p>Tell me how you feel, and I'll create the perfect playlist for you.</p>
+          </div>
+
+          <!-- Quick Mood Launch Cards -->
+          <div class="mood-quick-grid" id="moodQuickGrid">
+            <button class="mood-quick-card" data-mood="happy" style="--mq1:#f97316;--mq2:#eab308;"><span class="mqc-emoji">😊</span><span class="mqc-label">Happy & Upbeat</span></button>
+            <button class="mood-quick-card" data-mood="sad" style="--mq1:#6366f1;--mq2:#8b5cf6;"><span class="mqc-emoji">😢</span><span class="mqc-label">Sad & Emotional</span></button>
+            <button class="mood-quick-card" data-mood="romantic" style="--mq1:#ec4899;--mq2:#f43f5e;"><span class="mqc-emoji">❤️</span><span class="mqc-label">Romantic</span></button>
+            <button class="mood-quick-card" data-mood="chill" style="--mq1:#06b6d4;--mq2:#3b82f6;"><span class="mqc-emoji">😌</span><span class="mqc-label">Chill & Relaxed</span></button>
+            <button class="mood-quick-card" data-mood="energetic" style="--mq1:#ef4444;--mq2:#f97316;"><span class="mqc-emoji">💪</span><span class="mqc-label">Energetic & Hyped</span></button>
+            <button class="mood-quick-card" data-mood="focus" style="--mq1:#10b981;--mq2:#14b8a6;"><span class="mqc-emoji">🧠</span><span class="mqc-label">Deep Focus</span></button>
+            <button class="mood-quick-card" data-mood="party" style="--mq1:#d946ef;--mq2:#a855f7;"><span class="mqc-emoji">🎉</span><span class="mqc-label">Party & Dance</span></button>
+            <button class="mood-quick-card" data-mood="sleep" style="--mq1:#1e3a5f;--mq2:#312e81;"><span class="mqc-emoji">🌙</span><span class="mqc-label">Zen & Sleep</span></button>
+            <button class="mood-quick-card" data-mood="nostalgia" style="--mq1:#92400e;--mq2:#78350f;"><span class="mqc-emoji">🕰️</span><span class="mqc-label">Nostalgic</span></button>
+          </div>
+
+          <!-- Advanced Mood Questionnaire Button -->
+          <div class="mood-advanced-launch">
+            <button class="mood-advanced-btn" id="openMoodQuestionnaireBtn">
+              <span>✨ Advanced AI Mood Questionnaire</span>
+              <small>Answer 4 quick questions for a perfectly tailored playlist</small>
+            </button>
+          </div>
+
+          <!-- Mood Results Section -->
+          <div class="home-section" id="moodResultsSection" style="display:none;">
+            <div class="section-header">
+              <h2 id="moodResultsTitle">🎭 Your Mood Mix</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="playAllMoodBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="saveMoodPlaylistBtn">💾 Save as Playlist</button>
+              </div>
+            </div>
+            <div class="results-grid" id="moodResultsGrid"></div>
+          </div>
+
+          <!-- Saved Mood Presets -->
+          <div class="home-section" id="savedMoodPresetsSection" style="display:none;">
+            <div class="section-header">
+              <h2>⚡ Your Saved Mood Presets</h2>
+            </div>
+            <div class="mood-presets-list" id="savedMoodPresetsList"></div>
           </div>
         </section>
 
@@ -904,6 +960,105 @@
     </div>
   </div>
 
+  <!-- ============ AI MOOD QUESTIONNAIRE MODAL ============ -->
+  <div class="modal-overlay" id="moodQuestionnaireModal" style="display:none;">
+    <div class="modal modal-large mood-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🎭 AI Mood & Vibe Questionnaire</h3>
+          <p class="modal-subtitle">Answer a few quick questions and get a perfectly tailored playlist.</p>
+        </div>
+        <button class="modal-close" id="moodModalCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Step Indicator -->
+        <div class="mood-steps-bar">
+          <div class="mood-step-dot active" data-step="1"><span>1</span><small>Emotion</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="2"><span>2</span><small>Activity</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="3"><span>3</span><small>Style</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="4"><span>4</span><small>Energy</small></div>
+        </div>
+
+        <!-- Step 1: Emotion -->
+        <div class="mood-step-panel" id="moodStep1">
+          <h4 class="mood-question">How are you feeling right now?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="happy"><span class="moc-emoji">😊</span><span>Happy & Euphoric</span></button>
+            <button class="mood-option-chip" data-value="sad"><span class="moc-emoji">😢</span><span>Heartbroken / Sad</span></button>
+            <button class="mood-option-chip" data-value="chill"><span class="moc-emoji">😌</span><span>Chill & Relaxed</span></button>
+            <button class="mood-option-chip" data-value="energetic"><span class="moc-emoji">⚡</span><span>Energetic & Hyped</span></button>
+            <button class="mood-option-chip" data-value="focus"><span class="moc-emoji">🧠</span><span>Deep Focus</span></button>
+            <button class="mood-option-chip" data-value="romantic"><span class="moc-emoji">❤️</span><span>Romantic & Dreamy</span></button>
+            <button class="mood-option-chip" data-value="party"><span class="moc-emoji">🎉</span><span>Party & Dance</span></button>
+            <button class="mood-option-chip" data-value="nostalgia"><span class="moc-emoji">🕰️</span><span>Nostalgic / Retro</span></button>
+            <button class="mood-option-chip" data-value="sleep"><span class="moc-emoji">🌙</span><span>Zen & Sleep</span></button>
+          </div>
+        </div>
+
+        <!-- Step 2: Activity -->
+        <div class="mood-step-panel" id="moodStep2" style="display:none;">
+          <h4 class="mood-question">What are you doing?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="coding"><span class="moc-emoji">💻</span><span>Coding / Deep Work</span></button>
+            <button class="mood-option-chip" data-value="driving"><span class="moc-emoji">🚗</span><span>Night Driving</span></button>
+            <button class="mood-option-chip" data-value="workout"><span class="moc-emoji">🏋️</span><span>Gym / Workout</span></button>
+            <button class="mood-option-chip" data-value="morning"><span class="moc-emoji">☀️</span><span>Morning Coffee</span></button>
+            <button class="mood-option-chip" data-value="hangout"><span class="moc-emoji">🛋️</span><span>Hanging Out</span></button>
+            <button class="mood-option-chip" data-value="rainy"><span class="moc-emoji">🌧️</span><span>Rainy Day Vibes</span></button>
+            <button class="mood-option-chip" data-value="study"><span class="moc-emoji">📚</span><span>Studying</span></button>
+            <button class="mood-option-chip" data-value="cooking"><span class="moc-emoji">🍳</span><span>Cooking / Chores</span></button>
+          </div>
+        </div>
+
+        <!-- Step 3: Music Style -->
+        <div class="mood-step-panel" id="moodStep3" style="display:none;">
+          <h4 class="mood-question">What music style fits your vibe?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="global_pop"><span class="moc-emoji">🌍</span><span>Global Pop Hits</span></button>
+            <button class="mood-option-chip" data-value="bollywood"><span class="moc-emoji">🇮🇳</span><span>Bollywood & Hindi</span></button>
+            <button class="mood-option-chip" data-value="punjabi"><span class="moc-emoji">🔥</span><span>Punjabi Fire</span></button>
+            <button class="mood-option-chip" data-value="lofi"><span class="moc-emoji">☕</span><span>Lo-Fi & Instrumental</span></button>
+            <button class="mood-option-chip" data-value="edm"><span class="moc-emoji">🎹</span><span>EDM & Synthwave</span></button>
+            <button class="mood-option-chip" data-value="rock"><span class="moc-emoji">🎸</span><span>Rock & Indie</span></button>
+            <button class="mood-option-chip" data-value="rnb"><span class="moc-emoji">🎷</span><span>R&B / Soul</span></button>
+            <button class="mood-option-chip" data-value="kpop"><span class="moc-emoji">🇰🇷</span><span>K-Pop</span></button>
+          </div>
+        </div>
+
+        <!-- Step 4: Energy Level -->
+        <div class="mood-step-panel" id="moodStep4" style="display:none;">
+          <h4 class="mood-question">How much energy do you want?</h4>
+          <div class="mood-energy-slider-wrap">
+            <div class="mood-energy-labels">
+              <span>🌙 Mellow</span><span>☀️ Balanced</span><span>⚡ Upbeat</span><span>🔥 Ultra Hype</span>
+            </div>
+            <input type="range" class="mood-energy-slider" id="moodEnergySlider" min="1" max="4" value="2" step="1" />
+            <div class="mood-energy-value" id="moodEnergyValue">☀️ Balanced</div>
+          </div>
+        </div>
+
+        <!-- Generating Progress -->
+        <div class="mood-generating" id="moodGenerating" style="display:none;">
+          <div class="mood-gen-spinner"></div>
+          <p class="mood-gen-text">🎭 Crafting your perfect mood mix...</p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="modal-actions mood-nav-actions" id="moodNavActions">
+          <button class="modal-cancel-btn" id="moodBackBtn" style="display:none;">← Back</button>
+          <div style="flex:1;"></div>
+          <button class="modal-cancel-btn" id="moodRandomBtn" title="Randomize answers">🎲 Surprise Me</button>
+          <button class="modal-submit-btn" id="moodNextBtn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
@@ -916,7 +1071,7 @@
   <!-- Hidden IFrame for isolated file downloads -->
   <iframe id="downloadFrame" name="downloadFrame" style="display:none; width:0; height:0; border:none; visibility:hidden;" aria-hidden="true"></iframe>
 
-  <script src="/js/app.js?v=2.8"></script>
+  <script src="/js/app.js?v=3.0"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

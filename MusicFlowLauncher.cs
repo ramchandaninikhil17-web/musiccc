@@ -36,9 +36,9 @@ namespace MusicFlow
                             FileName = "npm.cmd",
                             Arguments = "install",
                             WorkingDirectory = appDir,
-                            CreateNoWindow = false,
-                            UseShellExecute = true,
-                            WindowStyle = ProcessWindowStyle.Normal
+                            CreateNoWindow = true,
+                            UseShellExecute = false,
+                            WindowStyle = ProcessWindowStyle.Hidden
                         };
                         Process npmProcess = Process.Start(npmStart);
                         if (npmProcess != null) npmProcess.WaitForExit();
@@ -57,10 +57,10 @@ namespace MusicFlow
 
                     Process.Start(serverStart);
 
-                    // Poll http://localhost:3000/health every 30ms for up to 3 seconds
-                    for (int i = 0; i < 100; i++)
+                    // Poll http://localhost:3000/health every 20ms for up to 4 seconds
+                    for (int i = 0; i < 200; i++)
                     {
-                        Thread.Sleep(30);
+                        Thread.Sleep(20);
                         if (IsServerRunning(AppUrl))
                         {
                             activeUrl = AppUrl;

@@ -1043,6 +1043,90 @@ app.get('/api/network-info', (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  POST /api/mood-mix — AI Mood-Based Music Resolution               */
+/* ------------------------------------------------------------------ */
+app.post('/api/mood-mix', async (req, res) => {
+  const queries = req.body.queries;
+  const energy = req.body.energy || 2;
+
+  if (!Array.isArray(queries) || queries.length === 0) {
+    return res.status(400).json({ error: 'Queries array is required' });
+  }
+
+  const cleanQueries = queries
+    .map(q => (typeof q === 'string' ? q.trim() : ''))
+    .filter(Boolean)
+    .slice(0, 6);
+
+  try {
+    const rawResults = await mapConcurrent(cleanQueries, 4, async (query) => {
+      try {
+        const stdout = await runYtDlp([
+          `ytsearch8:${query}`,
+          '--dump-json', '--flat-playlist', '--no-warnings',
+          '--default-search', 'ytsearch', '--skip-download',
+        ], 15000);
+        if (!stdout) return [];
+        return stdout.split('\n').filter(Boolean).map(line => {
+          try {
+            const d = JSON.parse(line);
+            return {
+              id: d.id || d.url,
+              title: d.title || 'Unknown',
+              channel: d.channel || d.uploader || 'Unknown',
+              duration: d.duration || 0,
+              thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url
+                : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+              views: d.view_count || 0,
+            };
+          } catch { return null; }
+        }).filter(Boolean).filter(item => isYouTubeId(item.id));
+      } catch {
+        return [];
+      }
+    });
+
+    const seen = new Set();
+    const allSongs = [];
+    rawResults.flat().forEach(s => {
+      if (s && s.id && !seen.has(s.id)) {
+        seen.add(s.id);
+        const dur = Number(s.duration) || 0;
+        if (dur >= 60 && dur <= 600) {
+          allSongs.push(s);
+        }
+      }
+    });
+
+    // Sort by relevance score
+    const scored = allSongs.map(item => ({
+      item,
+      score: scoreSong(item, cleanQueries[0] || '', true),
+    })).sort((a, b) => b.score - a.score);
+
+    // Energy filter: for low energy, prefer longer/calmer; for high, prefer shorter/energetic
+    let filtered = scored.map(s => s.item);
+    if (energy <= 1) {
+      filtered = filtered.filter(s => (s.duration || 0) >= 120);
+    } else if (energy >= 4) {
+      filtered = filtered.filter(s => (s.duration || 0) <= 360);
+    }
+
+    // Shuffle top results
+    const top = filtered.slice(0, 24);
+    for (let i = top.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [top[i], top[j]] = [top[j], top[i]];
+    }
+
+    res.json({ total: allSongs.length, results: top.slice(0, 20) });
+  } catch (err) {
+    console.error('[MoodMix]', err.message);
+    res.status(500).json({ error: 'Mood mix generation failed' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /*  SPA fallback                                                      */
 /* ------------------------------------------------------------------ */
 app.get('*', (req, res) => {
@@ -1066,7 +1150,7 @@ function listenOnPort(port, maxTries = 10) {
   server.listen(port, HOST, () => {
     ensureYtDlp().catch(() => {});
     console.log('\n============================================================');
-    console.log(`  🎵  MusicFlow v2.5 Desktop — High-Performance Music Engine`);
+    console.log(`  🎵  MusicFlow v3.0 Desktop — High-Performance Music Engine`);
     console.log('============================================================');
     console.log(`  💻  Local Desktop App:       http://localhost:${port}`);
     console.log(`  🌐  Network Host:            http://${HOST}:${port}`);
