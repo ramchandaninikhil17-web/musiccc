@@ -18,6 +18,7 @@ try {
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
+const MAX_SEARCH_LENGTH = 160;
 
 process.on('uncaughtException', (err) => {
   if (err.code === 'EPIPE' || err.code === 'ECONNRESET') {
@@ -32,18 +33,18 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 }));
 
 /* ------------------------------------------------------------------ */
-/*  Standard Extractor & User-Agent Arguments for Cloud Anti-Bot Bypass*/
+/*  Standard extractor arguments for reliable local YouTube access     */
 /* ------------------------------------------------------------------ */
+const YOUTUBE_ANDROID_USER_AGENT = 'com.google.android.youtube/19.29.37 (Linux; U; Android 11) gzip';
 const BASE_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
-  '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
   '--no-playlist',
-  '--format-sort', 'ext:mp4:m4a'
+  '--extractor-args', 'youtube:player_client=android'
 ];
 
 /* ------------------------------------------------------------------ */
@@ -122,8 +123,12 @@ function runYtDlp(args, timeout = 60000) {
       maxBuffer: 10 * 1024 * 1024,
       timeout,
       windowsHide: true,
-    }, (err, stdout) => {
-      if (err) return reject(err);
+    }, (err, stdout, stderr) => {
+      if (err) {
+        const details = String(stderr || '').trim();
+        if (details) err.message = `${err.message}: ${details}`;
+        return reject(err);
+      }
       resolve(stdout.trim());
     });
   });
@@ -131,6 +136,11 @@ function runYtDlp(args, timeout = 60000) {
 
 function isYouTubeId(id) {
   return typeof id === 'string' && /^[a-zA-Z0-9_-]{11}$/.test(id.trim());
+}
+
+function getSearchQuery(value) {
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/\s+/g, ' ').slice(0, MAX_SEARCH_LENGTH);
 }
 
 /* ------------------------------------------------------------------ */
@@ -283,7 +293,7 @@ async function performSingleSmartSearch(query, preferOfficial = true) {
           views: d.view_count || 0,
         };
       } catch { return null; }
-    }).filter(Boolean);
+    }).filter(Boolean).filter(item => isYouTubeId(item.id));
 
     if (!items.length) return null;
 
@@ -312,7 +322,7 @@ async function performSingleSmartSearch(query, preferOfficial = true) {
 /*  GET /api/search?q=...                                             */
 /* ------------------------------------------------------------------ */
 app.get('/api/search', async (req, res) => {
-  const query = req.query.q;
+  const query = getSearchQuery(req.query.q);
   if (!query) return res.status(400).json({ error: 'Missing q' });
 
   const cacheKey = `search_${query.toLowerCase()}`;
@@ -341,7 +351,7 @@ app.get('/api/search', async (req, res) => {
           views: d.view_count || 0,
         };
       } catch { return null; }
-    }).filter(Boolean);
+    }).filter(Boolean).filter(item => isYouTubeId(item.id));
 
     setCache(cacheKey, results);
     res.json(results);
@@ -355,7 +365,7 @@ app.get('/api/search', async (req, res) => {
 /*  GET /api/smart-search?q=...&official=1                            */
 /* ------------------------------------------------------------------ */
 app.get('/api/smart-search', async (req, res) => {
-  const query = req.query.q;
+  const query = getSearchQuery(req.query.q);
   const preferOfficial = req.query.official !== '0';
   if (!query) return res.status(400).json({ error: 'Missing q' });
 
@@ -458,7 +468,7 @@ app.get('/api/recommendations', async (req, res) => {
               views: d.view_count || 0,
             };
           } catch { return null; }
-        }).filter(Boolean);
+        }).filter(Boolean).filter(item => isYouTubeId(item.id));
       } catch {
         return [];
       }
@@ -494,7 +504,7 @@ app.get('/api/recommendations', async (req, res) => {
 /*  GET /api/suggestions?q=...                                        */
 /* ------------------------------------------------------------------ */
 app.get('/api/suggestions', async (req, res) => {
-  const query = req.query.q;
+  const query = getSearchQuery(req.query.q);
   if (!query) return res.json([]);
 
   const cacheKey = `sug_${query.toLowerCase()}`;
@@ -515,7 +525,7 @@ app.get('/api/suggestions', async (req, res) => {
         const d = JSON.parse(line);
         return { id: d.id, title: d.title || 'Unknown', channel: d.channel || d.uploader || '' };
       } catch { return null; }
-    }).filter(Boolean);
+    }).filter(Boolean).filter(item => isYouTubeId(item.id));
 
     setCache(cacheKey, results);
     res.json(results);
@@ -609,12 +619,10 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
     const protocol = isHttps ? https : http;
 
     const headers = {
-      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+      'User-Agent': YOUTUBE_ANDROID_USER_AGENT,
       'Accept': '*/*',
       'Referer': 'https://www.youtube.com/',
       'Origin': 'https://www.youtube.com',
-      'Host': parsedUrl.host,
-      'Connection': 'keep-alive',
     };
     if (req.headers.range) headers['Range'] = req.headers.range;
 
@@ -634,8 +642,9 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
       }
 
       // If YouTube CDN returns HTTP >= 400, fallback to pipe
-      if (proxyRes.statusCode >= 400) {
+      if (!proxyRes.statusCode || proxyRes.statusCode >= 400) {
         console.warn(`[Stream Proxy] CDN HTTP ${proxyRes.statusCode}, trying pipe fallback...`);
+        proxyRes.resume();
         return streamViaPipeFallback(videoId, req, res);
       }
 
@@ -654,10 +663,7 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
 
       proxyRes.pipe(res);
 
-      proxyRes.on('error', (err) => {
-        console.warn('[Proxy Res Error]', err.message);
-        if (!res.headersSent) streamViaPipeFallback(videoId, req, res);
-      });
+      proxyRes.on('error', (err) => console.warn('[Proxy Res Error]', err.message));
     });
 
     proxyReq.on('error', (err) => {
@@ -686,19 +692,24 @@ function streamViaPipeFallback(videoId, req, res) {
     const streamProcess = spawn(ytDlpPath, [
       ...BASE_YTDLP_ARGS,
       `https://www.youtube.com/watch?v=${videoId}`,
-      '-f', 'bestaudio[ext=webm]/bestaudio/worst',
+      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
       '-o', '-',
       '--no-warnings',
-    ], { windowsHide: true, stdio: ['ignore', 'pipe', 'ignore'] });
+    ], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
 
     let headersSet = false;
+    let stderr = '';
+
+    streamProcess.stderr.on('data', (chunk) => {
+      stderr += chunk.toString();
+    });
 
     streamProcess.stdout.on('data', (chunk) => {
       if (!headersSet && !res.headersSent) {
         headersSet = true;
         res.writeHead(200, {
-          'Content-Type': 'audio/webm',
-          'Accept-Ranges': 'bytes',
+          'Content-Type': 'audio/mp4',
+          'Accept-Ranges': 'none',
           'Cache-Control': 'no-cache',
           'Access-Control-Allow-Origin': '*',
         });
@@ -716,7 +727,7 @@ function streamViaPipeFallback(videoId, req, res) {
 
     streamProcess.on('close', (code) => {
       if (code !== 0 && !res.headersSent && !headersSet) {
-        console.warn(`[Pipe Process Close] Non-zero exit ${code}`);
+        console.warn(`[Pipe Process Close] Non-zero exit ${code}: ${stderr.trim()}`);
         streamViaServerlessApi(videoId, res);
       } else if (!res.headersSent && !headersSet) {
          streamViaServerlessApi(videoId, res);
@@ -737,9 +748,11 @@ async function streamViaServerlessApi(videoId, res) {
   if (res.headersSent) return;
 
   const apis = [
+    `https://invidious.privacydev.net/api/v1/videos/${videoId}`,
+    `https://yewtu.be/api/v1/videos/${videoId}`,
+    `https://inv.nadeko.net/api/v1/videos/${videoId}`,
     `https://pipedapi.kavin.rocks/streams/${videoId}`,
     `https://api.piped.video/streams/${videoId}`,
-    `https://invidious.privacydev.net/api/v1/videos/${videoId}`,
   ];
 
   for (const apiUrl of apis) {
@@ -854,12 +867,31 @@ const tempDownloadsDir = path.join(__dirname, 'temp_downloads');
 if (!fs.existsSync(tempDownloadsDir)) {
   try { fs.mkdirSync(tempDownloadsDir, { recursive: true }); } catch (e) {}
 }
+const MAX_CONCURRENT_DOWNLOADS = 2;
+let activeDownloadCount = 0;
+
+function cleanStaleDownloads() {
+  const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+  try {
+    for (const file of fs.readdirSync(tempDownloadsDir)) {
+      const filePath = path.join(tempDownloadsDir, file);
+      if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
+    }
+  } catch (err) {
+    console.warn('[Download Cleanup]', err.message);
+  }
+}
+
+cleanStaleDownloads();
 
 app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
   if (!isYouTubeId(videoId)) {
     return res.status(400).json({ error: 'Invalid YouTube ID' });
+  }
+  if (activeDownloadCount >= MAX_CONCURRENT_DOWNLOADS) {
+    return res.status(429).json({ error: 'Too many downloads in progress. Please try again shortly.' });
   }
 
   try {
@@ -878,23 +910,39 @@ app.get('/api/download/:videoId', async (req, res) => {
       .trim() || 'Track';
 
     const tempPrefix = path.join(tempDownloadsDir, `dl_${videoId}_${Date.now()}`);
+    activeDownloadCount++;
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      activeDownloadCount = Math.max(0, activeDownloadCount - 1);
+      try {
+        for (const file of fs.readdirSync(tempDownloadsDir)) {
+          if (file.startsWith(path.basename(tempPrefix))) {
+            fs.unlinkSync(path.join(tempDownloadsDir, file));
+          }
+        }
+      } catch (cleanupError) {
+        console.warn('[Download Cleanup]', cleanupError.message);
+      }
+    };
     const dlArgs = [
-      '--geo-bypass',
-      '--no-check-certificates',
-      '--user-agent', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
-      '--no-playlist',
+      ...BASE_YTDLP_ARGS,
       '--ffmpeg-location', ffmpegPath,
+      '--no-part',
+      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
       '-x', '--audio-format', 'mp3',
       '--audio-quality', '192K',
       '-o', `${tempPrefix}.%(ext)s`,
       `https://www.youtube.com/watch?v=${videoId}`
     ];
 
-    execFile(ytDlpPath, dlArgs, { timeout: 120000 }, (err) => {
+    execFile(ytDlpPath, dlArgs, { timeout: 180000, windowsHide: true }, (err, _stdout, stderr) => {
       const targetMp3 = `${tempPrefix}.mp3`;
 
       if (err || !fs.existsSync(targetMp3)) {
-        console.error('[Download Error]', err ? err.message : 'File creation failed');
+        console.error('[Download Error]', err ? `${err.message}: ${String(stderr || '').trim()}` : 'File creation failed');
+        cleanup();
         if (!res.headersSent) res.status(500).json({ error: 'MP3 download failed' });
         return;
       }
@@ -904,15 +952,12 @@ app.get('/api/download/:videoId', async (req, res) => {
       
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', stat.size);
-      res.setHeader('Content-Disposition', `attachment; filename="${encodedFilename}.mp3"; filename*=UTF-8''${encodedFilename}.mp3`);
+      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp3"; filename*=UTF-8''${encodedFilename}.mp3`);
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Cache-Control', 'no-store');
 
       const stream = fs.createReadStream(targetMp3);
       stream.pipe(res);
-
-      const cleanup = () => {
-        try { if (fs.existsSync(targetMp3)) fs.unlinkSync(targetMp3); } catch (e) {}
-      };
 
       stream.on('end', cleanup);
       stream.on('error', (sErr) => {

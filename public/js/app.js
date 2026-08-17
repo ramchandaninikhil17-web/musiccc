@@ -119,6 +119,8 @@
   let searchResults = [];
   let lastQuery = '';
   let searchTimeout = null;
+  let activeSearchController = null;
+  let searchRequestId = 0;
   let isSeeking = false;
   let currentSong = null;
   let likedSongs = Storage.get('likes', []); // array of song objects
@@ -209,16 +211,21 @@
      THEME
      ================================================================ */
   function applyTheme(theme) {
-    currentTheme = theme;
-    document.documentElement.setAttribute('data-theme', theme);
-    Storage.set('theme', theme);
+    currentTheme = theme || 'dark';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    Storage.set('theme', currentTheme);
     const sun = $('.icon-sun');
     const moon = $('.icon-moon');
     if (sun && moon) {
-      if (theme === 'dark') { sun.style.display = ''; moon.style.display = 'none'; }
-      else { sun.style.display = 'none'; moon.style.display = ''; }
+      if (currentTheme === 'light') {
+        sun.style.display = 'none';
+        moon.style.display = '';
+      } else {
+        sun.style.display = '';
+        moon.style.display = 'none';
+      }
     }
-    if ($('#settingTheme')) $('#settingTheme').value = theme;
+    if ($('#settingTheme')) $('#settingTheme').value = currentTheme;
   }
 
   /* ================================================================
@@ -271,8 +278,13 @@
     audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); });
     audioPlayer?.addEventListener('error', onAudioError);
 
-    // Theme
-    $('#themeToggleBtn')?.addEventListener('click', () => applyTheme(currentTheme === 'dark' ? 'light' : 'dark'));
+    // Theme cycling: Dark -> Light -> OLED -> Dark
+    $('#themeToggleBtn')?.addEventListener('click', () => {
+      const cycle = { dark: 'light', light: 'oled', oled: 'dark' };
+      const nextTheme = cycle[currentTheme] || 'dark';
+      applyTheme(nextTheme);
+      toast(`🎨 Theme: ${nextTheme.toUpperCase()}`);
+    });
 
     // Settings
     $('#settingsBtn')?.addEventListener('click', () => { if ($('#settingsModal')) $('#settingsModal').style.display = ''; });
@@ -475,7 +487,12 @@
   };
 
   async function doSearch(query) {
+    query = query.trim().slice(0, 160);
     if (!query) return;
+    if (activeSearchController) activeSearchController.abort();
+    const requestId = ++searchRequestId;
+    const controller = new AbortController();
+    activeSearchController = controller;
     lastQuery = query;
     navigateTo('search');
 
@@ -492,8 +509,7 @@
     try {
       let results = [];
       try {
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2500);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) {
@@ -507,6 +523,8 @@
         results = await CloudMusicEngine.search(query);
       }
 
+      if (requestId !== searchRequestId) return;
+
       searchResults = results;
       if (searchResults.length === 0) {
         resultsGrid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">No results found.</p>';
@@ -514,13 +532,16 @@
         renderResults(searchResults);
       }
     } catch (err) {
+      if (err.name === 'AbortError' || requestId !== searchRequestId) return;
       resultsGrid.innerHTML = `<p class="empty-msg" style="grid-column:1/-1;text-align:center;">Search failed. Please check connection.</p>`;
     } finally {
-      searchLoading.classList.remove('active');
+      if (requestId === searchRequestId) searchLoading.classList.remove('active');
     }
   }
 
   function clearSearch() {
+    if (activeSearchController) activeSearchController.abort();
+    searchRequestId++;
     searchInput.value = '';
     searchClear.classList.remove('visible');
     resultsGrid.innerHTML = '';
@@ -613,7 +634,10 @@
     npChannel.textContent = song.channel;
     updateLikeBtn();
 
-    if (song.isCloud) {
+    if (song.isLocal) {
+      audioPlayer.src = song.streamUrl;
+      audioPlayer.play().catch(() => toast('Your browser could not play this local audio file.'));
+    } else if (song.isCloud) {
       if (song.streamUrl) {
         audioPlayer.src = song.streamUrl;
         audioPlayer.play().catch(async () => {
@@ -654,8 +678,8 @@
     // Set document title
     document.title = `${song.title} — MusicFlow`;
 
-    // Fetch lyrics
-    fetchLyrics(song.id);
+    // Fetch lyrics only when the panel is open to keep track changes responsive.
+    if ($('#lyricsPanel')?.classList.contains('open')) fetchLyrics(song.id);
   }
 
   function togglePlayPause() {
@@ -735,6 +759,14 @@
         audioPlayer.play().catch(() => {});
         return;
       }
+      audioRetryCount = 0;
+      toast(`Playback is unavailable for "${(currentSong.title || 'track').slice(0, 20)}". Trying the next track...`);
+      setTimeout(playNext, 1000);
+      return;
+    }
+    if (currentSong && currentSong.isLocal) {
+      toast(`Your browser could not play "${(currentSong.title || 'local track').slice(0, 20)}".`);
+      return;
     }
     if (currentSong && audioRetryCount < 3) {
       audioRetryCount++;
@@ -1258,7 +1290,7 @@
       let data = [];
       try {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 2000);
+        const timeoutId = setTimeout(() => controller.abort(), 15000);
         const res = await fetch(url, { signal: controller.signal });
         clearTimeout(timeoutId);
         if (res.ok) data = await res.json();
@@ -1534,7 +1566,7 @@
      ================================================================ */
   function addToHistory(song) {
     history.unshift({ song, playedAt: new Date().toISOString(), listenedSec: 0 });
-    if (history.length > 500) history = history.slice(0, 500);
+    if (history.length > 250) history = history.slice(0, 250);
     Storage.set('history', history);
   }
 
@@ -1626,15 +1658,18 @@
      LYRICS
      ================================================================ */
   let lyricsData = null;
+  let lyricsRequestId = 0;
 
   function toggleLyrics() {
     const panel = $('#lyricsPanel');
     panel.classList.toggle('open');
     $('#lyricsBtn').classList.toggle('active', panel.classList.contains('open'));
+    if (panel.classList.contains('open') && currentSong) fetchLyrics(currentSong.id);
   }
 
   async function fetchLyrics(videoId) {
     const content = $('#lyricsContent');
+    const requestId = ++lyricsRequestId;
     if (!videoId || videoId.length !== 11) {
       content.innerHTML = '<p class="lyrics-placeholder">No lyrics available for this track</p>';
       lyricsData = null;
@@ -1646,6 +1681,8 @@
     try {
       const res = await fetch(`/api/lyrics/${videoId}`);
       const data = await res.json();
+
+      if (requestId !== lyricsRequestId || currentSong?.id !== videoId) return;
 
       if (!data.lines || data.lines.length === 0) {
         content.innerHTML = '<p class="lyrics-placeholder">No lyrics available for this song</p>';
@@ -1663,6 +1700,7 @@
         });
       });
     } catch {
+      if (requestId !== lyricsRequestId) return;
       content.innerHTML = '<p class="lyrics-placeholder">Could not load lyrics</p>';
     }
   }
@@ -1700,17 +1738,34 @@
 
   async function downloadSong(song) {
     if (!song || !song.id) { toast('No song selected'); return; }
+    if (song.isLocal) {
+      const a = document.createElement('a');
+      a.href = song.streamUrl;
+      a.download = song.title || 'MusicFlow-Track';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      return;
+    }
+    if (song.isCloud) {
+      toast('Downloads are available for YouTube search results.');
+      return;
+    }
     toast(`⏳ Preparing MP3 download for "${(song.title || 'track').slice(0, 25)}..."`);
 
     try {
-      const downloadUrl = (song.isCloud && song.streamUrl) ? song.streamUrl : `/api/download/${song.id}`;
+      const downloadUrl = `/api/download/${song.id}`;
+      const response = await fetch(downloadUrl);
+      if (!response.ok) throw new Error('The server could not prepare this MP3.');
+      const blob = await response.blob();
       const a = document.createElement('a');
-      a.href = downloadUrl;
+      const objectUrl = URL.createObjectURL(blob);
+      a.href = objectUrl;
       a.download = `${(song.title || 'MusicTrack').replace(/[/\\?%*:|"<>]/g, '')}.mp3`;
-      a.target = '_blank';
       document.body.appendChild(a);
       a.click();
-      setTimeout(() => a.remove(), 1000);
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
       toast(`✅ MP3 download started! Check downloads folder.`);
     } catch (err) {
       toast(`⚠️ Download error: ${err.message || 'Server busy'}`);
@@ -2354,11 +2409,11 @@
         chipEl.classList.remove('active');
       } else {
         try {
-          const bufferSize = this.audioCtx.sampleRate * 2;
+          const bufferSize = this.audioCtx.sampleRate * 3;
           const buffer = this.audioCtx.createBuffer(1, bufferSize, this.audioCtx.sampleRate);
           const data = buffer.getChannelData(0);
           for (let i = 0; i < bufferSize; i++) {
-            data[i] = (Math.random() * 2 - 1) * 0.1;
+            data[i] = (Math.random() * 2 - 1) * 0.12;
           }
 
           const noise = this.audioCtx.createBufferSource();
@@ -2366,11 +2421,32 @@
           noise.loop = true;
 
           const filter = this.audioCtx.createBiquadFilter();
-          filter.type = soundType === 'rain' ? 'lowpass' : soundType === 'waves' ? 'bandpass' : 'lowpass';
-          filter.frequency.value = soundType === 'rain' ? 800 : soundType === 'waves' ? 400 : 300;
+          let gainVal = 0.1;
+
+          if (soundType === 'rain') {
+            filter.type = 'lowpass';
+            filter.frequency.value = 950;
+            filter.Q.value = 1.2;
+            gainVal = 0.12;
+          } else if (soundType === 'waves') {
+            filter.type = 'bandpass';
+            filter.frequency.value = 450;
+            filter.Q.value = 2.5;
+            gainVal = 0.14;
+          } else if (soundType === 'cafe') {
+            filter.type = 'lowpass';
+            filter.frequency.value = 650;
+            filter.Q.value = 0.8;
+            gainVal = 0.09;
+          } else { // whitenoise
+            filter.type = 'lowpass';
+            filter.frequency.value = 1400;
+            filter.Q.value = 0.5;
+            gainVal = 0.08;
+          }
 
           const gain = this.audioCtx.createGain();
-          gain.gain.setValueAtTime(0.12, this.audioCtx.currentTime);
+          gain.gain.setValueAtTime(gainVal, this.audioCtx.currentTime);
 
           noise.connect(filter);
           filter.connect(gain);
@@ -2379,7 +2455,8 @@
 
           this.ambientNodes[soundType] = { source: noise, gain, filter };
           chipEl.classList.add('active');
-          toast(`🌧️ Ambient ${soundType} active`);
+          const icons = { rain: '🌧️ Rain', waves: '🌊 Ocean Waves', cafe: '☕ Cozy Cafe', whitenoise: '💨 White Noise' };
+          toast(`${icons[soundType] || soundType} atmosphere active`);
         } catch (e) {
           console.warn('Ambient synth error:', e);
         }
@@ -2845,6 +2922,10 @@
       root.style.setProperty('--primary', c.primary);
       root.style.setProperty('--primary-glow', c.glow);
       root.style.setProperty('--primary-hover', c.hover);
+      root.style.setProperty('--accent', c.primary);
+      root.style.setProperty('--accent-light', c.primary);
+      root.style.setProperty('--accent-glow', c.glow);
+      root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${c.primary}, ${c.hover || '#ec4899'})`);
 
       const activeDot = $(`.accent-dot[data-color="${key}"]`);
       if (activeDot) {
@@ -2911,4 +2992,3 @@
   /* ----- Start ----- */
   init();
 })();
-

@@ -57,6 +57,31 @@
 
 [data-theme="light"] .bg-animation { opacity: 0.3; }
 
+/* ----- OLED Pitch Black Mode ----- */
+[data-theme="oled"] {
+  --bg-primary: #000000;
+  --bg-secondary: #050505;
+  --bg-card: rgba(15, 15, 15, 0.75);
+  --bg-glass: rgba(255, 255, 255, 0.03);
+  --bg-glass-hover: rgba(255, 255, 255, 0.07);
+  --bg-glass-active: rgba(255, 255, 255, 0.1);
+  --bg-sidebar: #000000;
+  --bg-modal: #080808;
+
+  --text-primary: #ffffff;
+  --text-secondary: #a3a3a3;
+  --text-muted: #666666;
+
+  --border: rgba(255, 255, 255, 0.08);
+  --border-hover: rgba(255, 255, 255, 0.18);
+
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.8);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.9);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,1);
+}
+
+[data-theme="oled"] .bg-animation { opacity: 0.1; }
+
 /* ----- Shared Tokens ----- */
 :root {
   --radius-sm: 8px;

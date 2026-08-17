@@ -911,11 +911,12 @@
   <audio id="audioPlayer" preload="auto"></audio>
 
   <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
+  <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
   <video id="pipVideo" playsinline muted style="position:fixed; bottom:-9999px; left:-9999px; width:480px; height:270px; opacity:0; pointer-events:none;"></video>
   <!-- Hidden IFrame for isolated file downloads -->
   <iframe id="downloadFrame" name="downloadFrame" style="display:none; width:0; height:0; border:none; visibility:hidden;" aria-hidden="true"></iframe>
 
-  <script src="/js/app.js?v=2.5"></script>
+  <script src="/js/app.js?v=2.8"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
