@@ -630,7 +630,33 @@
      ================================================================ */
   let audioRetryCount = 0;
 
+  // Every call site used to be `audioPlayer.play().catch(() => {})`, so a
+  // blocked autoplay or an unsupported codec looked identical to "nothing
+  // happened at all". Errors are now surfaced, minus the two rejection types
+  // that are normal (a superseded src, and the element's own error event which
+  // already owns the retry/skip logic).
+  function startPlayback(song) {
+    const attempt = audioPlayer.play();
+    if (!attempt || typeof attempt.catch !== 'function') return;
+    attempt.then(() => {
+      EqualizerManager.resumeContext();
+    }).catch(err => {
+      if (currentSong !== song) return;
+      const name = err && err.name;
+      if (name === 'AbortError') return;
+      if (name === 'NotAllowedError') {
+        toast('Press play to start audio — your browser blocked autoplay.');
+        return;
+      }
+      console.warn('[player] play() failed:', name, err && err.message);
+      if (name !== 'NotSupportedError') {
+        toast(`Could not play "${String(song.title || 'track').slice(0, 24)}".`);
+      }
+    });
+  }
+
   function playSong(song) {
+    if (!song || !song.id) return;
     recordListenTime();
     audioRetryCount = 0;
 
@@ -645,31 +671,48 @@
     updateLikeBtn();
 
     if (song.isLocal) {
-      audioPlayer.src = song.streamUrl;
-      audioPlayer.play().catch(() => toast('Your browser could not play this local audio file.'));
+      // The object URL has to be re-created from IndexedDB after a reload, so
+      // this is asynchronous. Guard against the user skipping on in the meantime.
+      LocalFileManager.resolveStreamUrl(song).then(url => {
+        if (currentSong !== song) return;
+        if (!url) {
+          toast('This local file is no longer stored. Re-import it from your device.');
+          return;
+        }
+        audioPlayer.src = url;
+        startPlayback(song);
+      });
     } else if (song.isCloud) {
       if (song.streamUrl) {
         audioPlayer.src = song.streamUrl;
         audioPlayer.play().catch(async () => {
           const freshUrl = await CloudMusicEngine.getStreamUrl(song.id);
+          if (currentSong !== song) return;
           if (freshUrl) {
             song.streamUrl = freshUrl;
             audioPlayer.src = freshUrl;
-            audioPlayer.play().catch(() => {});
+            startPlayback(song);
+          } else {
+            toast(`Could not start "${String(song.title || 'track').slice(0, 24)}".`);
           }
         });
       } else {
         CloudMusicEngine.getStreamUrl(song.id).then(url => {
+          if (currentSong !== song) return;
           if (url) {
             song.streamUrl = url;
             audioPlayer.src = url;
-            audioPlayer.play().catch(() => {});
+            startPlayback(song);
+          } else {
+            toast(`Could not start "${String(song.title || 'track').slice(0, 24)}".`);
           }
+        }).catch(() => {
+          if (currentSong === song) toast('Could not reach the music service.');
         });
       }
     } else {
       audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-      audioPlayer.play().catch(() => {});
+      startPlayback(song);
     }
 
     // History
@@ -756,7 +799,11 @@
 
   function onEnd() {
     recordListenTime();
-    if (repeatMode === 'one') { audioPlayer.currentTime = 0; audioPlayer.play(); }
+    // The sleep timer's "stop after this track" mode has to be checked here.
+    // Its own 'ended' listener runs *after* this one, so playNext() had already
+    // started the following track before the timer paused it.
+    if (SleepTimerManager.consumeStopAfterTrack()) return;
+    if (repeatMode === 'one') { audioPlayer.currentTime = 0; audioPlayer.play().catch(() => {}); }
     else playNext();
   }
 
@@ -1576,31 +1623,43 @@
      HISTORY & ANALYTICS
      ================================================================ */
   function addToHistory(song) {
+    if (!song || !song.id) return;
     history.unshift({ song, playedAt: new Date().toISOString(), listenedSec: 0 });
     if (history.length > 250) history = history.slice(0, 250);
     Storage.set('history', history);
   }
 
+  // History is merged from localStorage and the server, and older builds wrote
+  // entries in different shapes. Any entry without a usable `song` used to throw
+  // on `h.song.id` and take the entire profile page down with it.
+  function validHistory() {
+    if (!Array.isArray(history)) return [];
+    return history.filter(h => h && h.song && h.song.id);
+  }
+
   function recordListenTime() {
-    if (playStartTime && history.length > 0) {
+    if (playStartTime && history.length > 0 && history[0] && history[0].song) {
       const sec = Math.floor((Date.now() - playStartTime) / 1000);
       history[0].listenedSec = (history[0].listenedSec || 0) + sec;
       Storage.set('history', history);
-      playStartTime = null;
     }
+    // Always cleared, even when there was nothing to attribute the time to.
+    playStartTime = null;
   }
 
   function renderProfile() {
+    const hist = validHistory();
+
     // Stats
-    $('#statTotalPlayed').textContent = history.length;
-    const totalMin = Math.floor(history.reduce((a, h) => a + (h.listenedSec || 0), 0) / 60);
+    $('#statTotalPlayed').textContent = hist.length;
+    const totalMin = Math.floor(hist.reduce((a, h) => a + (h.listenedSec || 0), 0) / 60);
     $('#statMinutes').textContent = totalMin;
     $('#statLiked').textContent = likedSongs.length;
     $('#statPlaylists').textContent = playlists.length;
 
     // Top Songs
     const songCounts = {};
-    history.forEach(h => {
+    hist.forEach(h => {
       const id = h.song.id;
       if (!songCounts[id]) songCounts[id] = { song: h.song, count: 0 };
       songCounts[id].count++;
@@ -1611,7 +1670,7 @@
       topList.innerHTML = '<p class="empty-msg">Play some songs to see your top tracks!</p>';
     } else {
       topList.innerHTML = topSongs.map((t, i) => `
-        <div class="top-item" data-id="${t.song.id}">
+        <div class="top-item" data-id="${esc(t.song.id)}">
           <span class="ti-rank">${i + 1}</span>
           <div class="ti-thumb"><img src="${thumb(t.song)}" alt="" loading="lazy" /></div>
           <div class="ti-info"><div class="ti-name">${esc(t.song.title)}</div><div class="ti-sub">${esc(t.song.channel)}</div></div>
@@ -1628,7 +1687,7 @@
 
     // Top Artists
     const artistCounts = {};
-    history.forEach(h => {
+    hist.forEach(h => {
       const ch = h.song.channel || 'Unknown';
       if (!artistCounts[ch]) artistCounts[ch] = { name: ch, count: 0 };
       artistCounts[ch].count++;
@@ -1645,7 +1704,7 @@
 
     // History list
     const histList = $('#historyList');
-    const recentHist = history.slice(0, 30);
+    const recentHist = hist.slice(0, 30);
     if (!recentHist.length) {
       histList.innerHTML = '<p class="empty-msg">No listening history yet.</p>';
     } else {
@@ -1658,7 +1717,10 @@
         </div>
       `).join('');
       histList.querySelectorAll('.song-row').forEach(row => {
-        row.addEventListener('click', () => { const i = parseInt(row.dataset.idx); playSong(recentHist[i].song); });
+        row.addEventListener('click', () => {
+          const i = parseInt(row.dataset.idx);
+          if (recentHist[i] && recentHist[i].song) playSong(recentHist[i].song);
+        });
       });
     }
   }
@@ -2555,7 +2617,8 @@
     sourceNode: null,
     filters: [],
     bassNode: null,
-    pannerNode: null,
+    widener: null,
+    unavailable: false,
     modal: null,
     bands: [60, 170, 310, 600, 1000, 3000, 6000, 12000, 14000, 16000],
     presets: {
@@ -2604,7 +2667,12 @@
       });
 
       $('#spatialAudioToggle')?.addEventListener('change', (e) => {
-        this.setSpatialAudio(e.target.checked);
+        const applied = this.setSpatialAudio(e.target.checked);
+        if (!applied) {
+          // Don't leave the switch claiming a mode that never engaged.
+          e.target.checked = false;
+          return;
+        }
         toast(e.target.checked ? '🎧 3D Spatial Audio Active' : '3D Spatial Audio Off');
       });
 
@@ -2616,9 +2684,15 @@
     },
 
     ensureAudioContext() {
-      if (this.audioCtx) return;
+      if (this.audioCtx) return true;
+      if (this.unavailable) return false;
+
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
+      if (!AudioCtx) { this.unavailable = true; return false; }
+
+      // Refuse to attach while a cross-origin track is loaded — see canAttach().
+      if (!this.canAttach()) return false;
+
       try {
         this.audioCtx = new AudioCtx();
         this.sourceNode = this.audioCtx.createMediaElementSource(audioPlayer);
@@ -2641,23 +2715,91 @@
         lastNode.connect(this.bassNode);
         lastNode = this.bassNode;
 
-        if (this.audioCtx.createStereoPanner) {
-          this.pannerNode = this.audioCtx.createStereoPanner();
-          this.pannerNode.pan.value = 0;
-          lastNode.connect(this.pannerNode);
-          lastNode = this.pannerNode;
-        }
-
-        lastNode.connect(this.audioCtx.destination);
+        // Real mid/side stereo widening. The old implementation just set a
+        // StereoPanner to 0.35, which shoved the entire mix to the right ear
+        // and called it "3D spatial audio".
+        this.widener = this.buildWidener(lastNode);
+        this.widener.output.connect(this.audioCtx.destination);
+        return true;
       } catch (e) {
-        console.warn('Web Audio EQ Init Note:', e);
+        // createMediaElementSource() cannot be retried or undone, so give up
+        // permanently rather than looping on a broken graph.
+        this.unavailable = true;
+        this.audioCtx = null;
+        console.warn('Web Audio EQ unavailable:', e && e.message);
+        return false;
       }
     },
 
+    // Web Audio can only read an <audio> element whose media is same-origin
+    // (or CORS-approved). Attaching a MediaElementSource to a cross-origin
+    // stream silences it permanently and the connection can never be undone,
+    // which is exactly how opening the equalizer used to kill playback.
+    canAttach() {
+      const src = audioPlayer.currentSrc || audioPlayer.src;
+      if (!src) return true;
+      if (src.startsWith('blob:') || src.startsWith('data:')) return true;
+      try {
+        return new URL(src, location.href).origin === location.origin;
+      } catch (e) {
+        return true;
+      }
+    },
+
+    // An AudioContext created outside a user gesture starts suspended, and a
+    // suspended context routes the element through a dead graph — silence.
+    resumeContext() {
+      if (this.audioCtx && this.audioCtx.state === 'suspended') {
+        this.audioCtx.resume().catch(() => {});
+      }
+    },
+
+    buildWidener(input) {
+      const ctx = this.audioCtx;
+      const splitter = ctx.createChannelSplitter(2);
+      const merger = ctx.createChannelMerger(2);
+
+      // mid = (L + R) / 2,  side = (L - R) / 2
+      const mid = ctx.createGain();
+      const side = ctx.createGain();
+      const midFromL = ctx.createGain(); midFromL.gain.value = 0.5;
+      const midFromR = ctx.createGain(); midFromR.gain.value = 0.5;
+      const sideFromL = ctx.createGain(); sideFromL.gain.value = 0.5;
+      const sideFromR = ctx.createGain(); sideFromR.gain.value = -0.5;
+
+      input.connect(splitter);
+      splitter.connect(midFromL, 0);
+      splitter.connect(midFromR, 1);
+      splitter.connect(sideFromL, 0);
+      splitter.connect(sideFromR, 1);
+      midFromL.connect(mid);
+      midFromR.connect(mid);
+      sideFromL.connect(side);
+      sideFromR.connect(side);
+
+      // L' = mid + width * side,  R' = mid - width * side.
+      // width === 1 reconstructs the original stereo image bit-for-bit, so 1 is
+      // the neutral value and anything above it widens the image.
+      const widthPos = ctx.createGain(); widthPos.gain.value = 1;
+      const widthNeg = ctx.createGain(); widthNeg.gain.value = -1;
+      side.connect(widthPos);
+      side.connect(widthNeg);
+
+      mid.connect(merger, 0, 0);
+      mid.connect(merger, 0, 1);
+      widthPos.connect(merger, 0, 0);
+      widthNeg.connect(merger, 0, 1);
+
+      return { output: merger, widthPos, widthNeg };
+    },
+
     openModal() {
-      this.ensureAudioContext();
-      if (this.audioCtx && this.audioCtx.state === 'suspended') this.audioCtx.resume();
       if (this.modal) this.modal.style.display = 'flex';
+      if (this.ensureAudioContext()) {
+        this.resumeContext();
+      } else if (!this.unavailable) {
+        toast('Equalizer is unavailable for this track — it plays from an external source.');
+      }
     },
 
     closeModal() {
@@ -2665,30 +2807,42 @@
     },
 
     setFilterGain(index, val) {
-      this.ensureAudioContext();
-      if (this.filters[index]) {
-        this.filters[index].gain.value = val;
-      }
+      if (!this.ensureAudioContext()) return false;
+      this.resumeContext();
+      if (this.filters[index]) this.filters[index].gain.value = val;
+      return true;
     },
 
     setBassBoost(val) {
-      this.ensureAudioContext();
-      if (this.bassNode) {
-        this.bassNode.gain.value = val;
+      if (!this.ensureAudioContext()) {
+        toast('Bass boost is unavailable for this track.');
+        return;
       }
+      this.resumeContext();
+      if (this.bassNode) this.bassNode.gain.value = val;
     },
 
     setSpatialAudio(enabled) {
-      this.ensureAudioContext();
-      if (this.pannerNode) {
-        this.pannerNode.pan.value = enabled ? 0.35 : 0;
+      if (!this.ensureAudioContext()) {
+        toast('Spatial audio is unavailable for this track.');
+        return false;
       }
+      this.resumeContext();
+      if (!this.widener) return false;
+      const width = enabled ? 1.9 : 1;
+      const now = this.audioCtx.currentTime;
+      // Ramp rather than jump, otherwise toggling clicks audibly.
+      this.widener.widthPos.gain.setTargetAtTime(width, now, 0.05);
+      this.widener.widthNeg.gain.setTargetAtTime(-width, now, 0.05);
+      return true;
     },
 
     applyPreset(gains) {
-      this.ensureAudioContext();
+      const ready = this.ensureAudioContext();
+      if (ready) this.resumeContext();
       gains.forEach((g, i) => {
-        this.setFilterGain(i, g);
+        if (ready && this.filters[i]) this.filters[i].gain.value = g;
+        // Sliders are updated either way so the UI never lies about its state.
         const slider = $(`.eq-slider[data-band="${i}"]`);
         if (slider) {
           slider.value = g;
@@ -2696,16 +2850,116 @@
           if (valSpan) valSpan.textContent = (g > 0 ? '+' : '') + g + 'dB';
         }
       });
+      if (!ready) toast('Equalizer is unavailable for the current track.');
     }
   };
 
   /* ================================================================
      LOCAL MUSIC FILE PLAYER & DRAG & DROP MANAGER
      ================================================================ */
+
+  // A blob: URL only stays valid for the lifetime of the document that created
+  // it, so the object URLs older builds persisted into localStorage were dead
+  // on every reload — imported tracks appeared in the library but refused to
+  // play. The file bytes now live in IndexedDB and a fresh object URL is minted
+  // on demand.
+  const LocalAudioStore = {
+    DB_NAME: 'musicflow_local_audio',
+    STORE: 'files',
+    dbPromise: null,
+
+    open() {
+      if (this.dbPromise) return this.dbPromise;
+      const promise = new Promise((resolve, reject) => {
+        if (typeof indexedDB === 'undefined' || !indexedDB) {
+          reject(new Error('IndexedDB unavailable'));
+          return;
+        }
+        let req;
+        try {
+          req = indexedDB.open(this.DB_NAME, 1);
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(this.STORE)) db.createObjectStore(this.STORE);
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror = () => reject(req.error || new Error('IndexedDB open failed'));
+        req.onblocked = () => reject(new Error('IndexedDB blocked'));
+      });
+      // Don't cache a rejected promise — a later attempt may succeed.
+      this.dbPromise = promise;
+      promise.catch(() => { if (this.dbPromise === promise) this.dbPromise = null; });
+      return promise;
+    },
+
+    async tx(mode, fn) {
+      const db = await this.open();
+      return new Promise((resolve, reject) => {
+        let transaction;
+        try {
+          transaction = db.transaction(this.STORE, mode);
+        } catch (e) {
+          reject(e);
+          return;
+        }
+        let request;
+        try {
+          request = fn(transaction.objectStore(this.STORE));
+        } catch (e) {
+          try { transaction.abort(); } catch (e2) {}
+          reject(e);
+          return;
+        }
+        // Resolve on complete rather than on request success, so a write is
+        // only reported as done once it is actually durable.
+        transaction.oncomplete = () => resolve(request ? request.result : undefined);
+        transaction.onerror = () => reject(transaction.error || new Error('IndexedDB transaction failed'));
+        transaction.onabort = () => reject(transaction.error || new Error('IndexedDB transaction aborted'));
+      });
+    },
+
+    put(id, blob) { return this.tx('readwrite', (s) => s.put(blob, id)); },
+    get(id) { return this.tx('readonly', (s) => s.get(id)); },
+    remove(id) { return this.tx('readwrite', (s) => s.delete(id)); },
+    keys() { return this.tx('readonly', (s) => s.getAllKeys()); }
+  };
+
+  // Imports used to hardcode a 180s duration, which made the seek bar and the
+  // queue lie about every local track.
+  function readAudioDuration(url) {
+    return new Promise((resolve) => {
+      let settled = false;
+      const probe = document.createElement('audio');
+      const done = (val) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(bail);
+        try { probe.removeAttribute('src'); probe.load(); } catch (e) {}
+        resolve(val);
+      };
+      // Some containers never report metadata; don't hang the import on them.
+      const bail = setTimeout(() => done(0), 5000);
+      probe.preload = 'metadata';
+      probe.addEventListener('loadedmetadata', () => {
+        done(Number.isFinite(probe.duration) && probe.duration > 0 ? Math.round(probe.duration) : 0);
+      });
+      probe.addEventListener('error', () => done(0));
+      probe.src = url;
+    });
+  }
+
   const LocalFileManager = {
-    localSongs: Storage.get('local_songs', []),
+    localSongs: [],
+    liveUrls: new Map(),
+    persistable: true,
 
     init() {
+      this.loadPersisted();
+
       const dropzone = $('#localDropzone');
       const input = $('#localFileInput');
       const importBtn = $('#localImportBtn');
@@ -2739,21 +2993,94 @@
         input.addEventListener('change', (e) => {
           if (e.target.files && e.target.files.length > 0) {
             this.handleFiles(e.target.files);
+            // Let the same file be re-picked after a failed import.
+            e.target.value = '';
           }
         });
       }
     },
 
-    handleFiles(fileList) {
-      const audioFiles = Array.from(fileList).filter(f => f.type.startsWith('audio/') || /\.(mp3|flac|wav|m4a|aac|ogg)$/i.test(f.name));
+    loadPersisted() {
+      const saved = Storage.get('local_songs', []);
+      this.localSongs = (Array.isArray(saved) ? saved : [])
+        .filter(s => s && s.id)
+        .map(s => Object.assign({}, s, { streamUrl: null, isLocal: true }));
+      this.pruneOrphans();
+    },
+
+    // localStorage metadata and IndexedDB bytes can drift apart (site data
+    // cleared for one but not the other), which would leave unplayable ghosts.
+    async pruneOrphans() {
+      try {
+        const keys = await LocalAudioStore.keys();
+        const stored = new Set(keys || []);
+        const before = this.localSongs.length;
+        this.localSongs = this.localSongs.filter(s => stored.has(s.id));
+        if (this.localSongs.length !== before) this.persist();
+
+        const listed = new Set(this.localSongs.map(s => s.id));
+        stored.forEach(key => {
+          if (!listed.has(key)) LocalAudioStore.remove(key).catch(() => {});
+        });
+      } catch (e) {
+        // No usable IndexedDB (private mode, storage disabled). Local files
+        // still work, but only for this session, so drop the stale list
+        // instead of showing entries that can never play.
+        this.persistable = false;
+        this.localSongs = [];
+        console.warn('[local] persistent storage unavailable:', e && e.message);
+      }
+    },
+
+    persist() {
+      if (!this.persistable) return;
+      // streamUrl is deliberately dropped — it is only meaningful in this document.
+      const meta = this.localSongs.slice(0, 100).map(s => {
+        const copy = Object.assign({}, s);
+        delete copy.streamUrl;
+        return copy;
+      });
+      Storage.set('local_songs', meta);
+    },
+
+    async resolveStreamUrl(song) {
+      if (!song || !song.id) return null;
+      const cached = this.liveUrls.get(song.id);
+      if (cached) { song.streamUrl = cached; return cached; }
+      try {
+        const blob = await LocalAudioStore.get(song.id);
+        if (!blob) return null;
+        const url = URL.createObjectURL(blob);
+        this.liveUrls.set(song.id, url);
+        song.streamUrl = url;
+        return url;
+      } catch (e) {
+        console.warn('[local] could not restore file:', e && e.message);
+        return null;
+      }
+    },
+
+    forget(id) {
+      const url = this.liveUrls.get(id);
+      if (url) {
+        try { URL.revokeObjectURL(url); } catch (e) {}
+        this.liveUrls.delete(id);
+      }
+      LocalAudioStore.remove(id).catch(() => {});
+    },
+
+    async handleFiles(fileList) {
+      const audioFiles = Array.from(fileList).filter(f =>
+        (f.type && f.type.startsWith('audio/')) || /\.(mp3|flac|wav|m4a|aac|ogg|oga|opus|wma)$/i.test(f.name));
       if (!audioFiles.length) {
         toast('No audio files detected');
         return;
       }
 
-      let added = 0;
-      audioFiles.forEach(file => {
-        const objectUrl = URL.createObjectURL(file);
+      const added = [];
+      let storageFailed = false;
+
+      for (const file of audioFiles) {
         const cleanName = file.name.replace(/\.[^/.]+$/, '');
         const parts = cleanName.split('-');
         const title = parts.length > 1 ? parts.slice(1).join('-').trim() : cleanName.trim();
@@ -2763,20 +3090,46 @@
           id: 'local_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
           title: title || file.name,
           channel: channel || 'Local File',
-          duration: 180,
+          duration: 0,
           thumbnail: '/icons/icon-192.png',
-          streamUrl: objectUrl,
+          streamUrl: null,
           isLocal: true
         };
 
-        this.localSongs.unshift(song);
-        addToQueue(song);
-        added++;
-      });
+        const url = URL.createObjectURL(file);
+        this.liveUrls.set(song.id, url);
+        song.streamUrl = url;
+        song.duration = await readAudioDuration(url);
 
-      Storage.set('local_songs', this.localSongs.slice(0, 100));
-      toast(`🎵 Added ${added} local tracks to playlist!`);
-      if (queue.length > 0 && !isPlaying) playSong(queue[queue.length - added]);
+        if (this.persistable) {
+          try {
+            await LocalAudioStore.put(song.id, file);
+          } catch (e) {
+            // Usually a quota error on a large file. Keep the track playable
+            // for this session rather than aborting the whole import.
+            storageFailed = true;
+            console.warn('[local] could not persist', file.name, e && e.message);
+          }
+        }
+
+        this.localSongs.unshift(song);
+        // Deliberately not addToQueue() — it toasts once per song.
+        if (!queue.some(s => s.id === song.id)) queue.push(song);
+        added.push(song);
+      }
+
+      if (this.localSongs.length > 100) {
+        this.localSongs.slice(100).forEach(s => this.forget(s.id));
+        this.localSongs = this.localSongs.slice(0, 100);
+      }
+      this.persist();
+
+      updateQueueUI();
+      toast(`🎵 Added ${added.length} local track${added.length === 1 ? '' : 's'}`);
+      if (storageFailed || !this.persistable) {
+        toast('Some files could not be saved — they will only play this session.');
+      }
+      if (added.length && !isPlaying) playSong(added[0]);
     }
   };
 
@@ -2788,6 +3141,9 @@
     timer: null,
     remainingSeconds: 0,
     isFadeStarted: false,
+    fadeInterval: null,
+    volumeBeforeFade: null,
+    stopAfterTrack: false,
 
     init() {
       this.modal = $('#sleepModal');
@@ -2848,36 +3204,79 @@
 
     setTimerTrackEnd() {
       this.cancelTimer();
-      const onTrackEnded = () => {
-        audioPlayer.pause();
-        audioPlayer.removeEventListener('ended', onTrackEnded);
-        toast('🌙 Track ended. Sleep timer activated.');
-      };
-      audioPlayer.addEventListener('ended', onTrackEnded);
-      $('#sleepBadge').style.display = 'inline-block';
-      $('#sleepBadge').textContent = 'End';
+      this.stopAfterTrack = true;
+      const badge = $('#sleepBadge');
+      if (badge) {
+        badge.style.display = 'inline-block';
+        badge.textContent = 'End';
+      }
       toast('🌙 Music will stop after this track ends');
     },
 
+    // Called from onEnd(). Returns true if playback should stop here instead of
+    // advancing to the next track.
+    consumeStopAfterTrack() {
+      if (!this.stopAfterTrack) return false;
+      this.stopAfterTrack = false;
+      audioPlayer.pause();
+      const badge = $('#sleepBadge');
+      if (badge) badge.style.display = 'none';
+      $$('.sleep-option-btn').forEach(b => b.classList.remove('active'));
+      toast('🌙 Track ended. Sleep timer activated.');
+      return true;
+    },
+
     fadeVolumeOut() {
+      this.stopFade();
       const initialVol = audioPlayer.volume;
+      // Remember where the volume was so it can be put back. Without this the
+      // fade left the player near-silent forever, while the volume slider still
+      // showed 80% because the app's `volume` value was never touched.
+      this.volumeBeforeFade = initialVol;
       let steps = 30;
-      const interval = setInterval(() => {
+      this.fadeInterval = setInterval(() => {
         if (steps > 0 && audioPlayer.volume > 0.02) {
           audioPlayer.volume = Math.max(0, audioPlayer.volume - (initialVol / 30));
           steps--;
         } else {
-          clearInterval(interval);
+          this.stopFade();
         }
       }, 1000);
+    },
+
+    // Stops the fade without restoring volume (used when the fade completes
+    // naturally and the player is about to be paused anyway).
+    stopFade() {
+      if (this.fadeInterval) {
+        clearInterval(this.fadeInterval);
+        this.fadeInterval = null;
+      }
+    },
+
+    // Puts the volume back to whatever the user actually has configured.
+    restoreVolume() {
+      this.stopFade();
+      const target = typeof this.volumeBeforeFade === 'number' && this.volumeBeforeFade > 0.02
+        ? this.volumeBeforeFade
+        : volume;
+      audioPlayer.volume = Math.max(0, Math.min(1, target));
+      this.volumeBeforeFade = null;
+      this.isFadeStarted = false;
+      updateVolumeUI();
     },
 
     cancelTimer() {
       if (this.timer) clearInterval(this.timer);
       this.timer = null;
       this.remainingSeconds = 0;
-      $('#sleepBadge').style.display = 'none';
-      $('#sleepStatusBar').style.display = 'none';
+      this.stopAfterTrack = false;
+      // The fade ran on its own interval that cancelTimer() never knew about, so
+      // cancelling a timer mid-fade left the volume ramping down to zero.
+      this.restoreVolume();
+      const badge = $('#sleepBadge');
+      if (badge) badge.style.display = 'none';
+      const statusBar = $('#sleepStatusBar');
+      if (statusBar) statusBar.style.display = 'none';
       $$('.sleep-option-btn').forEach(b => b.classList.remove('active'));
     },
 

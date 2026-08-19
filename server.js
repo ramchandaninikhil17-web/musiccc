@@ -64,7 +64,9 @@ app.get('/api/health', (req, res) => {
     status: 'ok',
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
-    ytDlpReady: ytDlpPath ? true : false,
+    // ytDlpPath is always a truthy string, so the old check reported "ready"
+    // even when the binary had not been resolved yet.
+    ytDlpReady: ytDlpResolved,
   });
 });
 
@@ -72,6 +74,23 @@ app.get('/api/health', (req, res) => {
 /*  Resolve yt-dlp binary path & Auto-Download if missing             */
 /* ------------------------------------------------------------------ */
 let ytDlpPath = 'yt-dlp';
+let ytDlpResolved = false;
+
+// Resolves once the binary has been located/downloaded. Every code path that
+// shells out to yt-dlp awaits this, otherwise requests that arrive during the
+// first few seconds of uptime run against a binary that isn't there yet.
+let ytDlpReadyPromise = null;
+
+function whenYtDlpReady() {
+  if (!ytDlpReadyPromise) {
+    ytDlpReadyPromise = ensureYtDlp().then(() => {
+      ytDlpResolved = true;
+    }).catch(() => {
+      // ensureYtDlp already logs; leave ytDlpResolved false so /api/health is honest.
+    });
+  }
+  return ytDlpReadyPromise;
+}
 
 async function ensureYtDlp() {
   try {
@@ -134,16 +153,40 @@ function downloadBinaryDirect(url, destPath) {
   return new Promise((resolve, reject) => {
     https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 MusicFlow-Server' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+        res.resume();
         return downloadBinaryDirect(res.headers.location, destPath).then(resolve).catch(reject);
       }
       if (res.statusCode !== 200) {
+        res.resume();
         return reject(new Error(`Download failed with HTTP ${res.statusCode}`));
       }
+      const expected = Number(res.headers['content-length']) || 0;
+      let received = 0;
+      res.on('data', (chunk) => { received += chunk.length; });
+
       const fileStream = fs.createWriteStream(destPath);
       res.pipe(fileStream);
+
+      // A socket drop mid-transfer used to resolve successfully, leaving a
+      // truncated binary on disk that then failed on every invocation.
+      res.on('error', (err) => {
+        fileStream.destroy();
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+
       fileStream.on('finish', () => {
-        fileStream.close();
-        resolve();
+        fileStream.close(() => {
+          if (expected && received < expected) {
+            fs.unlink(destPath, () => {});
+            return reject(new Error(`Truncated download: got ${received} of ${expected} bytes`));
+          }
+          if (received === 0) {
+            fs.unlink(destPath, () => {});
+            return reject(new Error('Downloaded binary was empty'));
+          }
+          resolve();
+        });
       });
       fileStream.on('error', (err) => {
         fs.unlink(destPath, () => {});
@@ -157,7 +200,7 @@ function downloadBinaryDirect(url, destPath) {
 /*  Helper: run yt-dlp with cloud anti-bot args                       */
 /* ------------------------------------------------------------------ */
 function runYtDlp(args, timeout = 60000) {
-  return new Promise((resolve, reject) => {
+  return whenYtDlpReady().then(() => new Promise((resolve, reject) => {
     const fullArgs = [...BASE_YTDLP_ARGS, ...args];
     execFile(ytDlpPath, fullArgs, {
       maxBuffer: 10 * 1024 * 1024,
@@ -171,7 +214,7 @@ function runYtDlp(args, timeout = 60000) {
       }
       resolve(stdout.trim());
     });
-  });
+  }));
 }
 
 function isYouTubeId(id) {
@@ -613,7 +656,9 @@ const httpsAgent = new https.Agent({
   keepAlive: true,
   keepAliveMsecs: 10000,
   maxSockets: 50,
-  rejectUnauthorized: false,
+  // Certificate verification stays ON. Disabling it made every proxied audio
+  // stream and every third-party API call trivially MITM-able.
+  rejectUnauthorized: true,
 });
 
 app.get('/api/stream/:videoId', async (req, res) => {
@@ -648,13 +693,36 @@ app.get('/api/stream/:videoId', async (req, res) => {
   streamViaPipeFallback(videoId, req, res);
 });
 
-function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
-  if (redirectCount > 4 || res.headersSent) {
-    return streamViaPipeFallback(videoId, req, res);
+function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0, isFinalTier = false) {
+  if (res.headersSent || res.writableEnded) return;
+
+  // isFinalTier means we were called by Tier 3. Falling back to the pipe from
+  // here would loop Tier 2 -> Tier 3 -> Tier 2 forever.
+  const giveUp = (reason) => {
+    if (res.headersSent || res.writableEnded) return;
+    if (isFinalTier) {
+      console.warn(`[Stream] All tiers exhausted for ${videoId}: ${reason}`);
+      res.status(502).json({ error: 'Audio stream unavailable' });
+    } else {
+      streamViaPipeFallback(videoId, req, res);
+    }
+  };
+
+  if (redirectCount > 4) return giveUp('too many redirects');
+
+  let parsedUrl;
+  try {
+    parsedUrl = new URL(targetUrl);
+  } catch (e) {
+    return giveUp('unparseable URL');
+  }
+
+  // Only ever speak http(s). Anything else is a malformed/hostile Location.
+  if (parsedUrl.protocol !== 'https:' && parsedUrl.protocol !== 'http:') {
+    return giveUp(`unsupported protocol ${parsedUrl.protocol}`);
   }
 
   try {
-    const parsedUrl = new URL(targetUrl);
     const isHttps = parsedUrl.protocol === 'https:';
     const protocol = isHttps ? https : http;
 
@@ -678,14 +746,16 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
     const proxyReq = protocol.request(options, (proxyRes) => {
       // Follow HTTP redirects
       if ([301, 302, 303, 307, 308].includes(proxyRes.statusCode) && proxyRes.headers.location) {
-        return fetchAndProxyAudio(proxyRes.headers.location, req, res, videoId, redirectCount + 1);
+        // Drain the redirect body, otherwise the socket is never released
+        // back to the keep-alive pool.
+        proxyRes.resume();
+        return fetchAndProxyAudio(proxyRes.headers.location, req, res, videoId, redirectCount + 1, isFinalTier);
       }
 
-      // If YouTube CDN returns HTTP >= 400, fallback to pipe
       if (!proxyRes.statusCode || proxyRes.statusCode >= 400) {
-        console.warn(`[Stream Proxy] CDN HTTP ${proxyRes.statusCode}, trying pipe fallback...`);
+        console.warn(`[Stream Proxy] CDN HTTP ${proxyRes.statusCode}, falling back...`);
         proxyRes.resume();
-        return streamViaPipeFallback(videoId, req, res);
+        return giveUp(`CDN HTTP ${proxyRes.statusCode}`);
       }
 
       const fwdHeaders = {
@@ -703,89 +773,109 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0) {
 
       proxyRes.pipe(res);
 
-      proxyRes.on('error', (err) => console.warn('[Proxy Res Error]', err.message));
+      proxyRes.on('error', (err) => {
+        console.warn('[Proxy Res Error]', err.message);
+        // Headers are already out, so the only honest signal left is to cut
+        // the connection rather than serve a silently truncated track.
+        try { res.destroy(); } catch (e) {}
+      });
     });
 
     proxyReq.on('error', (err) => {
       console.warn(`[Proxy Req Error - ${err.code || err.message}]`);
-      if (!res.headersSent) {
-        streamViaPipeFallback(videoId, req, res);
-      }
+      giveUp(err.code || err.message);
     });
 
     req.on('close', () => {
-      try { proxyReq.destroy(); } catch (e) {}
+      if (!res.writableEnded) {
+        try { proxyReq.destroy(); } catch (e) {}
+      }
     });
 
     proxyReq.end();
   } catch (err) {
     console.warn('[Stream Proxy Exception]', err.message);
-    if (!res.headersSent) streamViaPipeFallback(videoId, req, res);
+    giveUp(err.message);
   }
 }
 
 // Tier 2: Direct stream via yt-dlp stdout pipe if YouTube CDN URL drops socket
 function streamViaPipeFallback(videoId, req, res) {
-  if (res.headersSent) return;
+  if (res.headersSent || res.writableEnded) return;
 
+  let streamProcess;
   try {
-    const streamProcess = spawn(ytDlpPath, [
+    streamProcess = spawn(ytDlpPath, [
       ...BASE_YTDLP_ARGS,
       `https://www.youtube.com/watch?v=${videoId}`,
       '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
       '-o', '-',
       '--no-warnings',
     ], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
-
-    let headersSet = false;
-    let stderr = '';
-
-    streamProcess.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
-    });
-
-    streamProcess.stdout.on('data', (chunk) => {
-      if (!headersSet && !res.headersSent) {
-        headersSet = true;
-        res.writeHead(200, {
-          'Content-Type': 'audio/mp4',
-          'Accept-Ranges': 'none',
-          'Cache-Control': 'no-cache',
-          'Access-Control-Allow-Origin': '*',
-        });
-      }
-    });
-
-    streamProcess.stdout.pipe(res);
-
-    streamProcess.on('error', (err) => {
-      console.warn('[Pipe Process Error]', err.message);
-      if (!res.headersSent && !headersSet) {
-        streamViaServerlessApi(videoId, res);
-      }
-    });
-
-    streamProcess.on('close', (code) => {
-      if (code !== 0 && !res.headersSent && !headersSet) {
-        console.warn(`[Pipe Process Close] Non-zero exit ${code}: ${stderr.trim()}`);
-        streamViaServerlessApi(videoId, res);
-      } else if (!res.headersSent && !headersSet) {
-         streamViaServerlessApi(videoId, res);
-      }
-      res.end();
-    });
-
-    res.on('close', () => {
-      try { streamProcess.kill('SIGTERM'); } catch (e) {}
-    });
   } catch (e) {
-    if (!res.headersSent) streamViaServerlessApi(videoId, res);
+    return streamViaServerlessApi(videoId, req, res);
   }
+
+  let headersSet = false;
+  let stderr = '';
+  // 'error' and 'close' can both fire for a single failed spawn. Without this
+  // guard we handed the same response to Tier 3 twice.
+  let handedOff = false;
+
+  const handOffToTier3 = () => {
+    if (handedOff || headersSet || res.headersSent) return;
+    handedOff = true;
+    streamViaServerlessApi(videoId, req, res);
+  };
+
+  streamProcess.stderr.on('data', (chunk) => {
+    if (stderr.length < 8192) stderr += chunk.toString();
+  });
+
+  streamProcess.stdout.on('data', () => {
+    if (!headersSet && !res.headersSent) {
+      headersSet = true;
+      res.writeHead(200, {
+        'Content-Type': 'audio/mp4',
+        'Accept-Ranges': 'none',
+        'Cache-Control': 'no-cache',
+        'Access-Control-Allow-Origin': '*',
+      });
+    }
+  });
+
+  streamProcess.stdout.on('error', () => {});
+
+  // pipe() already calls res.end() when stdout finishes, and it does so only
+  // after the buffered audio has been flushed. Calling res.end() ourselves on
+  // process close truncated the tail of every track.
+  streamProcess.stdout.pipe(res);
+
+  streamProcess.on('error', (err) => {
+    console.warn('[Pipe Process Error]', err.message);
+    handOffToTier3();
+  });
+
+  streamProcess.on('close', (code) => {
+    if (!headersSet && !res.headersSent) {
+      if (code !== 0) {
+        console.warn(`[Pipe Process Close] Non-zero exit ${code}: ${stderr.trim()}`);
+      }
+      handOffToTier3();
+    }
+  });
+
+  res.on('close', () => {
+    // Only kill the child if the client bailed before we finished writing.
+    if (!res.writableEnded) {
+      try { streamProcess.kill('SIGTERM'); } catch (e) {}
+    }
+  });
 }
 
 // Tier 3: Serverless Piped / Invidious API Fallback (Works on Vercel / Cloud Functions with 0 binaries!)
-async function streamViaServerlessApi(videoId, res) {
-  if (res.headersSent) return;
+async function streamViaServerlessApi(videoId, req, res) {
+  if (res.headersSent || res.writableEnded) return;
 
   const apis = [
     `https://invidious.privacydev.net/api/v1/videos/${videoId}`,
@@ -799,11 +889,24 @@ async function streamViaServerlessApi(videoId, res) {
     try {
       const data = await new Promise((resolve, reject) => {
         const r = https.get(apiUrl, { timeout: 6000, agent: httpsAgent }, (resp) => {
+          if (!resp.statusCode || resp.statusCode >= 400) {
+            resp.resume();
+            return reject(new Error(`HTTP ${resp.statusCode}`));
+          }
           let body = '';
-          resp.on('data', c => body += c);
+          resp.setEncoding('utf8');
+          resp.on('data', c => {
+            body += c;
+            // Guard against an endpoint streaming an unbounded body at us.
+            if (body.length > 4 * 1024 * 1024) {
+              r.destroy();
+              reject(new Error('response too large'));
+            }
+          });
           resp.on('end', () => {
             try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
           });
+          resp.on('error', reject);
         });
         r.on('error', reject);
         r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
@@ -812,10 +915,12 @@ async function streamViaServerlessApi(videoId, res) {
       const audioStreams = data.audioStreams || data.adaptiveFormats;
       if (Array.isArray(audioStreams) && audioStreams.length > 0) {
         const bestStream = audioStreams.find(s => s.mimeType && s.mimeType.includes('audio/mp4')) || audioStreams[0];
-        if (bestStream && bestStream.url) {
-          if (!res.headersSent) {
-            return res.redirect(302, bestStream.url);
-          }
+        if (bestStream && bestStream.url && /^https?:\/\//i.test(bestStream.url)) {
+          if (res.headersSent || res.writableEnded) return;
+          // Proxy rather than 302. A redirect pushed the client off-origin,
+          // which broke range requests and caused the Web Audio equalizer to
+          // output silence (cross-origin media taints the graph).
+          return fetchAndProxyAudio(bestStream.url, req, res, videoId, 0, true);
         }
       }
     } catch (err) {
@@ -823,8 +928,8 @@ async function streamViaServerlessApi(videoId, res) {
     }
   }
 
-  if (!res.headersSent) {
-    res.status(500).json({ error: 'Audio stream unavailable' });
+  if (!res.headersSent && !res.writableEnded) {
+    res.status(502).json({ error: 'Audio stream unavailable' });
   }
 }
 
@@ -912,17 +1017,42 @@ let activeDownloadCount = 0;
 
 function cleanStaleDownloads() {
   const cutoff = Date.now() - (24 * 60 * 60 * 1000);
+  let files = [];
   try {
-    for (const file of fs.readdirSync(tempDownloadsDir)) {
-      const filePath = path.join(tempDownloadsDir, file);
-      if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
-    }
+    files = fs.readdirSync(tempDownloadsDir);
   } catch (err) {
     console.warn('[Download Cleanup]', err.message);
+    return;
+  }
+  // Per-file guard: one locked or already-deleted file used to abort the whole
+  // sweep, so temp files accumulated forever.
+  for (const file of files) {
+    try {
+      const filePath = path.join(tempDownloadsDir, file);
+      if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
+    } catch (err) {
+      // File vanished or is still locked by another process; skip it.
+    }
   }
 }
 
 cleanStaleDownloads();
+
+// Strips path/header-hostile characters while preserving non-Latin scripts.
+// The old filter allowed only [a-zA-Z0-9], so every Hindi, Tamil, Arabic or
+// CJK title collapsed to the empty string and downloaded as "Track.mp3".
+function buildSafeFilename(rawTitle) {
+  const cleaned = String(rawTitle || '')
+    // eslint-disable-next-line no-control-regex
+    .replace(/[\x00-\x1f\x7f]/g, '')   // control chars (incl. CR/LF header injection)
+    .replace(/[\\/:*?"<>|]/g, '')       // characters illegal in Windows filenames
+    .replace(/\s+/g, ' ')
+    .replace(/^\.+/, '')                // no leading dots -> no "." or ".."
+    .trim()
+    .slice(0, 120)
+    .trim();
+  return cleaned || 'MusicFlow_Track';
+}
 
 app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
@@ -934,6 +1064,34 @@ app.get('/api/download/:videoId', async (req, res) => {
     return res.status(429).json({ error: 'Too many downloads in progress. Please try again shortly.' });
   }
 
+  // Reserved up front and released by exactly one cleanup() call. Previously the
+  // counter was incremented inside the try block and never decremented if
+  // anything threw before the execFile callback ran, so after two failures the
+  // endpoint returned 429 forever until restart.
+  activeDownloadCount++;
+  const tempPrefix = path.join(tempDownloadsDir, `dl_${videoId}_${Date.now()}`);
+  let cleaned = false;
+  const cleanup = () => {
+    if (cleaned) return;
+    cleaned = true;
+    activeDownloadCount = Math.max(0, activeDownloadCount - 1);
+    let files = [];
+    try {
+      files = fs.readdirSync(tempDownloadsDir);
+    } catch (e) {
+      return;
+    }
+    const prefix = path.basename(tempPrefix);
+    for (const file of files) {
+      if (!file.startsWith(prefix)) continue;
+      try {
+        fs.unlinkSync(path.join(tempDownloadsDir, file));
+      } catch (cleanupError) {
+        // On Windows the file may still be open; the 24h sweep will get it.
+      }
+    }
+  };
+
   try {
     let info = { title: 'Track', channel: '' };
     try {
@@ -944,32 +1102,13 @@ app.get('/api/download/:videoId', async (req, res) => {
       if (infoStdout) info = JSON.parse(infoStdout);
     } catch (e) {}
 
-    const safeTitle = (info.title || 'MusicFlow_Track')
-      .replace(/[^a-zA-Z0-9\s\-_.()\[\]]/g, '')
-      .replace(/\s+/g, ' ')
-      .trim() || 'Track';
+    const safeTitle = buildSafeFilename(info.title);
 
-    const tempPrefix = path.join(tempDownloadsDir, `dl_${videoId}_${Date.now()}`);
-    activeDownloadCount++;
-    let cleaned = false;
-    const cleanup = () => {
-      if (cleaned) return;
-      cleaned = true;
-      activeDownloadCount = Math.max(0, activeDownloadCount - 1);
-      try {
-        for (const file of fs.readdirSync(tempDownloadsDir)) {
-          if (file.startsWith(path.basename(tempPrefix))) {
-            fs.unlinkSync(path.join(tempDownloadsDir, file));
-          }
-        }
-      } catch (cleanupError) {
-        console.warn('[Download Cleanup]', cleanupError.message);
-      }
-    };
     const dlArgs = [
       ...BASE_YTDLP_ARGS,
       '--ffmpeg-location', ffmpegPath,
       '--no-part',
+      '--no-progress',
       '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
       '-x', '--audio-format', 'mp3',
       '--audio-quality', '192K',
@@ -977,7 +1116,13 @@ app.get('/api/download/:videoId', async (req, res) => {
       `https://www.youtube.com/watch?v=${videoId}`
     ];
 
-    execFile(ytDlpPath, dlArgs, { timeout: 180000, windowsHide: true }, (err, _stdout, stderr) => {
+    execFile(ytDlpPath, dlArgs, {
+      timeout: 180000,
+      windowsHide: true,
+      // Without an explicit maxBuffer this inherits the 1MB default; a chatty
+      // yt-dlp/ffmpeg run would blow past it and kill an otherwise fine download.
+      maxBuffer: 10 * 1024 * 1024,
+    }, (err, _stdout, stderr) => {
       const targetMp3 = `${tempPrefix}.mp3`;
 
       if (err || !fs.existsSync(targetMp3)) {
@@ -987,9 +1132,17 @@ app.get('/api/download/:videoId', async (req, res) => {
         return;
       }
 
-      const stat = fs.statSync(targetMp3);
+      let stat;
+      try {
+        stat = fs.statSync(targetMp3);
+      } catch (statErr) {
+        cleanup();
+        if (!res.headersSent) res.status(500).json({ error: 'MP3 download failed' });
+        return;
+      }
+
       const encodedFilename = encodeURIComponent(safeTitle);
-      
+
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', stat.size);
       res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp3"; filename*=UTF-8''${encodedFilename}.mp3`);
@@ -999,15 +1152,23 @@ app.get('/api/download/:videoId', async (req, res) => {
       const stream = fs.createReadStream(targetMp3);
       stream.pipe(res);
 
-      stream.on('end', cleanup);
+      // Cleanup is driven off the *response* finishing, not the read stream
+      // ending. 'end' fires as soon as the last chunk is read, which on Windows
+      // is before the handle is released — unlinkSync then threw EBUSY and the
+      // temp file was never removed.
+      res.on('finish', cleanup);
+      res.on('close', cleanup);
       stream.on('error', (sErr) => {
         console.error('[Stream Error]', sErr.message);
+        // Headers (incl. Content-Length) are already committed, so ending
+        // normally would hand the client a truncated MP3 that looks valid.
+        try { res.destroy(sErr); } catch (e) {}
         cleanup();
       });
-      req.on('close', cleanup);
     });
   } catch (err) {
     console.error('[Download Exception]', err.message);
+    cleanup();
     if (!res.headersSent) res.status(500).json({ error: 'Download failed' });
   }
 });
@@ -1031,19 +1192,55 @@ app.get('/api/user-data', (req, res) => {
     res.json({});
   } catch (err) {
     console.error('[UserData Get Error]', err.message);
-    res.json({});
+    // Signal the failure instead of returning {}. A silent empty object looks
+    // to the client like "server has no data", which invited it to overwrite a
+    // perfectly good file with an empty one.
+    res.status(500).json({ error: 'Stored user data could not be read' });
   }
 });
 
-app.post('/api/user-data', (req, res) => {
-  try {
+// Saves are serialized through this promise chain. Two overlapping POSTs each
+// did read-modify-write against the same file, so one could clobber the other's
+// keys — and a crash mid-writeFileSync left a truncated, unparseable file.
+let userDataWriteChain = Promise.resolve();
+
+function saveUserData(patch) {
+  const run = async () => {
     let current = {};
-    if (fs.existsSync(userDataFile)) {
-      try { current = JSON.parse(fs.readFileSync(userDataFile, 'utf8') || '{}'); } catch (e) {}
+    try {
+      if (fs.existsSync(userDataFile)) {
+        current = JSON.parse(await fs.promises.readFile(userDataFile, 'utf8') || '{}');
+      }
+    } catch (e) {
+      console.warn('[UserData] Existing file unreadable, starting fresh:', e.message);
+      current = {};
     }
-    const updated = { ...current, ...req.body, lastSaved: new Date().toISOString() };
-    fs.writeFileSync(userDataFile, JSON.stringify(updated, null, 2), 'utf8');
-    res.json({ success: true, lastSaved: updated.lastSaved });
+    if (!current || typeof current !== 'object' || Array.isArray(current)) current = {};
+
+    const updated = { ...current, ...patch, lastSaved: new Date().toISOString() };
+
+    // Write to a sibling temp file then rename. rename() is atomic, so a reader
+    // sees either the old file or the new one — never a half-written one.
+    const tmpFile = `${userDataFile}.${process.pid}.tmp`;
+    await fs.promises.writeFile(tmpFile, JSON.stringify(updated, null, 2), 'utf8');
+    await fs.promises.rename(tmpFile, userDataFile);
+    return updated.lastSaved;
+  };
+
+  const result = userDataWriteChain.then(run, run);
+  // Keep the chain alive even when a write rejects.
+  userDataWriteChain = result.catch(() => {});
+  return result;
+}
+
+app.post('/api/user-data', async (req, res) => {
+  const patch = req.body;
+  if (!patch || typeof patch !== 'object' || Array.isArray(patch)) {
+    return res.status(400).json({ error: 'Body must be a JSON object' });
+  }
+  try {
+    const lastSaved = await saveUserData(patch);
+    res.json({ success: true, lastSaved });
   } catch (err) {
     console.error('[UserData Save Error]', err.message);
     res.status(500).json({ error: 'Failed to save data' });
@@ -1169,6 +1366,13 @@ app.post('/api/mood-mix', async (req, res) => {
 /* ------------------------------------------------------------------ */
 /*  SPA fallback                                                      */
 /* ------------------------------------------------------------------ */
+// Unknown API routes must 404 as JSON. The blanket '*' handler used to serve
+// index.html with a 200, so a typo'd or removed endpoint surfaced in the client
+// as "Unexpected token '<' in JSON" instead of a readable error.
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Unknown API endpoint: ${req.method} /api${req.path}` });
+});
+
 app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
@@ -1188,13 +1392,16 @@ function listenOnPort(port, maxTries = 10) {
   });
 
   server.listen(port, HOST, () => {
-    ensureYtDlp().catch(() => {});
     console.log('\n============================================================');
     console.log(`  🎵  MusicFlow v3.0 Desktop — High-Performance Music Engine`);
     console.log('============================================================');
     console.log(`  💻  Local Desktop App:       http://localhost:${port}`);
     console.log(`  🌐  Network Host:            http://${HOST}:${port}`);
     console.log('============================================================\n');
+    // Kick off binary resolution immediately. Requests arriving before this
+    // finishes now await the same promise rather than shelling out to a
+    // yt-dlp that isn't on disk yet.
+    whenYtDlpReady().catch(() => {});
   });
 }
 
