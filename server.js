@@ -54,7 +54,13 @@ app.get('/health', (req, res) => {
 
 app.get('/api/health', (req, res) => {
   res.status(200).json({
+    // Identifies this specific app. The desktop launcher probes a range of
+    // ports and must be able to tell MusicFlow apart from any other dev
+    // server that happens to be listening.
+    app: 'musicflow',
     status: 'ok',
+    port: activePort,
+    pid: process.pid,
     uptime: Math.floor(process.uptime()),
     timestamp: new Date().toISOString(),
     // ytDlpPath is always a truthy string, so the old check reported "ready"
@@ -1398,6 +1404,29 @@ app.get('*', (req, res) => {
 });
 
 const initialPort = parseInt(process.env.PORT || '3000', 10);
+let activePort = initialPort;
+
+// The desktop launcher needs to know which port was actually bound, because
+// listenOnPort() walks upward when 3000 is already taken. Without this the
+// shortcut opened localhost:3000 and showed whatever unrelated dev server
+// happened to be there.
+const RUNTIME_FILE = path.join(__dirname, 'data', 'runtime.json');
+
+function publishRuntimeInfo(port) {
+  try {
+    fs.mkdirSync(path.dirname(RUNTIME_FILE), { recursive: true });
+    fs.writeFileSync(RUNTIME_FILE, JSON.stringify({
+      app: 'musicflow',
+      port,
+      pid: process.pid,
+      url: `http://localhost:${port}`,
+      startedAt: new Date().toISOString()
+    }, null, 2));
+  } catch (e) {
+    // Non-fatal: the launcher falls back to scanning the port range.
+    console.warn('[MusicFlow] ⚠️ Could not write runtime info:', e.message);
+  }
+}
 
 function listenOnPort(port, maxTries = 10) {
   const server = http.createServer(app);
@@ -1412,6 +1441,8 @@ function listenOnPort(port, maxTries = 10) {
   });
 
   server.listen(port, HOST, () => {
+    activePort = port;
+    publishRuntimeInfo(port);
     console.log('\n============================================================');
     console.log(`  🎵  MusicFlow v3.0 Desktop — High-Performance Music Engine`);
     console.log('============================================================');

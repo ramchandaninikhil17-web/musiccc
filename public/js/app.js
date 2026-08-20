@@ -33,6 +33,14 @@
       clearTimeout(syncTimeout);
       syncTimeout = setTimeout(() => { Storage.flush(); }, 500);
     },
+    // Device-local only, never synced. The playback resume point is rewritten
+    // every few seconds while music plays; routing it through set() would mean
+    // a POST to /api/user-data every 5 seconds for a value the server has no
+    // use for.
+    setLocal(key, val) {
+      try { localStorage.setItem('mf_' + key, JSON.stringify(val)); }
+      catch (e) { console.warn('[storage] could not write', key, e && e.name); }
+    },
     flush() {
       const keys = Object.keys(pendingSync);
       if (!keys.length) return Promise.resolve();
@@ -268,6 +276,14 @@
 
     // Auto-restore saved likes and playlists from disk database
     Storage.syncFromServer();
+
+    // Launched from the desktop shortcut (which appends ?autoplay=1): pick up
+    // where the last session stopped. Deferred one frame-ish so the UI paints
+    // first — starting a network stream on the same tick makes the window feel
+    // slow to appear.
+    if (ResumeManager.wantsAutoplay()) {
+      setTimeout(() => ResumeManager.autoplay(), 250);
+    }
   }
 
   function createOrbs() {
@@ -343,17 +359,20 @@
     audioPlayer?.addEventListener('loadedmetadata', onMeta);
     audioPlayer?.addEventListener('ended', onEnd);
     audioPlayer?.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); });
-    audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); });
+    audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); ResumeManager.save(); });
     audioPlayer?.addEventListener('error', onAudioError);
 
     // Closing the tab used to discard the current track's listen time and any
     // queued sync. pagehide fires reliably where beforeunload does not (iOS).
     window.addEventListener('pagehide', () => {
       recordListenTime();
+      // Written before the flush so the shortcut can resume from the exact
+      // second the window was closed, not from the last 5-second checkpoint.
+      ResumeManager.save();
       Storage.flushBeacon();
     });
     document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') Storage.flushBeacon();
+      if (document.visibilityState === 'hidden') { ResumeManager.save(); Storage.flushBeacon(); }
     });
 
     // Theme cycling: Dark -> Light -> OLED -> Dark
@@ -961,9 +980,125 @@
     // Sync with Apple Orb & Lyrics
     AppleOrbController.updateProgress(c, d);
     syncLyrics(c);
+    ResumeManager.note();
   }
 
-  function onMeta() { npDuration.textContent = fmtTime(audioPlayer.duration); }
+  function onMeta() {
+    npDuration.textContent = fmtTime(audioPlayer.duration);
+    // Duration is only known now, so a pending resume seek can finally be
+    // validated and applied.
+    ResumeManager.applyPendingSeek();
+  }
+
+  /* ================================================================
+     RESUME + AUTOPLAY
+     Lets the desktop shortcut open straight into whatever was playing
+     when the app was last closed, at the second it stopped.
+     ================================================================ */
+  const ResumeManager = {
+    pendingSeek: null,
+    lastSaveAt: 0,
+    fadeTimer: null,
+
+    // Called from onTimeUpdate, which fires ~4x a second. localStorage writes
+    // are synchronous, so this is throttled hard.
+    note() {
+      const now = Date.now();
+      if (now - this.lastSaveAt < 5000) return;
+      this.lastSaveAt = now;
+      this.save();
+    },
+
+    save() {
+      if (!currentSong || !currentSong.id) return;
+      const song = Object.assign({}, currentSong);
+      // A local file's blob URL dies with the document; LocalFileManager mints
+      // a fresh one from IndexedDB on demand, so it must not be persisted.
+      delete song.streamUrl;
+      Storage.setLocal('resume', {
+        song,
+        position: Number(audioPlayer.currentTime) || 0,
+        duration: Number(audioPlayer.duration) || 0,
+        savedAt: Date.now()
+      });
+    },
+
+    applyPendingSeek() {
+      const target = this.pendingSeek;
+      if (target == null) return;
+      this.pendingSeek = null;
+      const dur = Number(audioPlayer.duration) || 0;
+      if (!dur || !isFinite(dur)) return;
+      // Never resume inside the last 15 seconds. Landing on a fade-out and
+      // immediately skipping is worse than starting the track over.
+      if (target > 0 && target < dur - 15) {
+        try { audioPlayer.currentTime = target; } catch (e) {}
+      }
+    },
+
+    // Ramp up from silence so a track resuming mid-phrase does not slam in.
+    fadeIn(ms) {
+      clearInterval(this.fadeTimer);
+      const target = audioPlayer.muted ? 0 : volume;
+      const steps = 24;
+      let i = 0;
+      this.fadeTimer = setInterval(() => {
+        i++;
+        audioPlayer.volume = Math.max(0, Math.min(target, (target * i) / steps));
+        if (i >= steps) {
+          clearInterval(this.fadeTimer);
+          this.fadeTimer = null;
+          audioPlayer.volume = target;
+        }
+      }, Math.max(10, Math.floor(ms / steps)));
+    },
+
+    wantsAutoplay() {
+      try {
+        if (new URLSearchParams(location.search).has('autoplay')) return true;
+      } catch (e) {}
+      return /(^|[#&])autoplay\b/.test(location.hash || '');
+    },
+
+    autoplay() {
+      const saved = Storage.get('resume', null);
+      if (saved && saved.song && saved.song.id) {
+        this.start(saved.song, Number(saved.position) || 0);
+        return;
+      }
+      // Nothing to resume — fall back to the most recently played track so the
+      // shortcut still starts music. If even that is empty (fresh install),
+      // stay silent rather than playing something arbitrary.
+      const hist = validHistory();
+      if (hist.length) this.start(hist[0].song, 0);
+    },
+
+    start(song, position) {
+      if (!song || !song.id) return;
+      this.pendingSeek = position > 5 ? position : null;
+
+      // Silence before the first sample, then fade up once audio truly starts.
+      audioPlayer.volume = 0;
+      const onPlaying = () => {
+        audioPlayer.removeEventListener('playing', onPlaying);
+        this.fadeIn(900);
+      };
+      audioPlayer.addEventListener('playing', onPlaying);
+
+      // Safety net: if playback never starts — blocked autoplay, dead stream,
+      // missing local file — restore the volume. Leaving a silent player behind
+      // a full-looking slider is exactly the sleep-timer bug all over again.
+      setTimeout(() => {
+        if (!this.fadeTimer && audioPlayer.paused) {
+          audioPlayer.removeEventListener('playing', onPlaying);
+          audioPlayer.volume = audioPlayer.muted ? 0 : volume;
+        }
+      }, 8000);
+
+      playSong(song);
+    }
+  };
+
 
   // Shuffle & Repeat
   function toggleShuffle() { isShuffle = !isShuffle; $('#shuffleBtn').classList.toggle('active', isShuffle); Storage.set('shuffle', isShuffle); toast(isShuffle ? 'Shuffle ON' : 'Shuffle OFF'); }

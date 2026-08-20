@@ -1,13 +1,13 @@
 @echo off
-title Create MusicFlow Shortcut
+title MusicFlow - Create Desktop Shortcut
 cd /d "%~dp0"
 
-echo ===================================================
-echo   Creating MusicFlow Desktop Shortcut...
-echo ===================================================
-echo.
-
 powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0create-shortcut.ps1"
+
+if errorlevel 1 (
+  echo.
+  echo Something went wrong. The message above should say what.
+)
 
 echo.
 pause
