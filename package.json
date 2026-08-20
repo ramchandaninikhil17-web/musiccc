@@ -1,6 +1,6 @@
 {
   "name": "musicflow",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "description": "MusicFlow — High-Performance YouTube & Cloud Music Player",
   "main": "server.js",
   "scripts": {
@@ -14,9 +14,7 @@
   },
   "dependencies": {
     "cors": "^2.8.5",
-    "crypto-js": "^4.2.0",
     "express": "^4.21.0",
-    "ffmpeg-static": "^5.3.0",
-    "yt-dlp-wrap": "^2.3.12"
+    "ffmpeg-static": "^5.3.0"
   }
 }

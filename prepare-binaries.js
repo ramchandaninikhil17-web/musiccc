@@ -36,28 +36,13 @@ async function prepareBinaries() {
     // Not in PATH, download below
   }
 
-  // 3. Download official binary for current platform
+  // 3. Download official binary for current platform.
+  //
+  // yt-dlp-wrap's downloadFromGithub() is deliberately not used: on a network
+  // or DNS failure it raises the error on an unlistened emitter, so it crashes
+  // the install with an uncaught exception instead of rejecting.
   console.log(`[MusicFlow Build] ⬇️ Downloading latest official yt-dlp binary for platform: ${process.platform}...`);
 
-  let YTDlpWrap;
-  try {
-    YTDlpWrap = require('yt-dlp-wrap').default || require('yt-dlp-wrap');
-  } catch (e) {}
-
-  if (YTDlpWrap && typeof YTDlpWrap.downloadFromGithub === 'function') {
-    try {
-      await YTDlpWrap.downloadFromGithub(binaryPath);
-      if (!isWin) {
-        try { fs.chmodSync(binaryPath, '755'); } catch (e) {}
-      }
-      console.log(`[MusicFlow Build] ✅ yt-dlp downloaded and marked executable: ${binaryPath}`);
-      return;
-    } catch (err) {
-      console.warn(`[MusicFlow Build] ⚠️ YTDlpWrap download failed, trying direct HTTPS fallback: ${err.message}`);
-    }
-  }
-
-  // Direct HTTPS GitHub Release download fallback
   let downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
   if (isWin) downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
   else if (isMac) downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
@@ -83,20 +68,46 @@ async function prepareBinaries() {
   }
 }
 
-function downloadFileWithRedirects(url, destPath) {
+function downloadFileWithRedirects(url, destPath, redirectCount = 0) {
   return new Promise((resolve, reject) => {
+    if (redirectCount > 5) return reject(new Error('Too many redirects'));
     https.get(url, { headers: { 'User-Agent': 'Mozilla/5.0 MusicFlow-Deploy' } }, (res) => {
       if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
-        return downloadFileWithRedirects(res.headers.location, destPath).then(resolve).catch(reject);
+        res.resume(); // drain, otherwise the socket leaks
+        return downloadFileWithRedirects(res.headers.location, destPath, redirectCount + 1).then(resolve).catch(reject);
       }
       if (res.statusCode !== 200) {
+        res.resume();
         return reject(new Error(`Download failed with HTTP ${res.statusCode}`));
       }
+
+      const expected = Number(res.headers['content-length']) || 0;
+      let received = 0;
+      res.on('data', (chunk) => { received += chunk.length; });
+
       const fileStream = fs.createWriteStream(destPath);
       res.pipe(fileStream);
+
+      res.on('error', (err) => {
+        fileStream.destroy();
+        fs.unlink(destPath, () => {});
+        reject(err);
+      });
+
       fileStream.on('finish', () => {
-        fileStream.close();
-        resolve();
+        fileStream.close(() => {
+          // A socket drop mid-transfer used to look like success, leaving a
+          // truncated yt-dlp on disk that failed on every single invocation.
+          if (expected && received < expected) {
+            fs.unlink(destPath, () => {});
+            return reject(new Error(`Truncated download: got ${received} of ${expected} bytes`));
+          }
+          if (received === 0) {
+            fs.unlink(destPath, () => {});
+            return reject(new Error('Downloaded binary was empty'));
+          }
+          resolve();
+        });
       });
       fileStream.on('error', (err) => {
         fs.unlink(destPath, () => {});

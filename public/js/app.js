@@ -1,5 +1,5 @@
 /* ================================================================
-   MusicFlow v2.0 — Complete App Logic
+   MusicFlow v3.0 — Complete App Logic
    ================================================================ */
 
 (function () {
@@ -12,7 +12,8 @@
      STORAGE MANAGER WITH DISK & LOCAL DUAL PERSISTENCE
      ================================================================ */
   let syncTimeout = null;
-  const pendingSync = {};
+  let pendingSync = {};
+  let syncInFlight = null;
 
   const Storage = {
     get(key, fallback) {
@@ -20,30 +21,74 @@
       catch { return fallback; }
     },
     set(key, val) {
-      try { localStorage.setItem('mf_' + key, JSON.stringify(val)); } catch {}
-      
+      try { localStorage.setItem('mf_' + key, JSON.stringify(val)); }
+      catch (e) {
+        // Quota exceeded is the common case; the value still lives in memory
+        // and will be pushed to the server, so keep going but say so once.
+        console.warn('[storage] could not write', key, e && e.name);
+      }
+
       // Auto sync to server disk database
       pendingSync[key] = val;
       clearTimeout(syncTimeout);
-      syncTimeout = setTimeout(() => {
-        try {
-          fetch('/api/user-data', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(pendingSync)
-          }).catch(() => {});
-        } catch {}
-      }, 500);
+      syncTimeout = setTimeout(() => { Storage.flush(); }, 500);
+    },
+    flush() {
+      const keys = Object.keys(pendingSync);
+      if (!keys.length) return Promise.resolve();
+
+      // Hand the batch off and clear it immediately. The old code kept every
+      // value it had ever seen in pendingSync and resent the whole thing on
+      // each flush, so a stale snapshot could clobber a newer server value.
+      const batch = pendingSync;
+      pendingSync = {};
+
+      const send = () => fetch('/api/user-data', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(batch)
+      }).then(res => {
+        if (!res.ok) throw new Error(`sync failed: ${res.status}`);
+      }).catch(err => {
+        // Re-queue only keys that have not been superseded since, so a retry
+        // can never overwrite a fresher value.
+        Object.keys(batch).forEach(k => {
+          if (!(k in pendingSync)) pendingSync[k] = batch[k];
+        });
+        console.warn('[storage]', err && err.message);
+      });
+
+      // Serialize requests so two in-flight POSTs cannot land out of order.
+      syncInFlight = (syncInFlight || Promise.resolve()).then(send, send);
+      return syncInFlight;
     },
     remove(key) {
-      localStorage.removeItem('mf_' + key);
+      try { localStorage.removeItem('mf_' + key); } catch {}
+      pendingSync[key] = null;
+      clearTimeout(syncTimeout);
+      syncTimeout = setTimeout(() => { Storage.flush(); }, 500);
+    },
+    // A normal fetch is cancelled when the page goes away, so anything still
+    // queued at teardown (including the listen time for the current track) was
+    // silently dropped.
+    flushBeacon() {
+      if (!Object.keys(pendingSync).length) return;
+      const batch = pendingSync;
+      pendingSync = {};
+      clearTimeout(syncTimeout);
+      const body = JSON.stringify(batch);
+      try {
+        const blob = new Blob([body], { type: 'application/json' });
+        if (navigator.sendBeacon && navigator.sendBeacon('/api/user-data', blob)) return;
+      } catch (e) {}
       try {
         fetch('/api/user-data', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ [key]: null })
+          body,
+          keepalive: true
         }).catch(() => {});
-      } catch {}
+      } catch (e) {}
     },
     async syncFromServer() {
       try {
@@ -127,7 +172,21 @@
   let playlists = Storage.get('playlists', []); // [{id, name, songs:[]}]
   let history = Storage.get('history', []); // [{song, playedAt, listenedSec}]
   let searchHistory = Storage.get('searchHistory', []);
+
+  // Anything persisted by an older build (or a partially-written sync) can be
+  // the wrong shape. Normalize once here so no renderer has to defend itself.
+  if (!Array.isArray(likedSongs)) likedSongs = [];
+  if (!Array.isArray(playlists)) playlists = [];
+  if (!Array.isArray(history)) history = [];
+  if (!Array.isArray(searchHistory)) searchHistory = [];
+  likedSongs = likedSongs.filter(s => s && s.id);
+  playlists = playlists.filter(p => p && p.id).map(p => Object.assign({}, p, {
+    songs: Array.isArray(p.songs) ? p.songs.filter(s => s && s.id) : []
+  }));
+  history = history.filter(h => h && h.song && h.song.id);
+  searchHistory = searchHistory.filter(q => typeof q === 'string' && q.trim());
   let playStartTime = null;
+  let activeHistoryEntry = null;
   let addToPlaylistSong = null; // song being added
 
   /* ================================================================
@@ -286,6 +345,16 @@
     audioPlayer?.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); });
     audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); });
     audioPlayer?.addEventListener('error', onAudioError);
+
+    // Closing the tab used to discard the current track's listen time and any
+    // queued sync. pagehide fires reliably where beforeunload does not (iOS).
+    window.addEventListener('pagehide', () => {
+      recordListenTime();
+      Storage.flushBeacon();
+    });
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') Storage.flushBeacon();
+    });
 
     // Theme cycling: Dark -> Light -> OLED -> Dark
     $('#themeToggleBtn')?.addEventListener('click', () => {
@@ -630,6 +699,17 @@
      ================================================================ */
   let audioRetryCount = 0;
 
+  // Changing crossOrigin restarts the resource-selection algorithm, so it has
+  // to be set before src and only when it actually changes.
+  function applyCrossOrigin(mode) {
+    const current = audioPlayer.getAttribute('crossorigin');
+    if (mode === null) {
+      if (current !== null) audioPlayer.removeAttribute('crossorigin');
+    } else if (current !== mode) {
+      audioPlayer.setAttribute('crossorigin', mode);
+    }
+  }
+
   // Every call site used to be `audioPlayer.play().catch(() => {})`, so a
   // blocked autoplay or an unsupported codec looked identical to "nothing
   // happened at all". Errors are now surfaced, minus the two rejection types
@@ -683,19 +763,20 @@
         startPlayback(song);
       });
     } else if (song.isCloud) {
+      // Once the Web Audio graph exists it taps the element directly, and a
+      // cross-origin stream fetched without CORS feeds it silence. Requesting
+      // CORS means a non-cooperating CDN fails loudly (error event -> skip)
+      // instead of playing a silent track that looks like it is working.
+      applyCrossOrigin(EqualizerManager.audioCtx ? 'anonymous' : null);
       if (song.streamUrl) {
         audioPlayer.src = song.streamUrl;
-        audioPlayer.play().catch(async () => {
-          const freshUrl = await CloudMusicEngine.getStreamUrl(song.id);
-          if (currentSong !== song) return;
-          if (freshUrl) {
-            song.streamUrl = freshUrl;
-            audioPlayer.src = freshUrl;
-            startPlayback(song);
-          } else {
-            toast(`Could not start "${String(song.title || 'track').slice(0, 24)}".`);
-          }
-        });
+        // A blocked autoplay is not an expired URL. The old code refetched the
+        // stream on any play() rejection, so a browser autoplay block produced
+        // a pointless network round-trip and a misleading "could not start"
+        // toast instead of "press play". startPlayback tells them apart; a
+        // genuinely dead URL surfaces as an 'error' event and onAudioError
+        // handles the refetch.
+        startPlayback(song);
       } else {
         CloudMusicEngine.getStreamUrl(song.id).then(url => {
           if (currentSong !== song) return;
@@ -711,6 +792,7 @@
         });
       }
     } else {
+      applyCrossOrigin(null);
       audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
       startPlayback(song);
     }
@@ -737,7 +819,14 @@
 
   function togglePlayPause() {
     if (!audioPlayer.src || currentIndex < 0) return;
-    audioPlayer.paused ? audioPlayer.play() : audioPlayer.pause();
+    if (audioPlayer.paused) {
+      // This is a user gesture, so it is the right moment to un-suspend the
+      // Web Audio graph if the browser started it suspended.
+      EqualizerManager.resumeContext();
+      startPlayback(currentSong || { title: '' });
+    } else {
+      audioPlayer.pause();
+    }
   }
 
   function setPlayState(playing) {
@@ -803,38 +892,64 @@
     // Its own 'ended' listener runs *after* this one, so playNext() had already
     // started the following track before the timer paused it.
     if (SleepTimerManager.consumeStopAfterTrack()) return;
-    if (repeatMode === 'one') { audioPlayer.currentTime = 0; audioPlayer.play().catch(() => {}); }
+    if (repeatMode === 'one') {
+      audioPlayer.currentTime = 0;
+      // recordListenTime() above closed the listening clock. Reopen it so a
+      // track on repeat keeps accruing minutes instead of counting only once,
+      // and go through startPlayback so a suspended audio context is resumed.
+      playStartTime = Date.now();
+      startPlayback(currentSong || {});
+    }
     else playNext();
   }
 
   async function onAudioError() {
-    if (currentSong && currentSong.isCloud) {
-      const freshUrl = await CloudMusicEngine.getStreamUrl(currentSong.id);
+    const song = currentSong;
+    if (!song) return;
+
+    // MEDIA_ERR_ABORTED is what the browser reports when the src is swapped
+    // while the previous one was still loading — i.e. every ordinary skip.
+    // Treating it as a playback failure burned through the retry budget and
+    // then force-skipped the track the user had just chosen.
+    const code = audioPlayer.error && audioPlayer.error.code;
+    if (code === 1 /* MEDIA_ERR_ABORTED */) return;
+    if (!audioPlayer.getAttribute('src')) return;
+
+    // Everything below can hand control back to the event loop, so each branch
+    // re-checks that this is still the track being played.
+    if (song.isCloud) {
+      let freshUrl = null;
+      try { freshUrl = await CloudMusicEngine.getStreamUrl(song.id); } catch (e) {}
+      if (currentSong !== song) return;
       if (freshUrl && freshUrl !== audioPlayer.src) {
-        currentSong.streamUrl = freshUrl;
+        song.streamUrl = freshUrl;
         audioPlayer.src = freshUrl;
-        audioPlayer.play().catch(() => {});
+        startPlayback(song);
         return;
       }
       audioRetryCount = 0;
-      toast(`Playback is unavailable for "${(currentSong.title || 'track').slice(0, 20)}". Trying the next track...`);
-      setTimeout(playNext, 1000);
+      toast(`Playback is unavailable for "${(song.title || 'track').slice(0, 20)}". Trying the next track...`);
+      setTimeout(() => { if (currentSong === song) playNext(); }, 1000);
       return;
     }
-    if (currentSong && currentSong.isLocal) {
-      toast(`Your browser could not play "${(currentSong.title || 'local track').slice(0, 20)}".`);
+
+    if (song.isLocal) {
+      audioRetryCount = 0;
+      toast(`Your browser could not play "${(song.title || 'local track').slice(0, 20)}".`);
       return;
     }
-    if (currentSong && audioRetryCount < 3) {
+
+    if (audioRetryCount < 3) {
       audioRetryCount++;
       const fallbackQuality = audioRetryCount === 1 ? 'low' : 'high';
-      audioPlayer.src = `/api/stream/${currentSong.id}?quality=${fallbackQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
-      audioPlayer.play().catch(() => {});
+      audioPlayer.src = `/api/stream/${song.id}?quality=${fallbackQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
+      startPlayback(song);
       return;
     }
+
     audioRetryCount = 0;
-    toast(`⚠️ Playback issue on "${(currentSong?.title || 'track').slice(0, 20)}", skipping to next...`);
-    setTimeout(playNext, 1000);
+    toast(`⚠️ Playback issue on "${(song.title || 'track').slice(0, 20)}", skipping to next...`);
+    setTimeout(() => { if (currentSong === song) playNext(); }, 1000);
   }
 
   function onTimeUpdate() {
@@ -1203,8 +1318,10 @@
 
     if (isNew) {
       const plName = ($('#batchNewPlaylistName').value || '').trim() || 'New Batch Playlist';
+      // Deliberately not pushed into `playlists` yet — the old code registered
+      // it before awaiting the search, so a failed import left an empty ghost
+      // playlist in the library.
       targetPl = { id: 'pl_' + Date.now(), name: plName, songs: [] };
-      playlists.push(targetPl);
     } else {
       const plId = $('#batchExistingPlaylistSelect').value;
       targetPl = playlists.find(p => p.id === plId);
@@ -1244,7 +1361,7 @@
         body: JSON.stringify({ queries, preferOfficial })
       });
 
-      if (!res.ok) throw new Error('Batch search failed');
+      if (!res.ok) throw new Error(`Batch search failed (${res.status})`);
       const data = await res.json();
 
       progFill.style.width = '85%';
@@ -1275,6 +1392,10 @@
           }
         });
       }
+
+      // Only now does a brand-new playlist join the library, so a failed
+      // search never leaves an empty one behind.
+      if (isNew && !playlists.some(p => p.id === targetPl.id)) playlists.push(targetPl);
 
       Storage.set('playlists', playlists);
       progFill.style.width = '100%';
@@ -1624,8 +1745,13 @@
      ================================================================ */
   function addToHistory(song) {
     if (!song || !song.id) return;
-    history.unshift({ song, playedAt: new Date().toISOString(), listenedSec: 0 });
+    const entry = { song, playedAt: new Date().toISOString(), listenedSec: 0 };
+    history.unshift(entry);
     if (history.length > 250) history = history.slice(0, 250);
+    // Listen time is attributed to this exact entry rather than to history[0],
+    // which stops being the current track as soon as a server sync re-sorts
+    // the array.
+    activeHistoryEntry = entry;
     Storage.set('history', history);
   }
 
@@ -1638,10 +1764,14 @@
   }
 
   function recordListenTime() {
-    if (playStartTime && history.length > 0 && history[0] && history[0].song) {
+    if (playStartTime && activeHistoryEntry) {
       const sec = Math.floor((Date.now() - playStartTime) / 1000);
-      history[0].listenedSec = (history[0].listenedSec || 0) + sec;
-      Storage.set('history', history);
+      if (sec > 0) {
+        activeHistoryEntry.listenedSec = (activeHistoryEntry.listenedSec || 0) + sec;
+        // The entry object may have been dropped by a sync merge; only persist
+        // if it is still part of the live array.
+        if (history.indexOf(activeHistoryEntry) !== -1) Storage.set('history', history);
+      }
     }
     // Always cleared, even when there was nothing to attribute the time to.
     playStartTime = null;
@@ -1809,12 +1939,48 @@
     }
   }
 
+  // The server allows only two concurrent MP3 conversions, so an impatient
+  // double-click used to spend the whole budget and come back 429.
+  const activeDownloads = new Set();
+
+  // Mirrors the server's sanitizer: strips only what is actually illegal in a
+  // filename instead of destroying every non-Latin character. The old regex
+  // turned every Hindi or Tamil title into an empty string.
+  function safeDownloadName(rawTitle) {
+    const cleaned = String(rawTitle || '')
+      .replace(/[\x00-\x1f\x7f]/g, '')
+      .replace(/[\\/:*?"<>|]/g, '')
+      .replace(/\s+/g, ' ')
+      .replace(/^\.+/, '')
+      .trim()
+      .slice(0, 120)
+      .trim();
+    return cleaned || 'MusicFlow_Track';
+  }
+
+  // Prefer the name the server picked; it knows the real video title.
+  function filenameFromDisposition(header) {
+    if (!header) return null;
+    const utf8 = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header);
+    if (utf8) {
+      try { return decodeURIComponent(utf8[1].trim()); } catch (e) {}
+    }
+    const plain = /filename\s*=\s*"([^"]+)"/i.exec(header) || /filename\s*=\s*([^;]+)/i.exec(header);
+    return plain ? plain[1].trim() : null;
+  }
+
   async function downloadSong(song) {
     if (!song || !song.id) { toast('No song selected'); return; }
     if (song.isLocal) {
+      // After a reload the persisted blob URL is gone, so re-mint it first.
+      const url = await LocalFileManager.resolveStreamUrl(song);
+      if (!url) {
+        toast('This local file is no longer stored. Re-import it from your device.');
+        return;
+      }
       const a = document.createElement('a');
-      a.href = song.streamUrl;
-      a.download = song.title || 'MusicFlow-Track';
+      a.href = url;
+      a.download = safeDownloadName(song.title);
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -1824,24 +1990,52 @@
       toast('Downloads are available for YouTube search results.');
       return;
     }
+    if (activeDownloads.has(song.id)) {
+      toast('That download is already running.');
+      return;
+    }
+
+    activeDownloads.add(song.id);
     toast(`⏳ Preparing MP3 download for "${(song.title || 'track').slice(0, 25)}..."`);
 
+    let objectUrl = null;
     try {
-      const downloadUrl = `/api/download/${song.id}`;
-      const response = await fetch(downloadUrl);
-      if (!response.ok) throw new Error('The server could not prepare this MP3.');
+      const response = await fetch(`/api/download/${encodeURIComponent(song.id)}`);
+
+      if (!response.ok) {
+        // The server explains itself in JSON; passing that through beats a
+        // generic "Server busy" for every failure mode.
+        let detail = `Server responded ${response.status}`;
+        try {
+          const body = await response.json();
+          if (body && body.error) detail = body.error;
+        } catch (e) {}
+        throw new Error(detail);
+      }
+
       const blob = await response.blob();
+      if (!blob || blob.size === 0) throw new Error('The server returned an empty file');
+
+      const serverName = filenameFromDisposition(response.headers.get('Content-Disposition'));
+      let filename = serverName ? safeDownloadName(serverName) : `${safeDownloadName(song.title)}.mp3`;
+      if (!/\.mp3$/i.test(filename)) filename += '.mp3';
+
+      objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
-      const objectUrl = URL.createObjectURL(blob);
       a.href = objectUrl;
-      a.download = `${(song.title || 'MusicTrack').replace(/[/\\?%*:|"<>]/g, '')}.mp3`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       a.remove();
-      setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
-      toast(`✅ MP3 download started! Check downloads folder.`);
+      toast(`✅ Saved "${filename}" to your downloads.`);
     } catch (err) {
-      toast(`⚠️ Download error: ${err.message || 'Server busy'}`);
+      console.warn('[download]', err);
+      toast(`⚠️ Download failed: ${err.message || 'unknown error'}`);
+    } finally {
+      // Revoking too early cancels the save in some browsers; 60s is safe and
+      // still bounded, unlike leaking the blob for the whole session.
+      if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
+      activeDownloads.delete(song.id);
     }
   }
 

@@ -8,13 +8,6 @@ const fs = require('fs');
 const os = require('os');
 const ffmpegPath = require('ffmpeg-static');
 
-let YTDlpWrap;
-try {
-  YTDlpWrap = require('yt-dlp-wrap').default || require('yt-dlp-wrap');
-} catch (e) {
-  // Optional fallback
-}
-
 const app = express();
 const PORT = process.env.PORT || 3000;
 const HOST = process.env.HOST || '0.0.0.0';
@@ -75,6 +68,11 @@ app.get('/api/health', (req, res) => {
 /* ------------------------------------------------------------------ */
 let ytDlpPath = 'yt-dlp';
 let ytDlpResolved = false;
+let ytDlpBinaryFound = false;
+
+// Upper bound on the first-run binary bootstrap. Past this, requests proceed
+// and fail fast with a real error instead of hanging.
+const YTDLP_BOOTSTRAP_TIMEOUT_MS = 90000;
 
 // Resolves once the binary has been located/downloaded. Every code path that
 // shells out to yt-dlp awaits this, otherwise requests that arrive during the
@@ -83,8 +81,14 @@ let ytDlpReadyPromise = null;
 
 function whenYtDlpReady() {
   if (!ytDlpReadyPromise) {
-    ytDlpReadyPromise = ensureYtDlp().then(() => {
-      ytDlpResolved = true;
+    // The bootstrap is raced against a timeout. A dependency that neither
+    // resolves nor rejects (yt-dlp-wrap does exactly that when DNS fails)
+    // would otherwise wedge every search and stream request forever.
+    ytDlpReadyPromise = Promise.race([
+      ensureYtDlp(),
+      new Promise((resolve) => setTimeout(resolve, YTDLP_BOOTSTRAP_TIMEOUT_MS).unref?.()),
+    ]).then(() => {
+      ytDlpResolved = ytDlpBinaryFound;
     }).catch(() => {
       // ensureYtDlp already logs; leave ytDlpResolved false so /api/health is honest.
     });
@@ -103,6 +107,7 @@ async function ensureYtDlp() {
         try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
       }
       ytDlpPath = rootBinary;
+      ytDlpBinaryFound = true;
       console.log(`[MusicFlow] ✅ yt-dlp binary ready: ${ytDlpPath}`);
       return;
     }
@@ -112,40 +117,33 @@ async function ensureYtDlp() {
       const check = require('child_process').spawnSync('yt-dlp', ['--version'], { windowsHide: true });
       if (check && check.status === 0) {
         ytDlpPath = 'yt-dlp';
+        ytDlpBinaryFound = true;
         console.log('[MusicFlow] ✅ Using system yt-dlp from PATH');
         return;
       }
     } catch (e) {}
 
-    // Not found locally or in PATH -> auto-download from official GitHub releases
-    if (YTDlpWrap && typeof YTDlpWrap.downloadFromGithub === 'function') {
-      try {
-        console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release from GitHub...');
-        await YTDlpWrap.downloadFromGithub(rootBinary);
-        if (!isWin) {
-          try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
-        }
-        ytDlpPath = rootBinary;
-        console.log(`[MusicFlow] ✅ yt-dlp downloaded successfully: ${ytDlpPath}`);
-        return;
-      } catch (wrapErr) {
-        console.warn(`[MusicFlow] ⚠️ YTDlpWrap download failed, trying direct HTTPS fallback: ${wrapErr.message}`);
-      }
-    }
-
-    // Direct HTTPS fallback download
+    // Not found locally or in PATH -> download from official GitHub releases.
+    //
+    // This deliberately does NOT use YTDlpWrap.downloadFromGithub(): when DNS
+    // or the network fails it raises the error on an emitter nobody listens to,
+    // so the failure surfaces as an uncaught exception AND its promise never
+    // settles — which hung every request waiting on this bootstrap.
     let downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
     if (isWin) downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
     else if (process.platform === 'darwin') downloadUrl = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
 
+    console.log('[MusicFlow] ⬇️ yt-dlp binary not found. Downloading latest official release...');
     await downloadBinaryDirect(downloadUrl, rootBinary);
     if (!isWin) {
       try { fs.chmodSync(rootBinary, '755'); } catch (e) {}
     }
     ytDlpPath = rootBinary;
+    ytDlpBinaryFound = true;
     console.log(`[MusicFlow] ✅ Direct download of yt-dlp successful: ${ytDlpPath}`);
   } catch (err) {
-    console.warn(`[MusicFlow] ⚠️ Auto-download of yt-dlp note: ${err.message}`);
+    console.warn(`[MusicFlow] ⚠️ yt-dlp is unavailable: ${err.message}`);
+    console.warn('[MusicFlow] ⚠️ Search, streaming and downloads will not work until yt-dlp is installed.');
   }
 }
 
@@ -846,10 +844,15 @@ function streamViaPipeFallback(videoId, req, res) {
 
   streamProcess.stdout.on('error', () => {});
 
-  // pipe() already calls res.end() when stdout finishes, and it does so only
-  // after the buffered audio has been flushed. Calling res.end() ourselves on
-  // process close truncated the tail of every track.
-  streamProcess.stdout.pipe(res);
+  // NOTE the `end: false`. Letting pipe() end the response automatically meant
+  // that a failed spawn — whose stdout ends immediately with zero bytes —
+  // answered the client with an empty HTTP 200 before Tier 3 could take over.
+  // The response is now ended explicitly, and only once audio actually flowed.
+  streamProcess.stdout.pipe(res, { end: false });
+
+  streamProcess.stdout.on('end', () => {
+    if (headersSet && !res.writableEnded) res.end();
+  });
 
   streamProcess.on('error', (err) => {
     console.warn('[Pipe Process Error]', err.message);
@@ -862,6 +865,9 @@ function streamViaPipeFallback(videoId, req, res) {
         console.warn(`[Pipe Process Close] Non-zero exit ${code}: ${stderr.trim()}`);
       }
       handOffToTier3();
+    } else if (headersSet && !res.writableEnded) {
+      // Guards the case where stdout emitted 'close' without a clean 'end'.
+      res.end();
     }
   });
 
@@ -1141,11 +1147,19 @@ app.get('/api/download/:videoId', async (req, res) => {
         return;
       }
 
-      const encodedFilename = encodeURIComponent(safeTitle);
+      // HTTP header values cannot carry characters above U+00FF — Node throws
+      // ERR_INVALID_CHAR. So the legacy `filename=` parameter gets an ASCII-only
+      // fallback and the real Unicode title travels in RFC 5987 `filename*=`,
+      // which every current browser prefers anyway.
+      const asciiFallback = safeTitle
+        .replace(/[^\x20-\x7e]/g, '')
+        .replace(/["\\]/g, '')
+        .trim() || 'MusicFlow_Track';
+      const encodedFilename = encodeURIComponent(`${safeTitle}.mp3`);
 
       res.setHeader('Content-Type', 'audio/mpeg');
       res.setHeader('Content-Length', stat.size);
-      res.setHeader('Content-Disposition', `attachment; filename="${safeTitle}.mp3"; filename*=UTF-8''${encodedFilename}.mp3`);
+      res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}.mp3"; filename*=UTF-8''${encodedFilename}`);
       res.setHeader('Access-Control-Allow-Origin', '*');
       res.setHeader('Cache-Control', 'no-store');
 
@@ -1374,6 +1388,12 @@ app.use('/api', (req, res) => {
 });
 
 app.get('*', (req, res) => {
+  // A missing asset must not be answered with index.html and a 200. That is how
+  // a renamed script ends up "loading" successfully and then dying on the first
+  // '<' of the HTML it actually received.
+  if (/\.[a-z0-9]{1,8}$/i.test(req.path) && !/\.html?$/i.test(req.path)) {
+    return res.status(404).type('text/plain').send('Not found');
+  }
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
