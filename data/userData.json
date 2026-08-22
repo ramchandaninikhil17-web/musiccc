@@ -1,7 +1,713 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-08-20T17:01:56.962Z",
+  "lastSaved": "2026-08-22T15:38:38.961Z",
   "history": [
+    {
+      "song": {
+        "id": "dCmp56tSSmA",
+        "title": "Diljit Dosanjh: Born To Shine (Official Music Video) G.O.A.T",
+        "channel": "Diljit Dosanjh",
+        "duration": 218,
+        "thumbnail": "https://i.ytimg.com/vi/dCmp56tSSmA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDbDC_1rWT8AyWskpgKIiPSsB11A",
+        "views": 534298915
+      },
+      "playedAt": "2026-08-22T15:38:38.145Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "f1r0XZLNlGQ",
+        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
+        "channel": "The Weeknd",
+        "duration": 245,
+        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
+        "views": 466658471
+      },
+      "playedAt": "2026-08-22T15:38:35.769Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "34Na4j8AVgA",
+        "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
+        "channel": "The Weeknd",
+        "duration": 274,
+        "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLDUxek6mE_p2sYJ2g7P-m0Z1d69KQ&usqp=CBc",
+        "views": 2782697277
+      },
+      "playedAt": "2026-08-22T15:38:34.170Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "cWMxCE2HTag",
+        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
+        "channel": "Karan Aujla",
+        "duration": 171,
+        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
+        "views": 491292592
+      },
+      "playedAt": "2026-08-22T15:38:18.738Z",
+      "listenedSec": 15
+    },
+    {
+      "song": {
+        "id": "yZ-2-BbK",
+        "title": "100 Preethili Pakka",
+        "channel": "Kailash Kher, Anuradha Bhat, Sadhu Kokila",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/771/Shourya-Kannada-2009-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/771/V5pdsiLdXDjgJONK0HxySZpu5jM3C1IYFjy2NUiac7_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:38:03.137Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "pZrg5umz",
+        "title": "Rx 100",
+        "channel": "Triminati Records, Raj Mawer, Kaka",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/851/Rx-100-Hindi-2019-20191101075009-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/851/lF4uudi4NGHKycpeRMldztexIikGrJn8bd22QhhkR_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:58.131Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "F2OkmWKn",
+        "title": "100 Sapp",
+        "channel": "Tiger",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/816/100-Sapp-Punjabi-2025-20250415115201-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/816/0ZyU8KeOzh11vopc20YD9LY1rAyYAfRiD7eRM9D7zs8if_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:50.139Z",
+      "listenedSec": 4
+    },
+    {
+      "song": {
+        "id": "5SQwpEal",
+        "title": "100 VALA GOGGLE",
+        "channel": "Bhaiya More",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/730/100-VALA-GOGGLE-Marathi-2026-20260729141432-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/730/Xra469kjECk7Ns0cO7wvXhEjVCDUr9Bi8aKaqLYQSQ_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:47.133Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "KK3mfw1e",
+        "title": "10000 Pax",
+        "channel": "ofRO, Santhosh Narayanan",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/935/Jigarthanda-DoubleX-Original-Motion-Picture-Soundtrack-Tamil-2023-20250905072714-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/935/hj7KlFIYQY5EYPHfl8azsy0o8EbC1CDIlOzyOo4LH_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:43.145Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "p_a1ty0C",
+        "title": "100 Million",
+        "channel": "DIVINE, Karan Aujla",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/505/Street-Dreams-Hindi-2024-20240220085345-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/505/vaUN6rXoa3ABvnaVADylRCZ1OsS1DXxguM_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:39.141Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "OHNvAKso",
+        "title": "0 To 100",
+        "channel": "Sidhu Moose Wala",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/448/No-Name-Punjabi-2022-20260626154650-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/448/YdfIzemEUiADpc7AFkiuUVDci9pLIL1WgZnY8rQzD_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:35.128Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "Mpi2m7cD",
+        "title": "Pillaa Raa",
+        "channel": "Anurag Kulkarni",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/172/RX-100-Telugu-2018-20230207103253-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/172/tMuVuxjCVCVzfCvuUmD1nuyuFWGucZnJI661LM_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:31.140Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "1KuVshU7",
+        "title": "100% Love (original motion picture soundtrack)",
+        "channel": "Monali Thakur, Jeet Gannguli",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/827/100-Love-original-motion-picture-soundtrack-Bengali-2023-20250203223504-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/827/J2Dp7yGKZAZkmijMe6jlzxPZrpMqN4IsMl_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:25.149Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "2tdSYEee",
+        "title": "100 Million",
+        "channel": "DIVINE, Karan Aujla",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/762/100-Million-Hindi-2024-20240117115926-500x500.jpg",
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/762/QqPfRrqr7MzeodzI6fuPGjkV7l3cNawT7u9o7_320.mp4"
+      },
+      "playedAt": "2026-08-22T15:37:20.978Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "vsWxs1tuwDk",
+        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
+        "channel": "Karan Aujla",
+        "duration": 238,
+        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
+        "views": 278521751
+      },
+      "playedAt": "2026-08-22T15:32:51.543Z",
+      "listenedSec": 251
+    },
+    {
+      "song": {
+        "id": "Mx92lTYxrJQ",
+        "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
+        "channel": "The Weeknd",
+        "duration": 259,
+        "thumbnail": "https://i.ytimg.com/vi/Mx92lTYxrJQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAL8NG5JoNndy3_nxIFDT3q4aD9Ow",
+        "views": 360189835
+      },
+      "playedAt": "2026-08-22T15:32:30.232Z",
+      "listenedSec": 21
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 379588822
+      },
+      "playedAt": "2026-08-22T15:29:24.126Z",
+      "listenedSec": 176
+    },
+    {
+      "song": {
+        "id": "5GCfYLguTIs",
+        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 162,
+        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+        "views": 274723992
+      },
+      "playedAt": "2026-08-22T15:29:16.484Z",
+      "listenedSec": 7
+    },
+    {
+      "song": {
+        "id": "TO-_3tck2tg",
+        "title": "Imagine Dragons - Bones (Official Music Video)",
+        "channel": "ImagineDragons",
+        "duration": 166,
+        "thumbnail": "https://i.ytimg.com/vi/TO-_3tck2tg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDkRMWTd2S9bZ2OWicdg6HlbOVMXQ",
+        "views": 443060930
+      },
+      "playedAt": "2026-08-22T15:26:09.885Z",
+      "listenedSec": 176
+    },
+    {
+      "song": {
+        "id": "-YlmnPh-6rE",
+        "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
+        "channel": "Rehaan Records",
+        "duration": 189,
+        "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
+        "views": 354828331
+      },
+      "playedAt": "2026-08-22T15:25:51.175Z",
+      "listenedSec": 18
+    },
+    {
+      "song": {
+        "id": "7wtfhZwyrcc",
+        "title": "Imagine Dragons - Believer (Official Music Video)",
+        "channel": "ImagineDragons",
+        "duration": 217,
+        "thumbnail": "https://i.ytimg.com/vi/7wtfhZwyrcc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAorFfrZXwv_HMuWFY58OGUgd0r5Q",
+        "views": 3034109074
+      },
+      "playedAt": "2026-08-22T15:21:44.949Z",
+      "listenedSec": 235
+    },
+    {
+      "song": {
+        "id": "YaEG2aWJnZ8",
+        "title": "Sia - Unstoppable (Official Video - Live from the Nostalgic For The Present Tour)",
+        "channel": "Sia",
+        "duration": 227,
+        "thumbnail": "https://i.ytimg.com/vi/YaEG2aWJnZ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAs9lEcnc-UuXYVpwJ-DAJ79pmOTw",
+        "views": 862810347
+      },
+      "playedAt": "2026-08-22T15:17:16.026Z",
+      "listenedSec": 268
+    },
+    {
+      "song": {
+        "id": "5GCfYLguTIs",
+        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 162,
+        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+        "views": 274704258
+      },
+      "playedAt": "2026-08-22T15:14:19.094Z",
+      "listenedSec": 176
+    },
+    {
+      "song": {
+        "id": "K9R7KcaettM",
+        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 194,
+        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLD44wja6aobLCys8wFkA9_V4Kjq0w",
+        "views": 95510303
+      },
+      "playedAt": "2026-08-22T15:10:34.787Z",
+      "listenedSec": 223
+    },
+    {
+      "song": {
+        "id": "K9R7KcaettM",
+        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 194,
+        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLD44wja6aobLCys8wFkA9_V4Kjq0w",
+        "views": 95510303
+      },
+      "playedAt": "2026-08-21T16:59:14.771Z",
+      "listenedSec": 35
+    },
+    {
+      "song": {
+        "id": "K9R7KcaettM",
+        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 194,
+        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLD44wja6aobLCys8wFkA9_V4Kjq0w",
+        "views": 95510303
+      },
+      "playedAt": "2026-08-21T14:33:21.832Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "K9R7KcaettM",
+        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 194,
+        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLD44wja6aobLCys8wFkA9_V4Kjq0w",
+        "views": 95510303
+      },
+      "playedAt": "2026-08-21T14:33:07.608Z",
+      "listenedSec": 3
+    },
+    {
+      "song": {
+        "id": "K9R7KcaettM",
+        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 194,
+        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLD44wja6aobLCys8wFkA9_V4Kjq0w",
+        "views": 95510303
+      },
+      "playedAt": "2026-08-21T14:15:35.253Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "16jA-6hiSUo",
+        "title": "The Weeknd, Playboi Carti - Timeless (Official Lyric Video)",
+        "channel": "The Weeknd",
+        "duration": 257,
+        "thumbnail": "https://i.ytimg.com/vi/16jA-6hiSUo/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLA0szHVyqZjdomVuaHGDQMc4U7-Og",
+        "views": 80331589
+      },
+      "playedAt": "2026-08-21T14:11:10.283Z",
+      "listenedSec": 264
+    },
+    {
+      "song": {
+        "id": "vt0i6nuqNEo",
+        "title": "The Weeknd, Madonna, Playboi Carti - Popular (Official Music Video)",
+        "channel": "The Weeknd",
+        "duration": 231,
+        "thumbnail": "https://i.ytimg.com/vi/vt0i6nuqNEo/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLDgqclQVtzk6HzjtI3evwTC3BDQyg",
+        "views": 117633609
+      },
+      "playedAt": "2026-08-21T14:07:11.349Z",
+      "listenedSec": 238
+    },
+    {
+      "song": {
+        "id": "k85UB5b6pJU",
+        "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
+        "channel": "Karan Aujla",
+        "duration": 211,
+        "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLB2aHO4AnsburpX5RYGrPwWqWpZvg",
+        "views": 187442194
+      },
+      "playedAt": "2026-08-21T14:03:32.911Z",
+      "listenedSec": 218
+    },
+    {
+      "song": {
+        "id": "TO-_3tck2tg",
+        "title": "Imagine Dragons - Bones (Official Music Video)",
+        "channel": "ImagineDragons",
+        "duration": 166,
+        "thumbnail": "https://i.ytimg.com/vi/TO-_3tck2tg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDkRMWTd2S9bZ2OWicdg6HlbOVMXQ",
+        "views": 443060930
+      },
+      "playedAt": "2026-08-21T14:00:29.208Z",
+      "listenedSec": 175
+    },
+    {
+      "song": {
+        "id": "YaEG2aWJnZ8",
+        "title": "Sia - Unstoppable (Official Video - Live from the Nostalgic For The Present Tour)",
+        "channel": "Sia",
+        "duration": 227,
+        "thumbnail": "https://i.ytimg.com/vi/YaEG2aWJnZ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAs9lEcnc-UuXYVpwJ-DAJ79pmOTw",
+        "views": 862810347
+      },
+      "playedAt": "2026-08-21T14:00:26.577Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "IgKdXLfxgQQ",
+        "title": "'Hawa Hawai\" Full Video Song | Mr. India | Sridevi,Anil Kapoor | Kavita Krishnamurthy | Javed Akhtar",
+        "channel": "T-Series Bollywood Classics",
+        "duration": 419,
+        "thumbnail": "https://i.ytimg.com/vi/IgKdXLfxgQQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAXzPe5ryGFDBRdHq2Unf1mqIDMcg",
+        "views": 65693887
+      },
+      "playedAt": "2026-08-21T14:00:09.362Z",
+      "listenedSec": 17
+    },
+    {
+      "song": {
+        "id": "IgKdXLfxgQQ",
+        "title": "'Hawa Hawai\" Full Video Song | Mr. India | Sridevi,Anil Kapoor | Kavita Krishnamurthy | Javed Akhtar",
+        "channel": "T-Series Bollywood Classics",
+        "duration": 419,
+        "thumbnail": "https://i.ytimg.com/vi/IgKdXLfxgQQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAXzPe5ryGFDBRdHq2Unf1mqIDMcg",
+        "views": 65693887
+      },
+      "playedAt": "2026-08-21T14:00:02.241Z",
+      "listenedSec": 7
+    },
+    {
+      "song": {
+        "id": "2kjolTLZ_Mg",
+        "title": "The Weeknd - São Paulo (Official Music Video)",
+        "channel": "The Weeknd",
+        "duration": 210,
+        "thumbnail": "https://i.ytimg.com/vi/2kjolTLZ_Mg/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDzszvYfu3JvKLpuynneOtSWRpbZA",
+        "views": 64759376
+      },
+      "playedAt": "2026-08-21T13:57:23.264Z",
+      "listenedSec": 23
+    },
+    {
+      "song": {
+        "id": "2kjolTLZ_Mg",
+        "title": "The Weeknd - São Paulo (Official Music Video)",
+        "channel": "The Weeknd",
+        "duration": 210,
+        "thumbnail": "https://i.ytimg.com/vi/2kjolTLZ_Mg/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDzszvYfu3JvKLpuynneOtSWRpbZA",
+        "views": 64759376
+      },
+      "playedAt": "2026-08-21T12:37:48.104Z",
+      "listenedSec": 3
+    },
+    {
+      "song": {
+        "id": "2kjolTLZ_Mg",
+        "title": "The Weeknd - São Paulo (Official Music Video)",
+        "channel": "The Weeknd",
+        "duration": 210,
+        "thumbnail": "https://i.ytimg.com/vi/2kjolTLZ_Mg/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDzszvYfu3JvKLpuynneOtSWRpbZA",
+        "views": 64759376
+      },
+      "playedAt": "2026-08-21T07:57:09.667Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "umqmDe8GFTA",
+        "title": "Main Agar Full Video - Tubelight | Salman Khan, Sohail Khan | Pritam | Atif Aslam | Kabir Khan",
+        "channel": "SonyMusicIndiaVEVO",
+        "duration": 232,
+        "thumbnail": "https://i.ytimg.com/vi/umqmDe8GFTA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBsR9hqgFJxmYAPX8z1u-eQQpCo2g",
+        "views": 21423386
+      },
+      "playedAt": "2026-08-21T07:53:01.132Z",
+      "listenedSec": 239
+    },
+    {
+      "song": {
+        "id": "Y8ZN7QjQcP0",
+        "title": "It's the Time to Disco - Kal Ho Naa Ho | Shah Rukh Khan | Saif Ali Khan |Preity Zinta |Shaan| KK| 4K",
+        "channel": "Sony Music India",
+        "duration": 311,
+        "thumbnail": "https://i.ytimg.com/vi/Y8ZN7QjQcP0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBHyTExK_g0J7SwbAmDNgLfkZGlhA",
+        "views": 26970930
+      },
+      "playedAt": "2026-08-21T07:52:18.164Z",
+      "listenedSec": 42
+    },
+    {
+      "song": {
+        "id": "5GCfYLguTIs",
+        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 162,
+        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+        "views": 273372928
+      },
+      "playedAt": "2026-08-21T07:51:58.939Z",
+      "listenedSec": 19
+    },
+    {
+      "song": {
+        "id": "cWMxCE2HTag",
+        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
+        "channel": "Karan Aujla",
+        "duration": 171,
+        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
+        "views": 490735883
+      },
+      "playedAt": "2026-08-21T07:48:52.146Z",
+      "listenedSec": 178
+    },
+    {
+      "song": {
+        "id": "cWMxCE2HTag",
+        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
+        "channel": "Karan Aujla",
+        "duration": 171,
+        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
+        "views": 490735883
+      },
+      "playedAt": "2026-08-20T17:31:03.901Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "g6fnFALEseI",
+        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
+        "channel": "SonyMusicIndiaVEVO",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
+        "views": 87099571
+      },
+      "playedAt": "2026-08-20T17:30:58.301Z",
+      "listenedSec": 5
+    },
+    {
+      "song": {
+        "id": "g6fnFALEseI",
+        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
+        "channel": "SonyMusicIndiaVEVO",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
+        "views": 87099571
+      },
+      "playedAt": "2026-08-20T17:29:12.783Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "g6fnFALEseI",
+        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
+        "channel": "SonyMusicIndiaVEVO",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
+        "views": 87099571
+      },
+      "playedAt": "2026-08-20T17:28:39.876Z",
+      "listenedSec": 28
+    },
+    {
+      "song": {
+        "id": "R1gDHm4LS4Y",
+        "title": "good for you x one of the girls (lyrics) (tiktok mashup) | Selena Gomez x The Weeknd",
+        "channel": "faint music",
+        "duration": 150,
+        "thumbnail": "https://i.ytimg.com/vi/R1gDHm4LS4Y/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDU4zQyQcp7Wmv6T6zJ8Fo6Vv52A",
+        "views": 4344084
+      },
+      "playedAt": "2026-08-20T17:27:41.854Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "R1gDHm4LS4Y",
+        "title": "good for you x one of the girls (lyrics) (tiktok mashup) | Selena Gomez x The Weeknd",
+        "channel": "faint music",
+        "duration": 150,
+        "thumbnail": "https://i.ytimg.com/vi/R1gDHm4LS4Y/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDU4zQyQcp7Wmv6T6zJ8Fo6Vv52A",
+        "views": 4344084
+      },
+      "playedAt": "2026-08-20T17:26:32.520Z",
+      "listenedSec": 69
+    },
+    {
+      "song": {
+        "id": "AJtDXIazrMo",
+        "title": "Ellie Goulding - Love Me Like You Do (Official Video)",
+        "channel": "Ellie Goulding",
+        "duration": 250,
+        "thumbnail": "https://i.ytimg.com/vi/AJtDXIazrMo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAsfKGOpZz9W7dNt4ZpT_80KdGTDw",
+        "views": 2411901142
+      },
+      "playedAt": "2026-08-20T17:24:59.169Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "AJtDXIazrMo",
+        "title": "Ellie Goulding - Love Me Like You Do (Official Video)",
+        "channel": "Ellie Goulding",
+        "duration": 250,
+        "thumbnail": "https://i.ytimg.com/vi/AJtDXIazrMo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAsfKGOpZz9W7dNt4ZpT_80KdGTDw",
+        "views": 2411901142
+      },
+      "playedAt": "2026-08-20T17:13:44.106Z",
+      "listenedSec": 239
+    },
+    {
+      "song": {
+        "id": "f1r0XZLNlGQ",
+        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
+        "channel": "The Weeknd",
+        "duration": 245,
+        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
+        "views": 466646177
+      },
+      "playedAt": "2026-08-20T17:13:39.994Z",
+      "listenedSec": 4
+    },
+    {
+      "song": {
+        "id": "GG1_DsScm6U",
+        "title": "VAARI JAAVAN (Full Video)| Dhurandhar The Revenge| Ranveer Singh| Shashwat Sachdev,Jyoti N,Jasmine S",
+        "channel": "T-Series and 2 more",
+        "duration": 221,
+        "thumbnail": "https://i.ytimg.com/vi/GG1_DsScm6U/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLB22-FrHPRWstzeINMIuw9icOqyZA&usqp=CBc",
+        "views": 54407981
+      },
+      "playedAt": "2026-08-20T17:13:34.698Z",
+      "listenedSec": 5
+    },
+    {
+      "song": {
+        "id": "ALZHF5UqnU4",
+        "title": "Marshmello - Alone (Official Music Video)",
+        "channel": "Marshmello",
+        "duration": 200,
+        "thumbnail": "https://i.ytimg.com/vi/ALZHF5UqnU4/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCM_NTYBhdQPPRNX4cZaLFysZLrew",
+        "views": 2734178239
+      },
+      "playedAt": "2026-08-20T17:11:14.191Z",
+      "listenedSec": 140
+    },
+    {
+      "song": {
+        "id": "Mx92lTYxrJQ",
+        "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
+        "channel": "The Weeknd",
+        "duration": 259,
+        "thumbnail": "https://i.ytimg.com/vi/Mx92lTYxrJQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAL8NG5JoNndy3_nxIFDT3q4aD9Ow",
+        "views": 359567674
+      },
+      "playedAt": "2026-08-20T17:11:06.467Z",
+      "listenedSec": 7
+    },
+    {
+      "song": {
+        "id": "Wwa1W0BHuB0",
+        "title": "MARVEL | Blinding Lights",
+        "channel": "madxthing",
+        "duration": 193,
+        "thumbnail": "https://i.ytimg.com/vi/Wwa1W0BHuB0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLplnzKDsGbZqvqip5HGskYmU8zA",
+        "views": 5331007
+      },
+      "playedAt": "2026-08-20T17:07:36.968Z",
+      "listenedSec": 200
+    },
+    {
+      "song": {
+        "id": "P_5WiNWVbqA",
+        "title": "Ghamand Kar Song | Tanhaji The Unsung Warrior | Ft Marvel | Dipan Patel",
+        "channel": "Dipan's Creations",
+        "duration": 272,
+        "thumbnail": "https://i.ytimg.com/vi/P_5WiNWVbqA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB0CITz8Bva_yNkUmYuhe1doICChA",
+        "views": 47482
+      },
+      "playedAt": "2026-08-20T17:07:07.120Z",
+      "listenedSec": 29
+    },
+    {
+      "song": {
+        "id": "Wwa1W0BHuB0",
+        "title": "MARVEL | Blinding Lights",
+        "channel": "madxthing",
+        "duration": 193,
+        "thumbnail": "https://i.ytimg.com/vi/Wwa1W0BHuB0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDLplnzKDsGbZqvqip5HGskYmU8zA",
+        "views": 5331007
+      },
+      "playedAt": "2026-08-20T17:07:06.058Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "5GCfYLguTIs",
+        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+        "channel": "Karan Aujla",
+        "duration": 162,
+        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBM3UoUw4TrYgzdBNTRMpkTpB4j1Q",
+        "views": 272979820
+      },
+      "playedAt": "2026-08-20T17:06:40.001Z",
+      "listenedSec": 13
+    },
     {
       "song": {
         "id": "leAlprToECY",
@@ -12,7 +718,7 @@
         "views": 1273676
       },
       "playedAt": "2026-08-20T17:01:56.352Z",
-      "listenedSec": 0
+      "listenedSec": 274
     },
     {
       "song": {
@@ -2419,698 +3125,15 @@
       },
       "playedAt": "2026-08-08T18:28:15.197Z",
       "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "7fsme4Nn6yw",
-        "title": "हम तेरे प्यार में [HD] Video Song : लता मंगेशकर | राज कुमार, मीना कुमारी, महमूद | दिल एक मंदिर 1963",
-        "channel": "SuperHit Gaane",
-        "duration": 295,
-        "thumbnail": "https://i.ytimg.com/vi/7fsme4Nn6yw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB661pqJzeZdY0qGOa5OQp6vh_vgA",
-        "views": 6715274
-      },
-      "playedAt": "2026-08-08T18:28:08.885Z",
-      "listenedSec": 6
-    },
-    {
-      "song": {
-        "id": "fHI8X4OXluQ",
-        "title": "The Weeknd - Blinding Lights (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 204,
-        "thumbnail": "https://i.ytimg.com/vi/fHI8X4OXluQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAfSMXwYa_9ko5cm3VBMhZgl5oukQ",
-        "views": 874789427
-      },
-      "playedAt": "2026-08-08T18:28:05.454Z",
-      "listenedSec": 3
-    },
-    {
-      "song": {
-        "id": "3j7bhOvW6jw",
-        "title": "LOW FADE (Music Video) KARAN AUJLA",
-        "channel": "Karan Aujla",
-        "duration": 179,
-        "thumbnail": "https://i.ytimg.com/vi/3j7bhOvW6jw/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhXIGUoZTAP&rs=AOn4CLDuYbNaDIL2aL1Mn_bItLvHKzQuBw",
-        "views": 35054025
-      },
-      "playedAt": "2026-08-08T18:28:03.420Z",
-      "listenedSec": 2
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 259910183
-      },
-      "playedAt": "2026-08-08T18:27:33.144Z",
-      "listenedSec": 30
-    },
-    {
-      "song": {
-        "id": "7fsme4Nn6yw",
-        "title": "हम तेरे प्यार में [HD] Video Song : लता मंगेशकर | राज कुमार, मीना कुमारी, महमूद | दिल एक मंदिर 1963",
-        "channel": "SuperHit Gaane",
-        "duration": 295,
-        "thumbnail": "https://i.ytimg.com/vi/7fsme4Nn6yw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB661pqJzeZdY0qGOa5OQp6vh_vgA",
-        "views": 6715274
-      },
-      "playedAt": "2026-08-08T18:27:28.095Z",
-      "listenedSec": 2
-    },
-    {
-      "song": {
-        "id": "fHI8X4OXluQ",
-        "title": "The Weeknd - Blinding Lights (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 204,
-        "thumbnail": "https://i.ytimg.com/vi/fHI8X4OXluQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAfSMXwYa_9ko5cm3VBMhZgl5oukQ",
-        "views": 874789427
-      },
-      "playedAt": "2026-08-08T18:26:59.370Z",
-      "listenedSec": 27
-    },
-    {
-      "song": {
-        "id": "-YlmnPh-6rE",
-        "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-        "channel": "Rehaan Records",
-        "duration": 189,
-        "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-        "views": 345949003
-      },
-      "playedAt": "2026-08-08T18:23:13.652Z",
-      "listenedSec": 225
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 259910183
-      },
-      "playedAt": "2026-08-08T18:19:59.969Z",
-      "listenedSec": 193
-    },
-    {
-      "song": {
-        "id": "-YlmnPh-6rE",
-        "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-        "channel": "Rehaan Records",
-        "duration": 189,
-        "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-        "views": 345949003
-      },
-      "playedAt": "2026-08-08T18:13:38.106Z",
-      "listenedSec": 379
-    },
-    {
-      "song": {
-        "id": "3j7bhOvW6jw",
-        "title": "LOW FADE (Music Video) KARAN AUJLA",
-        "channel": "Karan Aujla",
-        "duration": 179,
-        "thumbnail": "https://i.ytimg.com/vi/3j7bhOvW6jw/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhXIGUoZTAP&rs=AOn4CLDuYbNaDIL2aL1Mn_bItLvHKzQuBw",
-        "views": 35054025
-      },
-      "playedAt": "2026-08-08T18:09:58.075Z",
-      "listenedSec": 207
-    },
-    {
-      "song": {
-        "id": "AJtDXIazrMo",
-        "title": "Ellie Goulding - Love Me Like You Do (Official Video)",
-        "channel": "Ellie Goulding",
-        "duration": 250,
-        "thumbnail": "https://i.ytimg.com/vi/AJtDXIazrMo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAsfKGOpZz9W7dNt4ZpT_80KdGTDw",
-        "views": 2411909317
-      },
-      "playedAt": "2026-08-08T18:05:07.058Z",
-      "listenedSec": 264
-    },
-    {
-      "song": {
-        "id": "fHI8X4OXluQ",
-        "title": "The Weeknd - Blinding Lights (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 204,
-        "thumbnail": "https://i.ytimg.com/vi/fHI8X4OXluQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAfSMXwYa_9ko5cm3VBMhZgl5oukQ",
-        "views": 874789427
-      },
-      "playedAt": "2026-08-08T18:00:53.233Z",
-      "listenedSec": 213
-    },
-    {
-      "song": {
-        "id": "7fsme4Nn6yw",
-        "title": "हम तेरे प्यार में [HD] Video Song : लता मंगेशकर | राज कुमार, मीना कुमारी, महमूद | दिल एक मंदिर 1963",
-        "channel": "SuperHit Gaane",
-        "duration": 295,
-        "thumbnail": "https://i.ytimg.com/vi/7fsme4Nn6yw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB661pqJzeZdY0qGOa5OQp6vh_vgA",
-        "views": 6715274
-      },
-      "playedAt": "2026-08-08T18:00:45.753Z",
-      "listenedSec": 7
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 278521751
-      },
-      "playedAt": "2026-08-08T18:00:27.401Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "34Na4j8AVgA",
-        "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
-        "channel": "The Weeknd",
-        "duration": 274,
-        "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLDUxek6mE_p2sYJ2g7P-m0Z1d69KQ&usqp=CBc",
-        "views": 2782697277
-      },
-      "playedAt": "2026-08-08T18:00:19.386Z",
-      "listenedSec": 7
-    },
-    {
-      "song": {
-        "id": "f1r0XZLNlGQ",
-        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 245,
-        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
-        "views": 466658471
-      },
-      "playedAt": "2026-08-08T18:00:12.672Z",
-      "listenedSec": 6
-    },
-    {
-      "song": {
-        "id": "34Na4j8AVgA",
-        "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
-        "channel": "The Weeknd",
-        "duration": 274,
-        "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLDUxek6mE_p2sYJ2g7P-m0Z1d69KQ&usqp=CBc",
-        "views": 2782697277
-      },
-      "playedAt": "2026-08-08T17:41:37.621Z",
-      "listenedSec": 304
-    },
-    {
-      "song": {
-        "id": "g6fnFALEseI",
-        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
-        "channel": "SonyMusicIndiaVEVO",
-        "duration": 268,
-        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
-        "views": 87099571
-      },
-      "playedAt": "2026-08-08T17:41:33.815Z",
-      "listenedSec": 3
-    },
-    {
-      "song": {
-        "id": "5hKao7gACW4",
-        "title": "मंगलवार Special संकटमोचन हनुमान अष्टक I Sankatmochan Hanuman Ashtak I GULSHAN KUMAR I HARIHARAN",
-        "channel": "T-Series Bhakti Sagar",
-        "duration": 379,
-        "thumbnail": "https://i.ytimg.com/vi/5hKao7gACW4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDxCsGeCwX8UkbhQLisZ1dc2xx-iw",
-        "views": 67525687
-      },
-      "playedAt": "2026-08-08T17:41:31.694Z",
-      "listenedSec": 2
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 278521751
-      },
-      "playedAt": "2026-08-08T17:17:20.137Z",
-      "listenedSec": 266
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:17:17.770Z",
-      "listenedSec": 2
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 278521751
-      },
-      "playedAt": "2026-08-08T17:17:12.752Z",
-      "listenedSec": 4
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:14:25.748Z",
-      "listenedSec": 160
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:09:28.203Z",
-      "listenedSec": 175
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:09:18.698Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:07:53.839Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:07:53.520Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-08T17:07:15.438Z",
-      "listenedSec": 17
-    },
-    {
-      "song": {
-        "id": "3u6lLWGjFLY",
-        "title": "Naina | Crew | Diljit Dosanjh, Ft. Badshah | Tabu, Kareena Kapoor Khan, Kriti Sanon | Raj Ranjodh",
-        "channel": "Tips Official",
-        "duration": 173,
-        "thumbnail": "https://i.ytimg.com/vi/3u6lLWGjFLY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_gFnB_O20jNoz_lnMf6FmvfE_Ug",
-        "views": 197975116
-      },
-      "playedAt": "2026-08-07T15:35:28.061Z",
-      "listenedSec": 115
-    },
-    {
-      "song": {
-        "id": "3u6lLWGjFLY",
-        "title": "Naina | Crew | Diljit Dosanjh, Ft. Badshah | Tabu, Kareena Kapoor Khan, Kriti Sanon | Raj Ranjodh",
-        "channel": "Tips Official",
-        "duration": 173,
-        "thumbnail": "https://i.ytimg.com/vi/3u6lLWGjFLY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_gFnB_O20jNoz_lnMf6FmvfE_Ug",
-        "views": 197975116
-      },
-      "playedAt": "2026-08-07T14:35:09.713Z",
-      "listenedSec": 10
-    },
-    {
-      "song": {
-        "id": "3u6lLWGjFLY",
-        "title": "Naina | Crew | Diljit Dosanjh, Ft. Badshah | Tabu, Kareena Kapoor Khan, Kriti Sanon | Raj Ranjodh",
-        "channel": "Tips Official",
-        "duration": 173,
-        "thumbnail": "https://i.ytimg.com/vi/3u6lLWGjFLY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_gFnB_O20jNoz_lnMf6FmvfE_Ug",
-        "views": 197975116
-      },
-      "playedAt": "2026-08-07T13:55:34.652Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "dCmp56tSSmA",
-        "title": "Diljit Dosanjh: Born To Shine (Official Music Video) G.O.A.T",
-        "channel": "Diljit Dosanjh",
-        "duration": 218,
-        "thumbnail": "https://i.ytimg.com/vi/dCmp56tSSmA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDbDC_1rWT8AyWskpgKIiPSsB11A",
-        "views": 534298915
-      },
-      "playedAt": "2026-08-07T13:51:45.500Z",
-      "listenedSec": 229
-    },
-    {
-      "song": {
-        "id": "f1r0XZLNlGQ",
-        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 245,
-        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
-        "views": 466658471
-      },
-      "playedAt": "2026-08-07T13:51:28.791Z",
-      "listenedSec": 15
-    },
-    {
-      "song": {
-        "id": "34Na4j8AVgA",
-        "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
-        "channel": "The Weeknd",
-        "duration": 274,
-        "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLDUxek6mE_p2sYJ2g7P-m0Z1d69KQ&usqp=CBc",
-        "views": 2782697277
-      },
-      "playedAt": "2026-08-07T13:51:06.289Z",
-      "listenedSec": 22
-    },
-    {
-      "song": {
-        "id": "g6fnFALEseI",
-        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
-        "channel": "SonyMusicIndiaVEVO",
-        "duration": 268,
-        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
-        "views": 87099571
-      },
-      "playedAt": "2026-08-07T13:46:34.296Z",
-      "listenedSec": 271
-    },
-    {
-      "song": {
-        "id": "5hKao7gACW4",
-        "title": "मंगलवार Special संकटमोचन हनुमान अष्टक I Sankatmochan Hanuman Ashtak I GULSHAN KUMAR I HARIHARAN",
-        "channel": "T-Series Bhakti Sagar",
-        "duration": 379,
-        "thumbnail": "https://i.ytimg.com/vi/5hKao7gACW4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDxCsGeCwX8UkbhQLisZ1dc2xx-iw",
-        "views": 67525687
-      },
-      "playedAt": "2026-08-07T13:46:18.533Z",
-      "listenedSec": 15
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 278521751
-      },
-      "playedAt": "2026-08-07T13:42:07.791Z",
-      "listenedSec": 250
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-07T13:39:15.146Z",
-      "listenedSec": 171
-    },
-    {
-      "song": {
-        "id": "k85UB5b6pJU",
-        "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-        "channel": "Karan Aujla",
-        "duration": 211,
-        "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCGaLzl_8DDgjXwfO9Bhjg6gQg4KgB&rs=AOn4CLCzP_zcxLUcLYn72EtM0SlVSouXaQ&usqp=CBk",
-        "views": 185352117
-      },
-      "playedAt": "2026-08-07T13:38:58.261Z",
-      "listenedSec": 14
-    },
-    {
-      "song": {
-        "id": "7fsme4Nn6yw",
-        "title": "हम तेरे प्यार में [HD] Video Song : लता मंगेशकर | राज कुमार, मीना कुमारी, महमूद | दिल एक मंदिर 1963",
-        "channel": "SuperHit Gaane",
-        "duration": 295,
-        "thumbnail": "https://i.ytimg.com/vi/7fsme4Nn6yw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB661pqJzeZdY0qGOa5OQp6vh_vgA",
-        "views": 6715274
-      },
-      "playedAt": "2026-08-07T13:33:04.881Z",
-      "listenedSec": 300
-    },
-    {
-      "song": {
-        "id": "dCmp56tSSmA",
-        "title": "Diljit Dosanjh: Born To Shine (Official Music Video) G.O.A.T",
-        "channel": "Diljit Dosanjh",
-        "duration": 218,
-        "thumbnail": "https://i.ytimg.com/vi/dCmp56tSSmA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDbDC_1rWT8AyWskpgKIiPSsB11A",
-        "views": 534298915
-      },
-      "playedAt": "2026-08-06T18:10:51.263Z",
-      "listenedSec": 13
-    },
-    {
-      "song": {
-        "id": "6d5SS0gS5bU",
-        "title": "Tainu Khabar Nahi - Arijit Singh | Munjya | Sharvari, Abhay Verma| Sachin-Jigar,Amitabh Bhattacharya",
-        "channel": "Zee Music Company",
-        "duration": 159,
-        "thumbnail": "https://i.ytimg.com/vi/6d5SS0gS5bU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC42zXmLSZIU3FGl4xumxgLfjfVMg",
-        "views": 200956311
-      },
-      "playedAt": "2026-08-06T18:08:13.569Z",
-      "listenedSec": 157
-    },
-    {
-      "song": {
-        "id": "dCmp56tSSmA",
-        "title": "Diljit Dosanjh: Born To Shine (Official Music Video) G.O.A.T",
-        "channel": "Diljit Dosanjh",
-        "duration": 218,
-        "thumbnail": "https://i.ytimg.com/vi/dCmp56tSSmA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDbDC_1rWT8AyWskpgKIiPSsB11A",
-        "views": 534298915
-      },
-      "playedAt": "2026-08-06T18:07:14.851Z",
-      "listenedSec": 58
-    },
-    {
-      "song": {
-        "id": "6d5SS0gS5bU",
-        "title": "Tainu Khabar Nahi - Arijit Singh | Munjya | Sharvari, Abhay Verma| Sachin-Jigar,Amitabh Bhattacharya",
-        "channel": "Zee Music Company",
-        "duration": 159,
-        "thumbnail": "https://i.ytimg.com/vi/6d5SS0gS5bU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC42zXmLSZIU3FGl4xumxgLfjfVMg",
-        "views": 200956311
-      },
-      "playedAt": "2026-08-06T18:04:31.015Z",
-      "listenedSec": 163
-    },
-    {
-      "song": {
-        "id": "f1r0XZLNlGQ",
-        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 245,
-        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
-        "views": 466658471
-      },
-      "playedAt": "2026-08-06T18:00:20.381Z",
-      "listenedSec": 250
-    },
-    {
-      "song": {
-        "id": "hNgI9E_-v24",
-        "title": "Diljit Dosanjh: Tension (Official Music Video) Advisory",
-        "channel": "Diljit Dosanjh",
-        "duration": 199,
-        "thumbnail": "https://i.ytimg.com/vi/hNgI9E_-v24/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBR1usjsEFj45ele0ZSHvUsRdBQfA",
-        "views": 83506655
-      },
-      "playedAt": "2026-08-06T18:00:07.067Z",
-      "listenedSec": 13
-    },
-    {
-      "song": {
-        "id": "fXRvluHnjxE",
-        "title": "Mast Magan Full Song with Lyrics | 2 States | Arijit Singh | Arjun Kapoor, Alia Bhatt",
-        "channel": "T-Series",
-        "duration": 281,
-        "thumbnail": "https://i.ytimg.com/vi/fXRvluHnjxE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA2K2AcMQLPAw8Pb4B1VCsSfCFBPw",
-        "views": 167829395
-      },
-      "playedAt": "2026-08-06T17:59:56.443Z",
-      "listenedSec": 10
-    },
-    {
-      "song": {
-        "id": "34Na4j8AVgA",
-        "title": "The Weeknd - Starboy ft. Daft Punk (Official Video) ft. Daft Punk",
-        "channel": "The Weeknd",
-        "duration": 274,
-        "thumbnail": "https://i.ytimg.com/vi/34Na4j8AVgA/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCFw==&rs=AOn4CLDUxek6mE_p2sYJ2g7P-m0Z1d69KQ&usqp=CBc",
-        "views": 2782697277
-      },
-      "playedAt": "2026-08-06T17:55:37.152Z",
-      "listenedSec": 259
-    },
-    {
-      "song": {
-        "id": "g6fnFALEseI",
-        "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
-        "channel": "SonyMusicIndiaVEVO",
-        "duration": 268,
-        "thumbnail": "https://i.ytimg.com/vi/g6fnFALEseI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBhjRAPT74CBH7ZcHhWxXSXoIAyOw",
-        "views": 87099571
-      },
-      "playedAt": "2026-08-06T17:55:20.189Z",
-      "listenedSec": 15
-    },
-    {
-      "song": {
-        "id": "5hKao7gACW4",
-        "title": "मंगलवार Special संकटमोचन हनुमान अष्टक I Sankatmochan Hanuman Ashtak I GULSHAN KUMAR I HARIHARAN",
-        "channel": "T-Series Bhakti Sagar",
-        "duration": 379,
-        "thumbnail": "https://i.ytimg.com/vi/5hKao7gACW4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDxCsGeCwX8UkbhQLisZ1dc2xx-iw",
-        "views": 67525687
-      },
-      "playedAt": "2026-08-06T17:55:03.291Z",
-      "listenedSec": 15
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 278521751
-      },
-      "playedAt": "2026-08-06T17:39:28.861Z",
-      "listenedSec": 255
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 379588822
-      },
-      "playedAt": "2026-08-06T17:36:32.151Z",
-      "listenedSec": 176
-    },
-    {
-      "song": {
-        "id": "k85UB5b6pJU",
-        "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-        "channel": "Karan Aujla",
-        "duration": 211,
-        "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEfCNAFEJQDSFXyq4qpAxEIARUAAIhCGAFwAcABBrgCGaLzl_8DDgjXwfO9Bhjg6gQg4KgB&rs=AOn4CLCzP_zcxLUcLYn72EtM0SlVSouXaQ&usqp=CBk",
-        "views": 185352117
-      },
-      "playedAt": "2026-08-06T17:36:12.681Z",
-      "listenedSec": 17
-    },
-    {
-      "song": {
-        "id": "Myw7_Zy_MeU",
-        "title": "Gehra Hua (From \"Dhurandhar\") · Arijit Singh · Shashwat Sachdev · Irshad Kamil · Armaan Khan",
-        "channel": "Release · Topic",
-        "duration": 363,
-        "thumbnail": "https://i.ytimg.com/vi/Myw7_Zy_MeU/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAtAFigIMCAAQARhjIGMoYzAP&rs=AOn4CLCxAlwf2li4sgccy4FORRyrM7e4DA",
-        "views": 6997749
-      },
-      "playedAt": "2026-08-06T17:14:35.090Z",
-      "listenedSec": 25
-    },
-    {
-      "song": {
-        "id": "dCmp56tSSmA",
-        "title": "Diljit Dosanjh: Born To Shine (Official Music Video) G.O.A.T",
-        "channel": "Diljit Dosanjh",
-        "duration": 218,
-        "thumbnail": "https://i.ytimg.com/vi/dCmp56tSSmA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDDbDC_1rWT8AyWskpgKIiPSsB11A",
-        "views": 534298915
-      },
-      "playedAt": "2026-08-06T17:13:07.944Z",
-      "listenedSec": 5
-    },
-    {
-      "song": {
-        "id": "qcEf8GY8",
-        "title": "Apna Bana Le",
-        "channel": "Amitabh Bhattacharya, Sachin-Jigar, Arijit Singh",
-        "duration": 210,
-        "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-        "isCloud": true
-      },
-      "playedAt": "2026-08-17T13:13:25.297Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "f1r0XZLNlGQ",
-        "title": "The Weeknd, JENNIE & Lily Rose Depp - One Of The Girls (Official Audio)",
-        "channel": "The Weeknd",
-        "duration": 245,
-        "thumbnail": "https://i.ytimg.com/vi/f1r0XZLNlGQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhLIGUoXzAP&rs=AOn4CLBo5rthjSKqiOuiVqs_aD_JTH41ow",
-        "views": 466658471
-      },
-      "playedAt": "2026-08-17T13:13:14.941Z",
-      "listenedSec": 0
     }
   ],
   "searchHistory": [
+    "hwaian",
+    "dil",
+    "arz kiya",
     "marval song",
     "marval",
     "Diljit",
-    "dil",
-    "arz kiya",
     "Rick Astley",
     "Diljit Dosanjh",
     "Diljit Dosanjh:",
@@ -3222,14 +3245,6 @@
           "views": 278521751
         },
         {
-          "id": "5hKao7gACW4",
-          "title": "मंगलवार Special संकटमोचन हनुमान अष्टक I Sankatmochan Hanuman Ashtak I GULSHAN KUMAR I HARIHARAN",
-          "channel": "T-Series Bhakti Sagar",
-          "duration": 379,
-          "thumbnail": "https://i.ytimg.com/vi/5hKao7gACW4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDxCsGeCwX8UkbhQLisZ1dc2xx-iw",
-          "views": 67525687
-        },
-        {
           "id": "g6fnFALEseI",
           "title": "Kesariya - Official Lyric|Brahmāstra|Ranbir, Alia |Pritam, Arijit Singh, Amitabh",
           "channel": "SonyMusicIndiaVEVO",
@@ -3283,8 +3298,7 @@
           "channel": "Sidhu Moose Wala",
           "duration": 273,
           "thumbnail": "https://i.ytimg.com/vi/n_FCrCQ6-bA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBRMueham9v9CwwuRP5zrzaxA7U-Q",
-          "views": 863813059,
-          "streamUrl": "https://aac.saavncdn.com/598/E1p9Sym9ogM5TLHVfnZ1KiYqf3f4qcZYTkm_320.mp4"
+          "views": 863813059
         },
         {
           "id": "umqmDe8GFTA",
@@ -3436,8 +3450,7 @@
           "channel": "Karan Aujla",
           "duration": 194,
           "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-          "views": 93303032,
-          "streamUrl": "https://aac.saavncdn.com/675/F6vO251DIVkGSCettkC7Y6duFVGdMChxHWVFii8g_320.mp4"
+          "views": 93303032
         },
         {
           "id": "cWMxCE2HTag",
@@ -3461,8 +3474,7 @@
           "channel": "Rehaan Records",
           "duration": 195,
           "thumbnail": "https://i.ytimg.com/vi/x9RC77Oc-0Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDgZMTB9SSm0jAUn7KDFPZXxDAZ5w",
-          "views": 61329732,
-          "streamUrl": "https://aac.saavncdn.com/762/n1UtSzgDe9yBTIInWRmWrbd1SLsahmG46fDGMkbd_320.mp4"
+          "views": 61329732
         },
         {
           "id": "4NRXx6U8ABQ",
@@ -3486,24 +3498,58 @@
           "channel": "Diljit Dosanjh, Intense",
           "duration": 210,
           "thumbnail": "https://c.saavncdn.com/276/Ghost-English-2023-20231028142825-500x500.jpg",
-          "isCloud": true,
-          "streamUrl": "https://aac.saavncdn.com/276/X5LmXq5QwiX21J6A2HzAp1kKxoKEzIRukyZ1mr_320.mp4"
+          "isCloud": true
+        }
+      ]
+    },
+    {
+      "id": "pl_1787315883389",
+      "name": "d",
+      "songs": []
+    },
+    {
+      "id": "pl_1787320736429",
+      "name": "Imported Mix 21/8/2026",
+      "songs": [
+        {
+          "id": "YaEG2aWJnZ8",
+          "title": "Sia - Unstoppable (Official Video - Live from the Nostalgic For The Present Tour)",
+          "channel": "Sia",
+          "duration": 227,
+          "thumbnail": "https://i.ytimg.com/vi/YaEG2aWJnZ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAs9lEcnc-UuXYVpwJ-DAJ79pmOTw",
+          "views": 862810347
+        },
+        {
+          "id": "7wtfhZwyrcc",
+          "title": "Imagine Dragons - Believer (Official Music Video)",
+          "channel": "ImagineDragons",
+          "duration": 217,
+          "thumbnail": "https://i.ytimg.com/vi/7wtfhZwyrcc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAorFfrZXwv_HMuWFY58OGUgd0r5Q",
+          "views": 3034109074
+        },
+        {
+          "id": "TO-_3tck2tg",
+          "title": "Imagine Dragons - Bones (Official Music Video)",
+          "channel": "ImagineDragons",
+          "duration": 166,
+          "thumbnail": "https://i.ytimg.com/vi/TO-_3tck2tg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDkRMWTd2S9bZ2OWicdg6HlbOVMXQ",
+          "views": 443060930
         }
       ]
     }
   ],
-  "volume": 0.7415791304827868,
+  "volume": 1,
   "quality": "high",
   "repeat": "off",
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "YVCV6hyv7ac",
-      "title": "The Weeknd - Trust Issues (Remix)",
-      "channel": "The Weeknd",
-      "duration": 202,
-      "thumbnail": "https://i.ytimg.com/vi/YVCV6hyv7ac/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB8AiAAtAFigIMCAAQARhlIFkoRjAP&rs=AOn4CLDk08wWF2DKEZn3dphE81cNsAHWeQ",
-      "views": 66256765
+      "id": "cWMxCE2HTag",
+      "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
+      "channel": "Karan Aujla",
+      "duration": 171,
+      "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
+      "views": 491292592
     },
     {
       "id": "xnvkStb2jT0",
@@ -3511,55 +3557,7 @@
       "channel": "The Weeknd",
       "duration": 216,
       "thumbnail": "https://i.ytimg.com/vi/xnvkStb2jT0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDeKQKpgUvCInCb1r3XFp_p-sf_Dg",
-      "views": 98282232
-    },
-    {
-      "id": "16jA-6hiSUo",
-      "title": "The Weeknd, Playboi Carti - Timeless (Official Lyric Video)",
-      "channel": "The Weeknd",
-      "duration": 257,
-      "thumbnail": "https://i.ytimg.com/vi/16jA-6hiSUo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCS3VumFBfsIgMovkj5Oslg4T_yMA",
-      "views": 80262488
-    },
-    {
-      "id": "K9R7KcaettM",
-      "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 194,
-      "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-      "views": 95362941
-    },
-    {
-      "id": "Mx92lTYxrJQ",
-      "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
-      "channel": "The Weeknd",
-      "duration": 259,
-      "thumbnail": "https://i.ytimg.com/vi/Mx92lTYxrJQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAL8NG5JoNndy3_nxIFDT3q4aD9Ow",
-      "views": 359562664
-    },
-    {
-      "id": "5GCfYLguTIs",
-      "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 162,
-      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-      "views": 272966588
-    },
-    {
-      "id": "i4ZuseKFBF0",
-      "title": "The Weeknd - Is There Someone Else? (Audio)",
-      "channel": "The Weeknd",
-      "duration": 200,
-      "thumbnail": "https://i.ytimg.com/vi/i4ZuseKFBF0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD77YMLHqiYQLxgqtfS-gih63zEPQ",
-      "views": 116558237
-    },
-    {
-      "id": "-YlmnPh-6rE",
-      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-      "channel": "Rehaan Records",
-      "duration": 189,
-      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-      "views": 353781096
+      "views": 98318747
     },
     {
       "id": "k85UB5b6pJU",
@@ -3567,7 +3565,55 @@
       "channel": "Karan Aujla",
       "duration": 211,
       "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
-      "views": 187337670
+      "views": 187593796
+    },
+    {
+      "id": "16jA-6hiSUo",
+      "title": "The Weeknd, Playboi Carti - Timeless (Official Lyric Video)",
+      "channel": "The Weeknd",
+      "duration": 257,
+      "thumbnail": "https://i.ytimg.com/vi/16jA-6hiSUo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCS3VumFBfsIgMovkj5Oslg4T_yMA",
+      "views": 80426917
+    },
+    {
+      "id": "Mx92lTYxrJQ",
+      "title": "The Weeknd, JENNIE, Lily-Rose Depp - One Of The Girls (Official Video)",
+      "channel": "The Weeknd",
+      "duration": 259,
+      "thumbnail": "https://i.ytimg.com/vi/Mx92lTYxrJQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAL8NG5JoNndy3_nxIFDT3q4aD9Ow",
+      "views": 360190550
+    },
+    {
+      "id": "-YlmnPh-6rE",
+      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
+      "channel": "Rehaan Records",
+      "duration": 189,
+      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
+      "views": 354834573
+    },
+    {
+      "id": "5EpyN_6dqyk",
+      "title": "The Weeknd, Playboi Carti - Timeless",
+      "channel": "The Weeknd",
+      "duration": 257,
+      "thumbnail": "https://i.ytimg.com/vi/5EpyN_6dqyk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCslHocMxrHZ7tfZM1xmk82WDTMkA",
+      "views": 272505579
+    },
+    {
+      "id": "5GCfYLguTIs",
+      "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+      "channel": "Karan Aujla",
+      "duration": 162,
+      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+      "views": 274732297
+    },
+    {
+      "id": "bn8gP5N8hqM",
+      "title": "The Weeknd - Cry For Me (Official Music Video)",
+      "channel": "The Weeknd",
+      "duration": 246,
+      "thumbnail": "https://i.ytimg.com/vi/bn8gP5N8hqM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBBL5yaSjdL_gDesh9cSwMiKg0KbA",
+      "views": 63440859
     }
   ],
   "likes": [

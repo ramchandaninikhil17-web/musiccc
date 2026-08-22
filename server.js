@@ -6,6 +6,7 @@ const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
+const zlib = require('zlib');
 const ffmpegPath = require('ffmpeg-static');
 
 const app = express();
@@ -1024,8 +1025,36 @@ const tempDownloadsDir = path.join(__dirname, 'temp_downloads');
 if (!fs.existsSync(tempDownloadsDir)) {
   try { fs.mkdirSync(tempDownloadsDir, { recursive: true }); } catch (e) {}
 }
-const MAX_CONCURRENT_DOWNLOADS = 2;
+// Total simultaneous yt-dlp/ffmpeg conversions allowed process-wide. Batch
+// playlist jobs draw from this same budget but are capped lower (see
+// MAX_BATCH_CONCURRENCY) so a long playlist job can never starve an
+// interactive single-track download of every slot.
+const MAX_CONCURRENT_DOWNLOADS = 3;
+const MAX_BATCH_CONCURRENCY = 2;
 let activeDownloadCount = 0;
+
+// Waiters used by batch jobs, which queue for a slot instead of failing fast
+// the way the interactive endpoint does.
+const downloadSlotWaiters = [];
+
+function releaseDownloadSlot() {
+  activeDownloadCount = Math.max(0, activeDownloadCount - 1);
+  if (downloadSlotWaiters.length && activeDownloadCount < MAX_CONCURRENT_DOWNLOADS) {
+    const next = downloadSlotWaiters.shift();
+    activeDownloadCount++;
+    next();
+  }
+}
+
+// Resolves once a conversion slot is free. Unlike the interactive endpoint this
+// never rejects — a playlist job is expected to take as long as it takes.
+function acquireDownloadSlot() {
+  if (activeDownloadCount < MAX_CONCURRENT_DOWNLOADS) {
+    activeDownloadCount++;
+    return Promise.resolve();
+  }
+  return new Promise(resolve => downloadSlotWaiters.push(resolve));
+}
 
 function cleanStaleDownloads() {
   const cutoff = Date.now() - (24 * 60 * 60 * 1000);
@@ -1041,7 +1070,12 @@ function cleanStaleDownloads() {
   for (const file of files) {
     try {
       const filePath = path.join(tempDownloadsDir, file);
-      if (fs.statSync(filePath).mtimeMs < cutoff) fs.unlinkSync(filePath);
+      const stat = fs.statSync(filePath);
+      if (stat.mtimeMs >= cutoff) continue;
+      // Playlist jobs leave working *directories* here. unlinkSync throws on
+      // those, which previously meant they were never reclaimed.
+      if (stat.isDirectory()) fs.rmSync(filePath, { recursive: true, force: true });
+      else fs.unlinkSync(filePath);
     } catch (err) {
       // File vanished or is still locked by another process; skip it.
     }
@@ -1086,7 +1120,8 @@ app.get('/api/download/:videoId', async (req, res) => {
   const cleanup = () => {
     if (cleaned) return;
     cleaned = true;
-    activeDownloadCount = Math.max(0, activeDownloadCount - 1);
+    // Goes through the shared release so any queued batch job wakes up.
+    releaseDownloadSlot();
     let files = [];
     try {
       files = fs.readdirSync(tempDownloadsDir);
@@ -1191,6 +1226,287 @@ app.get('/api/download/:videoId', async (req, res) => {
     cleanup();
     if (!res.headersSent) res.status(500).json({ error: 'Download failed' });
   }
+});
+
+// The stored-mode zip writer lives in lib/zip.js so it can be unit tested
+// without booting the server.
+const { writeStoredZip } = require('./lib/zip');
+
+/* ------------------------------------------------------------------ */
+/*  Playlist batch download jobs (zip)                                */
+/* ------------------------------------------------------------------ */
+// A full playlist can take many minutes to transcode, which is far too long to
+// hold a single HTTP request open. So the client starts a job, polls progress,
+// then fetches the finished archive.
+const MAX_PLAYLIST_TRACKS = 50;
+const JOB_RETENTION_MS = 30 * 60 * 1000;
+const playlistJobs = new Map();
+
+function pruneJobs() {
+  const now = Date.now();
+  for (const [id, job] of playlistJobs) {
+    if (now - job.touchedAt < JOB_RETENTION_MS) continue;
+    try { if (job.zipPath && fs.existsSync(job.zipPath)) fs.unlinkSync(job.zipPath); } catch (e) {}
+    try { if (job.workDir && fs.existsSync(job.workDir)) fs.rmSync(job.workDir, { recursive: true, force: true }); } catch (e) {}
+    playlistJobs.delete(id);
+  }
+}
+setInterval(pruneJobs, 5 * 60 * 1000).unref();
+
+// Transcodes one video to mp3 inside the job's work dir. Resolves null on any
+// failure so one dead video cannot sink the whole playlist.
+function transcodeTrack(videoId, workDir, index) {
+  return new Promise((resolve) => {
+    const prefix = path.join(workDir, `t${String(index).padStart(3, '0')}_${videoId}`);
+    const dlArgs = [
+      ...BASE_YTDLP_ARGS,
+      '--ffmpeg-location', ffmpegPath,
+      '--no-part',
+      '--no-progress',
+      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+      '-x', '--audio-format', 'mp3',
+      '--audio-quality', '192K',
+      '-o', `${prefix}.%(ext)s`,
+      `https://www.youtube.com/watch?v=${videoId}`
+    ];
+    execFile(ytDlpPath, dlArgs, {
+      timeout: 180000,
+      windowsHide: true,
+      maxBuffer: 10 * 1024 * 1024,
+    }, (err, _stdout, stderr) => {
+      const target = `${prefix}.mp3`;
+      if (err || !fs.existsSync(target)) {
+        console.error('[Playlist DL]', videoId, err ? `${err.message}: ${String(stderr || '').trim()}` : 'file missing');
+        resolve(null);
+        return;
+      }
+      try {
+        // A zero-byte result would produce a valid-looking but empty archive
+        // entry, so treat it as a failure.
+        if (fs.statSync(target).size === 0) { resolve(null); return; }
+      } catch (e) { resolve(null); return; }
+      resolve(target);
+    });
+  });
+}
+
+async function runPlaylistJob(job) {
+  job.status = 'downloading';
+  const done = [];
+
+  await mapConcurrent(job.tracks, MAX_BATCH_CONCURRENCY, async (track, i) => {
+    if (job.cancelled) return null;
+
+    await acquireDownloadSlot();
+    if (job.cancelled) { releaseDownloadSlot(); return null; }
+
+    job.current = track.title || track.id;
+    job.touchedAt = Date.now();
+    try {
+      const file = await transcodeTrack(track.id, job.workDir, i);
+      if (file) {
+        done.push({ path: file, name: `${buildSafeFilename(track.title || track.id)}.mp3`, index: i });
+        job.completed++;
+      } else {
+        job.failed++;
+        job.failedTitles.push(track.title || track.id);
+      }
+    } finally {
+      releaseDownloadSlot();
+      job.touchedAt = Date.now();
+    }
+    return null;
+  });
+
+  if (job.cancelled) {
+    job.status = 'cancelled';
+    try { fs.rmSync(job.workDir, { recursive: true, force: true }); } catch (e) {}
+    return;
+  }
+
+  if (!done.length) {
+    job.status = 'error';
+    job.error = 'None of the tracks could be downloaded.';
+    try { fs.rmSync(job.workDir, { recursive: true, force: true }); } catch (e) {}
+    return;
+  }
+
+  job.status = 'zipping';
+  job.current = 'Building archive';
+  job.touchedAt = Date.now();
+  try {
+    // Preserve the playlist's own ordering, which mapConcurrent does not.
+    done.sort((a, b) => a.index - b.index);
+    job.zipPath = path.join(tempDownloadsDir, `${job.id}.zip`);
+    job.zipSize = await writeStoredZip(done, job.zipPath);
+    job.status = 'ready';
+  } catch (err) {
+    console.error('[Playlist Zip]', err.message);
+    job.status = 'error';
+    job.error = 'Failed to build the archive.';
+    try { if (job.zipPath && fs.existsSync(job.zipPath)) fs.unlinkSync(job.zipPath); } catch (e) {}
+  } finally {
+    // The individual mp3s are inside the zip now.
+    try { fs.rmSync(job.workDir, { recursive: true, force: true }); } catch (e) {}
+    job.current = null;
+    job.touchedAt = Date.now();
+  }
+}
+
+app.post('/api/playlist-download', (req, res) => {
+  const body = req.body || {};
+  const rawTracks = Array.isArray(body.tracks) ? body.tracks : [];
+
+  // Only real YouTube ids can be transcoded; local and cloud entries are
+  // filtered client-side but re-checked here so a stale client cannot wedge a job.
+  const seen = new Set();
+  const tracks = [];
+  for (const t of rawTracks) {
+    const id = t && typeof t.id === 'string' ? t.id : null;
+    if (!id || !isYouTubeId(id) || seen.has(id)) continue;
+    seen.add(id);
+    tracks.push({ id, title: typeof t.title === 'string' ? t.title : id });
+    if (tracks.length >= MAX_PLAYLIST_TRACKS) break;
+  }
+
+  if (!tracks.length) {
+    return res.status(400).json({ error: 'No downloadable YouTube tracks in this playlist.' });
+  }
+
+  // One active job at a time: two concurrent playlist jobs would fight over the
+  // same conversion slots and both crawl.
+  for (const job of playlistJobs.values()) {
+    if (job.status === 'downloading' || job.status === 'zipping' || job.status === 'queued') {
+      return res.status(409).json({ error: 'Another playlist download is already running.', jobId: job.id });
+    }
+  }
+
+  pruneJobs();
+
+  const id = `pl_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const workDir = path.join(tempDownloadsDir, id);
+  try {
+    fs.mkdirSync(workDir, { recursive: true });
+  } catch (err) {
+    return res.status(500).json({ error: 'Could not create a working folder for the download.' });
+  }
+
+  const job = {
+    id,
+    name: buildSafeFilename(body.name || 'Playlist'),
+    tracks,
+    total: tracks.length,
+    completed: 0,
+    failed: 0,
+    failedTitles: [],
+    status: 'queued',
+    current: null,
+    error: null,
+    zipPath: null,
+    zipSize: 0,
+    workDir,
+    cancelled: false,
+    createdAt: Date.now(),
+    touchedAt: Date.now(),
+  };
+  playlistJobs.set(id, job);
+
+  // Fire and forget; progress is observed through the status endpoint.
+  runPlaylistJob(job).catch(err => {
+    console.error('[Playlist Job]', err);
+    job.status = 'error';
+    job.error = 'Unexpected server error.';
+    job.touchedAt = Date.now();
+  });
+
+  res.json({ jobId: id, total: job.total, skipped: rawTracks.length - tracks.length });
+});
+
+app.get('/api/playlist-download/:jobId', (req, res) => {
+  const job = playlistJobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ error: 'Job not found or expired.' });
+  job.touchedAt = Date.now();
+  res.json({
+    jobId: job.id,
+    status: job.status,
+    total: job.total,
+    completed: job.completed,
+    failed: job.failed,
+    failedTitles: job.failedTitles.slice(0, 10),
+    current: job.current,
+    error: job.error,
+    size: job.zipSize,
+  });
+});
+
+app.post('/api/playlist-download/:jobId/cancel', (req, res) => {
+  const job = playlistJobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ error: 'Job not found or expired.' });
+  job.cancelled = true;
+  job.touchedAt = Date.now();
+  // A job that already produced an archive just gets the artifact dropped.
+  if (job.status === 'ready' || job.status === 'downloaded') {
+    try { if (job.zipPath && fs.existsSync(job.zipPath)) fs.unlinkSync(job.zipPath); } catch (e) {}
+    job.zipPath = null;
+    job.status = 'cancelled';
+  }
+  res.json({ ok: true });
+});
+
+app.get('/api/playlist-download/:jobId/file', (req, res) => {
+  const job = playlistJobs.get(req.params.jobId);
+  if (!job) return res.status(404).json({ error: 'Job not found or expired.' });
+  // 'downloaded' is accepted as well as 'ready': the archive is kept on disk
+  // after the first send precisely so an interrupted save can be retried, and
+  // rejecting the retry would defeat that.
+  const deliverable = job.status === 'ready' || job.status === 'downloaded';
+  if (!deliverable || !job.zipPath || !fs.existsSync(job.zipPath)) {
+    return res.status(409).json({ error: 'Archive is not ready yet.' });
+  }
+
+  let stat;
+  try {
+    stat = fs.statSync(job.zipPath);
+  } catch (err) {
+    return res.status(500).json({ error: 'Archive is no longer available.' });
+  }
+
+  const asciiFallback = job.name.replace(/[^\x20-\x7e]/g, '').replace(/["\\]/g, '').trim() || 'Playlist';
+  const encoded = encodeURIComponent(`${job.name}.zip`);
+
+  res.setHeader('Content-Type', 'application/zip');
+  res.setHeader('Content-Length', stat.size);
+  res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}.zip"; filename*=UTF-8''${encoded}`);
+  res.setHeader('Cache-Control', 'no-store');
+
+  const stream = fs.createReadStream(job.zipPath);
+  stream.pipe(res);
+  stream.on('error', (err) => {
+    console.error('[Playlist Zip Stream]', err.message);
+    // Content-Length is already committed, so ending cleanly would hand over a
+    // truncated archive that looks complete.
+    try { res.destroy(err); } catch (e) {}
+  });
+
+  // Keep the archive around after sending so an interrupted save can retry;
+  // pruneJobs() reclaims it later.
+  const markDelivered = () => {
+    if (job.status === 'ready') job.status = 'downloaded';
+    job.touchedAt = Date.now();
+  };
+
+  // Don't trust lifecycle events here. A client that closes as soon as it has
+  // Content-Length bytes — curl does, and so do browsers on a completed save —
+  // tears the socket down before the response settles, so 'close' can arrive
+  // with both writableFinished and writableEnded false and 'finish' never firing
+  // at all, even though every byte was delivered. Counting what actually went
+  // out sidesteps the race: the final 'data' event lands before 'end', so the
+  // total is already correct by the time 'close' fires. A transfer cut off
+  // midway stops short of the full size and correctly stays 'ready' for retry.
+  let sent = 0;
+  stream.on('data', (chunk) => { sent += chunk.length; });
+  res.on('finish', markDelivered);
+  res.on('close', () => { if (sent === stat.size) markDelivered(); });
 });
 
 /* ------------------------------------------------------------------ */

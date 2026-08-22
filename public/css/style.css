@@ -3028,3 +3028,154 @@ a { text-decoration: none; color: inherit; }
   .mood-option-chip { padding: 10px 12px; font-size: 13px; }
   .mood-step-line { width: 24px; }
 }
+
+/* ================================================================
+   PLAYLIST BATCH DOWNLOAD (ZIP)
+   ================================================================ */
+
+/* The playlist header carries four controls now, so it has to be allowed to
+   wrap instead of crushing the buttons on a narrow window. */
+.section-header { flex-wrap: wrap; gap: 10px; }
+.playlist-header-actions { flex-wrap: wrap; }
+
+/* .pill-action-btn had no icon sizing of its own; without this the inline svg
+   renders at its intrinsic size and dwarfs the label. */
+.pill-action-btn svg { width: 15px; height: 15px; flex-shrink: 0; }
+
+.pill-action-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.playlist-dl-current {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 0 0 10px;
+  min-height: 18px;
+  /* A long video title must not stretch the dialog. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.playlist-dl-note {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid rgba(99, 102, 241, 0.6);
+  border-radius: var(--radius-sm);
+  padding: 8px 10px;
+  margin: 0 0 12px;
+  line-height: 1.5;
+}
+
+.playlist-dl-failed {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: var(--radius-sm);
+  padding: 10px 12px;
+  margin-bottom: 12px;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.playlist-dl-failed strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 13px;
+  margin-bottom: 6px;
+}
+
+.playlist-dl-failed ul {
+  margin: 0 0 6px;
+  padding-left: 18px;
+}
+
+.playlist-dl-failed li {
+  margin-bottom: 2px;
+  word-break: break-word;
+}
+
+.playlist-dl-failed-hint {
+  display: block;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+@media (max-width: 600px) {
+  /* Stack the header controls full width so none of them get clipped. */
+  .playlist-header-actions {
+    width: 100%;
+    gap: 8px;
+  }
+  .playlist-header-actions .play-all-btn,
+  .playlist-header-actions .pill-action-btn {
+    flex: 1 1 auto;
+    justify-content: center;
+  }
+}
+
+/* ================================================================
+   Remove-from-playlist action, playlist count, undo toast
+   ================================================================ */
+
+/* Danger tint only on hover: the button sits beside like/download/add, so a
+   permanently red icon in every card would shout over the rest of the row. */
+.card-action-remove:hover {
+  background: rgba(248, 113, 113, 0.15);
+  color: #f87171;
+}
+
+.playlist-count {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding: 3px 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  white-space: nowrap;
+  /* Sits with the title, not the buttons, so it survives header wrapping. */
+  margin-right: auto;
+}
+
+.toast-action {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-right: 8px;
+}
+
+.toast-action-msg {
+  /* Long song titles must not push the Undo button off-screen. */
+  max-width: 240px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.toast-undo-btn {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-light);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm, 6px);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.toast-undo-btn:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+}
+
+@media (max-width: 600px) {
+  .toast-action-msg { max-width: 150px; }
+}

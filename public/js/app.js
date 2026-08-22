@@ -423,9 +423,15 @@
     $('#playlistModal')?.addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
     $('#playlistSaveBtn')?.addEventListener('click', savePlaylist);
     $('#playlistNameInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePlaylist(); });
-    $('#playlistBackBtn')?.addEventListener('click', () => { if ($('#playlistDetail')) $('#playlistDetail').style.display = 'none'; renderLibrary(); });
     $('#playPlaylistBtn')?.addEventListener('click', playCurrentPlaylist);
     $('#deletePlaylistBtn')?.addEventListener('click', deleteCurrentPlaylist);
+    $('#downloadPlaylistBtn')?.addEventListener('click', startPlaylistDownload);
+    $('#playlistDlCancelBtn')?.addEventListener('click', cancelOrClosePlaylistDownload);
+    $('#playlistDlSaveBtn')?.addEventListener('click', savePlaylistZip);
+    // Closing the dialog only hides it; the job keeps running so the user can
+    // keep browsing, and the Download All button reopens this view.
+    $('#playlistDlClose')?.addEventListener('click', hidePlaylistDlModal);
+    $('#playlistDlModal')?.addEventListener('click', (e) => { if (e.target === $('#playlistDlModal')) hidePlaylistDlModal(); });
     $('#addToPlaylistClose')?.addEventListener('click', () => { if ($('#addToPlaylistModal')) $('#addToPlaylistModal').style.display = 'none'; });
     $('#addToPlaylistModal')?.addEventListener('click', (e) => { if (e.target === $('#addToPlaylistModal')) $('#addToPlaylistModal').style.display = 'none'; });
 
@@ -1263,14 +1269,125 @@
     if (!pl) return;
     currentPlaylistId = plId;
 
+    // Otherwise the Liked Songs list stays open above and it is unclear which
+    // list the buttons below act on.
+    const likedSec = $('#likedSongsListSection');
+    if (likedSec) likedSec.style.display = 'none';
+
     const sec = $('#activePlaylistSection');
+    if (!sec) return;
+    sec.style.display = '';
+    renderActivePlaylist();
+    // The section sits below the playlist grid, so on a short window a click
+    // could otherwise appear to do nothing at all.
+    try { sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) { sec.scrollIntoView(); }
+  }
+
+  /**
+   * Redraws the open playlist in place. Split out from showPlaylistDetail
+   * because removing a song has to refresh the grid without re-running the
+   * scroll — being yanked back to the top after every removal would be awful.
+   *
+   * Re-rendering after each change is also what keeps removal accurate: the
+   * cards carry their array index, so stale indices would delete the wrong row.
+   */
+  function renderActivePlaylist() {
+    const pl = playlists.find(p => p.id === currentPlaylistId);
+    if (!pl) return null;
+
     const title = $('#activePlaylistTitle');
+    if (title) title.textContent = '📂 ' + pl.name;
+
+    const count = $('#activePlaylistCount');
+    if (count) count.textContent = pl.songs.length === 1 ? '1 song' : `${pl.songs.length} songs`;
+
     const grid = $('#activePlaylistGrid');
-    if (sec && title && grid) {
-      sec.style.display = '';
-      title.textContent = '📂 ' + pl.name;
-      renderRecommendationCards(grid, pl.songs);
+    if (grid) {
+      renderRecommendationCards(grid, pl.songs, {
+        removable: true,
+        emptyMessage: 'Nothing in this playlist yet. Add songs from Home or Search using the + button on any card.',
+      });
     }
+
+    syncPlaylistCardCount(pl);
+    return pl;
+  }
+
+  /**
+   * Keeps the "N songs" label on the library grid card in step with the open
+   * playlist. renderLibrary() would do this too, but it also force-hides the
+   * detail section — calling it here would slam the playlist shut on every
+   * removal.
+   */
+  function syncPlaylistCardCount(pl) {
+    const grid = $('#playlistGrid');
+    if (!grid || !pl) return;
+    const card = grid.querySelector(`.playlist-card[data-plid="${pl.id}"] .pc-count`);
+    if (card) card.textContent = pl.songs.length + ' songs';
+  }
+
+  /**
+   * Removing a song re-renders the grid, which slides the *next* song's card
+   * up under the cursor. A double click — or an impatient second click — would
+   * then delete a second, different song that the user never aimed at. Ignoring
+   * a repeat within this window costs nothing (a deliberate second removal
+   * still works a moment later) and prevents that.
+   */
+  const PLAYLIST_REMOVE_GUARD_MS = 350;
+  let lastPlaylistRemoveAt = 0;
+
+  /**
+   * Removes one song from the currently open playlist.
+   *
+   * Takes the rendered index *and* the expected song so the two can be
+   * cross-checked. Index alone is wrong if the array shifted under us; id alone
+   * is wrong if the same track appears twice (older data can contain duplicates
+   * even though both add paths now dedupe). Index-with-verification is the only
+   * option that is right in both cases.
+   */
+  function removeSongFromPlaylist(idx, expected) {
+    const pl = playlists.find(p => p.id === currentPlaylistId);
+    if (!pl) { toast('No playlist is open'); return; }
+    if (!expected || !expected.id) { toast('Could not identify that track'); return; }
+
+    const now = Date.now();
+    if (now - lastPlaylistRemoveAt < PLAYLIST_REMOVE_GUARD_MS) return;
+
+    let at = (pl.songs[idx] && pl.songs[idx].id === expected.id)
+      ? idx
+      : pl.songs.findIndex(s => s && s.id === expected.id);
+
+    if (at < 0) {
+      // Already gone — most likely a double click on the same button. Resync
+      // rather than removing something else by mistake.
+      renderActivePlaylist();
+      toast('That track is no longer in this playlist');
+      return;
+    }
+
+    lastPlaylistRemoveAt = now;
+    const [removed] = pl.songs.splice(at, 1);
+    Storage.set('playlists', playlists);
+    renderActivePlaylist();
+
+    // Undo instead of a confirm dialog: removal is one click on a small button
+    // next to four others, so it needs to be reversible, but a prompt on every
+    // single removal would make clearing out a playlist miserable.
+    const label = (removed && removed.title) ? removed.title : 'Track';
+    undoToast(`Removed ${label.length > 42 ? label.slice(0, 42) + '…' : label}`, () => {
+      const target = playlists.find(p => p.id === pl.id);
+      if (!target) { toast('That playlist no longer exists'); return; }
+      if (target.songs.some(s => s && s.id === removed.id)) { toast('Already back in the playlist'); return; }
+      // Restore to where it was, not to the end, so undo really is an undo.
+      target.songs.splice(Math.min(at, target.songs.length), 0, removed);
+      // Undoing means the user is still working in this list; don't make them
+      // wait out the double-click guard before they can remove something else.
+      lastPlaylistRemoveAt = 0;
+      Storage.set('playlists', playlists);
+      if (currentPlaylistId === target.id) renderActivePlaylist();
+      else { syncPlaylistCardCount(target); renderLibrary(); }
+      toast('Restored');
+    });
   }
 
   function playCurrentPlaylist() {
@@ -1281,8 +1398,14 @@
   }
 
   function deleteCurrentPlaylist() {
+    const pl = playlists.find(p => p.id === currentPlaylistId);
+    if (!pl) { toast('No playlist selected'); return; }
+    // Deleting is irreversible and the button sits next to Play/Download, so it
+    // asks first rather than silently discarding a playlist on a stray click.
+    if (!confirm(`Delete the playlist "${pl.name}"? This cannot be undone.`)) return;
     playlists = playlists.filter(p => p.id !== currentPlaylistId);
     Storage.set('playlists', playlists);
+    currentPlaylistId = null;
     const sec = $('#activePlaylistSection');
     if (sec) sec.style.display = 'none';
     renderLibrary();
@@ -1542,7 +1665,7 @@
 
       // If viewing library or the updated playlist detail, refresh
       if (pages.library.style.display !== 'none') {
-        if (currentPlaylistId === targetPl.id) showPlaylistDetail(targetPl.id);
+        if (currentPlaylistId === targetPl.id) renderActivePlaylist();
         else renderLibrary();
       }
 
@@ -1626,11 +1749,26 @@
     }
   }
 
-  function renderRecommendationCards(container, songs) {
+  /**
+   * Shared card grid renderer.
+   *
+   * opts.removable    render a "remove from playlist" button on every card.
+   *                   Only the playlist detail grid passes this — the button
+   *                   would be meaningless on Home or search results.
+   * opts.emptyMessage override the empty-state copy ("No songs available right
+   *                   now" is wrong for a playlist the user just emptied).
+   */
+  function renderRecommendationCards(container, songs, opts) {
+    const o = opts || {};
     if (!songs || !songs.length) {
-      container.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">No songs available right now.</p>';
+      container.innerHTML = `<p class="empty-msg" style="grid-column:1/-1;text-align:center;">${esc(o.emptyMessage || 'No songs available right now.')}</p>`;
       return;
     }
+
+    const removeBtn = o.removable ? `
+              <button class="card-action-btn card-action-remove" data-action="removepl" title="Remove from this playlist" aria-label="Remove from this playlist">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+              </button>` : '';
 
     container.innerHTML = songs.map((item, i) => `
       <div class="result-card ${isCurrent(item.id) ? 'playing' : ''}" data-id="${item.id}" data-idx="${i}">
@@ -1655,7 +1793,7 @@
               </button>
               <button class="card-action-btn" data-action="queue" title="Add to queue">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
-              </button>
+              </button>${removeBtn}
             </div>
           </div>
         </div>
@@ -1673,6 +1811,7 @@
           else if (action.dataset.action === 'queue') addToQueue(item);
           else if (action.dataset.action === 'addpl') openAddToPlaylist(item);
           else if (action.dataset.action === 'download') downloadSong(item);
+          else if (action.dataset.action === 'removepl') removeSongFromPlaylist(i, item);
           else playSong(item);
         } else {
           playSong(item);
@@ -2171,6 +2310,270 @@
       // still bounded, unlike leaking the blob for the whole session.
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
       activeDownloads.delete(song.id);
+    }
+  }
+
+  /* ================================================================
+     PLAYLIST BATCH DOWNLOAD (ZIP)
+     ================================================================ */
+  // Transcoding a whole playlist takes minutes, which is far too long to hold a
+  // request open, so the server runs it as a job and we poll for progress.
+  const PLAYLIST_DL_POLL_MS = 1500;
+  const PLAYLIST_DL_MAX_TRACKS = 50;   // must match MAX_PLAYLIST_TRACKS server-side
+
+  let playlistDlJobId = null;
+  let playlistDlTimer = null;
+  let playlistDlName = 'Playlist';
+  let playlistDlSaved = false;
+
+  // Only real YouTube ids can be transcoded server-side. Local imports are
+  // already on the user's disk and cloud tracks have no downloadable source.
+  function isDownloadableTrack(s) {
+    return !!(s && typeof s.id === 'string' && !s.isLocal && !s.isCloud && /^[a-zA-Z0-9_-]{11}$/.test(s.id));
+  }
+
+  function setPlaylistDlProgress(percent, statusText) {
+    const fill = $('#playlistDlFill');
+    const pct = $('#playlistDlPercent');
+    const status = $('#playlistDlStatus');
+    const clamped = Math.max(0, Math.min(100, Math.round(percent)));
+    if (fill) fill.style.width = clamped + '%';
+    if (pct) pct.textContent = clamped + '%';
+    if (status && statusText) status.textContent = statusText;
+  }
+
+  function stopPlaylistDlPolling() {
+    if (playlistDlTimer) {
+      clearInterval(playlistDlTimer);
+      playlistDlTimer = null;
+    }
+  }
+
+  function hidePlaylistDlModal() {
+    const modal = $('#playlistDlModal');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function startPlaylistDownload() {
+    const pl = playlists.find(p => p.id === currentPlaylistId);
+    if (!pl) { toast('Open a playlist first'); return; }
+
+    // A job already running: just reopen the progress view instead of starting
+    // a second one the server would reject anyway.
+    if (playlistDlJobId) {
+      const modal = $('#playlistDlModal');
+      if (modal) modal.style.display = '';
+      return;
+    }
+
+    if (!pl.songs || !pl.songs.length) { toast('This playlist is empty'); return; }
+
+    const all = pl.songs.slice();
+    const eligible = all.filter(isDownloadableTrack);
+    const skipped = all.length - eligible.length;
+
+    if (!eligible.length) {
+      toast('Nothing here can be downloaded — local files are already saved, and cloud tracks have no download source.');
+      return;
+    }
+
+    const tracks = eligible.slice(0, PLAYLIST_DL_MAX_TRACKS);
+    const overflow = eligible.length - tracks.length;
+
+    // Tell the user up front what will not be in the zip, rather than letting
+    // them discover a short archive afterwards.
+    const notes = [];
+    if (skipped) notes.push(`${skipped} track${skipped > 1 ? 's' : ''} skipped (local or cloud)`);
+    if (overflow) notes.push(`limited to the first ${PLAYLIST_DL_MAX_TRACKS} tracks, ${overflow} left out`);
+
+    playlistDlName = pl.name || 'Playlist';
+    playlistDlSaved = false;
+
+    const modal = $('#playlistDlModal');
+    const failedBox = $('#playlistDlFailed');
+    const saveBtn = $('#playlistDlSaveBtn');
+    const cancelBtn = $('#playlistDlCancelBtn');
+    const noteEl = $('#playlistDlNote');
+    const currentEl = $('#playlistDlCurrent');
+
+    if (failedBox) { failedBox.style.display = 'none'; failedBox.innerHTML = ''; }
+    if (saveBtn) saveBtn.style.display = 'none';
+    if (cancelBtn) { cancelBtn.style.display = ''; cancelBtn.disabled = false; cancelBtn.textContent = 'Cancel download'; }
+    if (currentEl) currentEl.textContent = '';
+    if (noteEl) {
+      noteEl.textContent = notes.length ? `Note: ${notes.join('; ')}.` : '';
+      noteEl.style.display = notes.length ? '' : 'none';
+    }
+    const subtitle = $('#playlistDlSubtitle');
+    if (subtitle) {
+      subtitle.textContent = `Converting ${tracks.length} track${tracks.length > 1 ? 's' : ''} to MP3, then bundling them into one zip file. This can take a few minutes.`;
+    }
+    setPlaylistDlProgress(0, 'Starting…');
+    if (modal) modal.style.display = '';
+
+    try {
+      const res = await fetch('/api/playlist-download', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: playlistDlName,
+          tracks: tracks.map(s => ({ id: s.id, title: s.title || s.id })),
+        }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        // 409 means another playlist job owns the conversion slots.
+        throw new Error(data.error || `Server responded ${res.status}`);
+      }
+
+      playlistDlJobId = data.jobId;
+      setPlaylistDlProgress(2, `0 of ${data.total} tracks converted`);
+      stopPlaylistDlPolling();
+      playlistDlTimer = setInterval(pollPlaylistDownload, PLAYLIST_DL_POLL_MS);
+      pollPlaylistDownload();
+    } catch (err) {
+      console.warn('[playlist download]', err);
+      failPlaylistDownload(err.message || 'Could not start the download');
+    }
+  }
+
+  function failPlaylistDownload(message) {
+    stopPlaylistDlPolling();
+    playlistDlJobId = null;
+    const cancelBtn = $('#playlistDlCancelBtn');
+    if (cancelBtn) { cancelBtn.textContent = 'Close'; cancelBtn.disabled = false; }
+    setPlaylistDlProgress(0, 'Failed');
+    const currentEl = $('#playlistDlCurrent');
+    if (currentEl) currentEl.textContent = message;
+    toast(`⚠️ ${message}`);
+  }
+
+  async function pollPlaylistDownload() {
+    if (!playlistDlJobId) { stopPlaylistDlPolling(); return; }
+
+    let data;
+    try {
+      const res = await fetch(`/api/playlist-download/${encodeURIComponent(playlistDlJobId)}`);
+      if (res.status === 404) {
+        // The job expired or the server restarted mid-run.
+        failPlaylistDownload('The download job expired. Please try again.');
+        return;
+      }
+      data = await res.json();
+    } catch (err) {
+      // A single failed poll is usually a transient blip; keep polling and let
+      // a real failure surface on a later tick.
+      console.warn('[playlist download poll]', err);
+      return;
+    }
+
+    const done = (data.completed || 0) + (data.failed || 0);
+    const total = data.total || 1;
+    const currentEl = $('#playlistDlCurrent');
+
+    if (data.status === 'queued' || data.status === 'downloading') {
+      // Converting is the long part, so it owns 0-90% of the bar and zipping
+      // gets the rest. A bar that sat at 100% while still working would read
+      // as frozen.
+      setPlaylistDlProgress((done / total) * 90, `${data.completed || 0} of ${total} tracks converted`);
+      if (currentEl) currentEl.textContent = data.current ? `Now converting: ${data.current}` : '';
+      renderPlaylistDlFailures(data);
+      return;
+    }
+
+    if (data.status === 'zipping') {
+      setPlaylistDlProgress(95, 'Building the zip file…');
+      if (currentEl) currentEl.textContent = '';
+      renderPlaylistDlFailures(data);
+      return;
+    }
+
+    if (data.status === 'ready' || data.status === 'downloaded') {
+      stopPlaylistDlPolling();
+      setPlaylistDlProgress(100, 'Ready');
+      renderPlaylistDlFailures(data);
+      const mb = data.size ? (data.size / (1024 * 1024)).toFixed(1) : null;
+      if (currentEl) {
+        currentEl.textContent = `${data.completed} track${data.completed > 1 ? 's' : ''} bundled${mb ? ` — ${mb} MB` : ''}.`;
+      }
+      const cancelBtn = $('#playlistDlCancelBtn');
+      if (cancelBtn) cancelBtn.textContent = 'Close';
+      const saveBtn = $('#playlistDlSaveBtn');
+      if (saveBtn) saveBtn.style.display = '';
+
+      // Auto-save once, with the button left visible as a manual fallback in
+      // case the browser declines a download this far from the original click.
+      if (!playlistDlSaved) {
+        playlistDlSaved = true;
+        savePlaylistZip();
+      }
+      return;
+    }
+
+    if (data.status === 'cancelled') {
+      stopPlaylistDlPolling();
+      playlistDlJobId = null;
+      hidePlaylistDlModal();
+      toast('Download cancelled');
+      return;
+    }
+
+    if (data.status === 'error') {
+      failPlaylistDownload(data.error || 'The download failed');
+      return;
+    }
+  }
+
+  function renderPlaylistDlFailures(data) {
+    const box = $('#playlistDlFailed');
+    if (!box) return;
+    if (!data.failed) { box.style.display = 'none'; box.innerHTML = ''; return; }
+    const titles = (data.failedTitles || []).map(t => `<li>${esc(t)}</li>`).join('');
+    const more = data.failed > (data.failedTitles || []).length
+      ? `<li>and ${data.failed - (data.failedTitles || []).length} more</li>` : '';
+    box.innerHTML = `<strong>${data.failed} track${data.failed > 1 ? 's' : ''} could not be downloaded</strong>` +
+      `<ul>${titles}${more}</ul>` +
+      `<span class="playlist-dl-failed-hint">The rest are still included in the zip.</span>`;
+    box.style.display = '';
+  }
+
+  // Handed to the browser as a plain link rather than fetched into a blob: an
+  // album-sized archive would otherwise sit in JS memory twice, and this way
+  // the browser shows its own download progress and handles the save natively.
+  function savePlaylistZip() {
+    if (!playlistDlJobId) return;
+    const a = document.createElement('a');
+    a.href = `/api/playlist-download/${encodeURIComponent(playlistDlJobId)}/file`;
+    a.download = `${safeDownloadName(playlistDlName)}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    toast('✅ Saving your playlist zip…');
+  }
+
+  async function cancelOrClosePlaylistDownload() {
+    const jobId = playlistDlJobId;
+    stopPlaylistDlPolling();
+
+    // Once the archive exists, this button is just "Close" — cancelling would
+    // delete the file the user is in the middle of saving.
+    const isFinished = $('#playlistDlSaveBtn') && $('#playlistDlSaveBtn').style.display !== 'none';
+    if (isFinished || !jobId) {
+      playlistDlJobId = null;
+      hidePlaylistDlModal();
+      return;
+    }
+
+    playlistDlJobId = null;
+    hidePlaylistDlModal();
+    toast('Cancelling download…');
+    try {
+      await fetch(`/api/playlist-download/${encodeURIComponent(jobId)}/cancel`, { method: 'POST' });
+    } catch (err) {
+      // The job aborts on its own when the server notices; nothing to do.
+      console.warn('[playlist download cancel]', err);
     }
   }
 
@@ -2936,6 +3339,48 @@
     const t = document.createElement('div'); t.className = 'toast'; t.textContent = msg;
     toastContainer.appendChild(t);
     setTimeout(() => { t.classList.add('removing'); setTimeout(() => t.remove(), 300); }, dur);
+  }
+
+  /**
+   * A toast with a single action button, used for undoing a destructive change.
+   * Kept separate from toast() so every existing caller keeps its plain-text
+   * behaviour, and built with textContent/createElement rather than innerHTML so
+   * a song title can never inject markup.
+   */
+  function undoToast(msg, onUndo, dur = 7000) {
+    const t = document.createElement('div');
+    t.className = 'toast toast-action';
+
+    const label = document.createElement('span');
+    label.className = 'toast-action-msg';
+    label.textContent = msg;
+
+    const btn = document.createElement('button');
+    btn.className = 'toast-undo-btn';
+    btn.type = 'button';
+    btn.textContent = 'Undo';
+
+    t.appendChild(label);
+    t.appendChild(btn);
+    toastContainer.appendChild(t);
+
+    let done = false;
+    const dismiss = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      t.classList.add('removing');
+      setTimeout(() => t.remove(), 300);
+    };
+
+    btn.addEventListener('click', () => {
+      if (done) return;
+      dismiss();
+      try { onUndo(); } catch (e) { console.error('[undo] failed', e); toast('Could not undo that'); }
+    });
+
+    // Longer than a normal toast: undo is only useful if there is time to reach it.
+    const timer = setTimeout(dismiss, dur);
   }
 
   /* ================================================================

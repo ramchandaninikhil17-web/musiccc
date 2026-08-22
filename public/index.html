@@ -337,7 +337,19 @@
           <div class="home-section" id="activePlaylistSection" style="display:none;">
             <div class="section-header">
               <h2 id="activePlaylistTitle">Playlist</h2>
-              <button class="text-btn" id="hidePlaylistBtn">Close</button>
+              <span class="playlist-count" id="activePlaylistCount">0 songs</span>
+              <div class="playlist-header-actions">
+                <button class="play-all-btn" id="playPlaylistBtn" title="Play this playlist">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Play All
+                </button>
+                <button class="pill-action-btn" id="downloadPlaylistBtn" title="Download every track as one zip file">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download All
+                </button>
+                <button class="text-btn danger" id="deletePlaylistBtn" title="Delete this playlist">Delete</button>
+                <button class="text-btn" id="hidePlaylistBtn">Close</button>
+              </div>
             </div>
             <div class="results-grid" id="activePlaylistGrid"></div>
           </div>
@@ -858,6 +870,42 @@
         <div class="modal-actions">
           <button class="modal-cancel-btn" type="button" id="batchCancelBtn">Cancel</button>
           <button class="modal-submit-btn" type="button" id="batchStartBtn">✨ Import Songs to Playlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PLAYLIST ZIP DOWNLOAD PROGRESS MODAL ============ -->
+  <div class="modal-overlay" id="playlistDlModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">⬇️ Downloading Playlist</h3>
+          <p class="modal-subtitle" id="playlistDlSubtitle">Converting each track to MP3, then bundling them into one zip file.</p>
+        </div>
+        <button class="modal-close" id="playlistDlClose" title="Hide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="batch-progress-box">
+          <div class="batch-progress-header">
+            <span id="playlistDlStatus">Starting…</span>
+            <span id="playlistDlPercent">0%</span>
+          </div>
+          <div class="batch-progress-track">
+            <div class="batch-progress-fill" id="playlistDlFill"></div>
+          </div>
+        </div>
+
+        <p class="playlist-dl-current" id="playlistDlCurrent"></p>
+        <p class="playlist-dl-note" id="playlistDlNote" style="display:none;"></p>
+
+        <div class="playlist-dl-failed" id="playlistDlFailed" style="display:none;"></div>
+
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="playlistDlCancelBtn">Cancel download</button>
+          <button class="modal-submit-btn" type="button" id="playlistDlSaveBtn" style="display:none;">⬇️ Save zip file</button>
         </div>
       </div>
     </div>
