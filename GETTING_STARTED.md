@@ -1,185 +1,164 @@
-# 🚀 Getting Started with MusicFlow v2.5
+# Getting Started
 
-Welcome to **MusicFlow v2.5**! A premium, ultra-fast music player with an Apple-style floating transparent orb, always-on-top PiP mini-player, Pomodoro focus mode, ambient sound mixer, and 1-click cloud deployment.
-
----
-
-## ✨ What's New in v2.5
-
-| Feature | Description |
-| :--- | :--- |
-| 🎛️ **10-Band Graphic Equalizer** | Web Audio DSP with 10 frequency sliders, Bass Boost dial, 3D Spatial Audio expander, and instant genre presets (*Rock, Pop, EDM, Vocal, Acoustic*). |
-| 📁 **Local Music Drag & Drop** | Import and play local `.mp3`, `.flac`, `.wav`, `.m4a` files directly in high fidelity. |
-| ⏲️ **Smart Sleep Timer** | Set 15m, 30m, 45m, 60m, or "Track End" timers with an automatic 30-second volume fade out. |
-| 🎨 **Accent Color Studio & OLED Mode** | Switch accent highlights (*Indigo, Cyan, Emerald, Orange, Pink, Purple*) and OLED Pitch Black mode. |
-| ♾️ **Endless Auto-Queue** | Intelligent auto-queue that automatically loads matching recommendation tracks when your queue ends. |
-| 🍏 **Apple Floating Transparent Orb** | Draggable frosted-glass orb with live disc spin, soundwave equalizer, and expandable Dynamic Island capsule. |
-| 🖼️ **Always-On-Top PiP Mini-Player** | Pop out a floating mini-player that stays visible over VS Code, Word, Excel, or any other app while MusicFlow is minimized. |
-| ⏱️ **Pomodoro Focus Flow** | Built-in 25/50/5/15 minute timer with SVG progress ring and session stats tracking. |
-| 🌧️ **Ambient Sound Mixer** | Layer Rain, Ocean Waves, or White Noise sound synthesis over your music (100% offline). |
+This guide walks you through your first session with MusicFlow — from installation to playing your first track. For deployment and building native apps, see [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md) and [BUILD_APPS.md](BUILD_APPS.md).
 
 ---
 
-## ⚡ 1-Minute Quick Start (Windows PC)
+## 1. Install Node.js
 
-### Step 1: Install Node.js (Only if you don't have it)
-1. Download the free **LTS version** of Node.js from: **[https://nodejs.org/](https://nodejs.org/)**
-2. Run the installer and click **Next** until finished.
+MusicFlow requires **Node.js 18 or later**. Download the LTS version from [nodejs.org](https://nodejs.org/) and run the installer.
 
----
-
-### Step 2: Extract & Run MusicFlow
-1. **Unzip** the downloaded MusicFlow folder anywhere on your computer (e.g. Desktop, Downloads, Documents).
-2. Choose **ONE** of these ways to launch:
-
-| Method | What to Double-Click | Best For |
-| :--- | :--- | :--- |
-| 🟢 **Method A (Recommended)** | **`start.bat`** | 1-Click universal launcher. Checks Node.js, installs dependencies on first run, and opens the app in your browser. |
-| 🚀 **Method B (App Mode)** | **`MusicFlow.exe`** | Opens MusicFlow in a sleek desktop app window without browser tabs or address bars. |
-| 🖥️ **Method C (Desktop Icon)** | **`create-desktop-shortcut.bat`** | Creates a **MusicFlow** icon directly on your Windows Desktop! |
-
-> 💡 **First Run Note**: On the very first launch, the launcher will automatically install necessary packages (`npm install`) and fetch the background audio engine. This takes ~10-20 seconds. Future launches are instant!
-
----
-
-## 🍏 macOS & Linux Quick Start
-
-1. Install **Node.js** from [https://nodejs.org/](https://nodejs.org/) (or `brew install node`).
-2. Open Terminal in the extracted `musicflow` folder.
-3. Make the start script executable and run it:
-   ```bash
-   chmod +x start.sh
-   ./start.sh
-   ```
-4. MusicFlow will install dependencies on first run and automatically open in your default browser at `http://localhost:3000`.
-
----
-
-## ⌨️ Keyboard Shortcuts
-
-| Key | Action |
-| :--- | :--- |
-| `Space` | Play / Pause |
-| `P` | Pop out / close Always-On-Top PiP Mini-Player |
-| `Shift + P` | Previous Track |
-| `N` | Next Track |
-| `F` | Open Pomodoro Focus Mode |
-| `M` | Mute / Unmute |
-| `D` | Download current song as MP3 |
-| `L` | Toggle Lyrics panel |
-| `Q` | Toggle Queue sidebar |
-| `Arrow Left / Right` | Seek 5 seconds backward / forward |
-| `Arrow Up / Down` | Volume up / down |
-
----
-
-## 🍏 Apple Floating Orb — How It Works
-
-1. The translucent orb appears in the bottom-right corner of the screen by default.
-2. **Drag** it anywhere — it snaps to the nearest edge when released.
-3. **Click** the orb to expand it into a Dynamic Island-style capsule with:
-   - Album artwork, title, and artist
-   - Interactive seek progress bar
-   - Play/Pause, Previous, Next buttons
-   - ⚡ **Quick Switch** — instantly skip to a fresh track
-   - **PiP Work Mini** — launch Always-On-Top mini-player
-   - **Focus Mode** — open Pomodoro timer
-4. Toggle visibility in **Settings > Apple Floating Transparent Orb**.
-
----
-
-## 🖼️ PiP Mini-Player — Multitask Like a Pro
-
-1. Click the **PiP button** (🖼️) in the top bar, now-playing bar, or floating orb capsule.
-2. A small floating window pops out showing album art, live visualizer bars, track info, and progress.
-3. This window stays on top of all other apps — keep it visible while you code, study, or work!
-4. Press `P` to toggle it on/off instantly.
-
----
-
-## ⏱️ Pomodoro Focus Flow
-
-1. Press `F` or click the **Focus Flow** button to open the timer.
-2. Choose a preset: **25m Focus**, **50m Deep**, **5m Break**, or **15m Break**.
-3. Hit **Start Focus** to begin the countdown with a visual SVG ring.
-4. Layer ambient sounds (Rain 🌧️, Cafe ☕, Waves 🌊, White Noise 💨) over your music.
-5. Launch focus playlists instantly: Lo-Fi Study Beats, Deep Alpha Waves, Classical Piano, Synthwave Coding.
-
----
-
-## 🖥️ Desktop Player Modes
-
-MusicFlow offers multiple ways to enjoy your music on desktop:
-- **Floating Orb Window**: Drag-and-drop dynamic transparent controls.
-- **Picture-in-Picture Mini Player**: Keep your music player always-on-top above all windows (`P` shortcut).
-- **Focus Flow Pomodoro**: Ambient sound mixer with timer (`F` shortcut).
-
----
-
-## ☁️ Deploy to the Cloud (Free, 24/7 Access)
-
-See **[DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)** for step-by-step instructions to deploy MusicFlow on:
-- **Render.com** (Recommended, free tier)
-- **Railway.app**
-- **Docker / Fly.io / DigitalOcean**
-
----
-
-## 🛠️ Advanced: Running via Terminal
-
-If you prefer standard npm commands:
+To verify the installation, open a terminal and run:
 
 ```bash
-# 1. Install dependencies
-npm install
+node --version
+```
 
-# 2. Start the server
+You should see `v18.x.x` or higher.
+
+---
+
+## 2. Launch MusicFlow
+
+### Windows
+
+The fastest way is to double-click **`start.bat`** in the project folder. It will:
+
+1. Check that Node.js is installed.
+2. Run `npm install` on first launch (takes ~10–20 seconds).
+3. Start the server and open MusicFlow in your browser.
+
+Alternatively, double-click **`MusicFlow.exe`** to run MusicFlow in a dedicated app window without browser tabs or an address bar.
+
+### macOS / Linux
+
+```bash
+cd musiccc
+chmod +x start.sh
+./start.sh
+```
+
+The script installs dependencies on first run and opens your browser automatically.
+
+### Any platform (manual)
+
+```bash
+cd musiccc
+npm install
 npm start
 ```
 
-Then open **[http://localhost:3000](http://localhost:3000)** in any modern web browser.
+Open **http://localhost:3000** in any modern browser.
+
+> **First-run note:** The server downloads the `yt-dlp` binary automatically if it's missing. This adds ~10–20 seconds to the first start.
 
 ---
 
-## ❓ Frequently Asked Questions & Troubleshooting
+## 3. Find and Play Music
 
-<details>
-<summary><strong>1. "Node.js is not recognized as an internal or external command"</strong></summary>
+1. Click **Search** in the sidebar (or press any alphanumeric key while not focused on an input).
+2. Type a song name, artist, or phrase.
+3. Click a result to start playing. The track loads in the bottom player bar.
 
-- Make sure you downloaded and installed Node.js from [nodejs.org](https://nodejs.org/).
-- If you just installed Node.js, close and re-open your terminal or restart your computer so Windows updates your system PATH.
-</details>
-
-<details>
-<summary><strong>2. "Port 3000 is already in use"</strong></summary>
-
-- You can specify a custom port by setting the `PORT` environment variable before starting:
-  - **Windows (Command Prompt)**: `set PORT=3001 && node server.js`
-  - **Windows (PowerShell)**: `$env:PORT=3001; node server.js`
-  - **Mac / Linux**: `PORT=3001 ./start.sh`
-</details>
-
-<details>
-<summary><strong>3. Phone cannot connect to the PC's Wi-Fi link</strong></summary>
-
-- Ensure both your PC and phone are connected to the **same Wi-Fi router**.
-- If Windows Firewall blocks incoming connections, allow Node.js through Windows Defender Firewall (Private Networks).
-</details>
-
-<details>
-<summary><strong>4. PiP Mini-Player doesn't open</strong></summary>
-
-- Picture-in-Picture requires **Chrome 70+**, **Edge 79+**, or **Opera**. Firefox has limited support.
-- Make sure no other PiP window is active. Close it first, then try again.
-- Some browser privacy extensions block PiP — try disabling them temporarily.
-</details>
-
-<details>
-<summary><strong>5. Floating Orb is not visible</strong></summary>
-
-- Open **Settings** (gear icon in sidebar) and ensure **"Apple Floating Transparent Orb"** is set to **"Enabled (Floating)"**.
-</details>
+Search results are ranked by an internal scoring algorithm that prefers official uploads from major labels and topic channels.
 
 ---
 
-Enjoy streaming your music with MusicFlow v2.5! 🎧✨
+## 4. Explore the Interface
+
+### Sidebar navigation
+
+| Page | What's there |
+|:---|:---|
+| **Home** | Trending recommendations and quick-play cards |
+| **Search** | Full-text search with autocomplete suggestions |
+| **Library** | Your playlists, liked songs, and recently played |
+| **Mood Flow** | Pick a mood and energy level — the server builds a mix of matching tracks |
+| **Your Stats** | Listening history, play counts, and top artists |
+| **Focus Flow** | Pomodoro timer, ambient sound mixer, and focus playlists |
+| **Settings** | Accent colour, OLED mode, floating orb toggle, crossfade, and more |
+
+### Player controls
+
+The bottom bar shows the current track with play/pause, skip, seek, volume, and a progress scrubber. Additional buttons open:
+
+- **Equalizer** — 10-band graphic EQ with presets (Rock, Pop, EDM, Vocal, Acoustic, Flat)
+- **Lyrics** — synced lyrics panel (when subtitle data is available)
+- **Queue** — drag-to-reorder Up Next list
+- **Download** — save the current track as an MP3
+- **PiP** — pop out a floating mini-player that stays on top of other windows
+
+---
+
+## 5. The Floating Orb
+
+A translucent glass circle appears in the bottom-right corner. You can:
+
+- **Drag** it anywhere — it snaps to the nearest screen edge when released.
+- **Click** it to expand into a capsule showing artwork, title, seek bar, and playback controls.
+- **Quick Switch** — skip to the next recommended track.
+- Toggle it in Settings → "Apple Floating Transparent Orb".
+
+---
+
+## 6. PiP Mini-Player
+
+Click the PiP button (in the top bar, player bar, or orb capsule) or press `P`. A small window pops out that stays on top of every other app — useful while coding, studying, or working. The window shows album art, a visualiser, track info, and a progress bar.
+
+Supported browsers: Chrome 70+, Edge 79+, Opera. Firefox has limited support.
+
+---
+
+## 7. Focus Flow (Pomodoro + Ambient)
+
+Press `F` or click Focus Flow in the sidebar.
+
+1. Pick a timer preset: **25 min Focus**, **50 min Deep**, **5 min Break**, or **15 min Rest**.
+2. Click **Start Focus**. An SVG ring animates the countdown.
+3. Layer ambient sounds over your music: Rain, Café, Ocean Waves, White Noise. Each has its own volume slider.
+4. Optionally start a focus playlist: Lo-Fi Study Beats, Deep Alpha Waves, Classical Piano, or Synthwave Coding.
+
+---
+
+## 8. Local File Playback
+
+Drag `.mp3`, `.flac`, `.wav`, or `.m4a` files directly onto the MusicFlow window. They play in full quality through the browser's audio decoder — no server round-trip needed.
+
+---
+
+## 9. Keyboard Shortcuts
+
+| Key | Action |
+|:---|:---|
+| `Space` | Play / pause |
+| `N` | Next track |
+| `Shift + P` | Previous track |
+| `P` | Toggle PiP mini-player |
+| `F` | Open focus flow |
+| `M` | Mute / unmute |
+| `D` | Download current track |
+| `L` | Toggle lyrics |
+| `Q` | Toggle queue |
+| `← / →` | Seek ±5 s |
+| `↑ / ↓` | Volume ±step |
+
+---
+
+## 10. Access from Your Phone
+
+If your phone is on the same Wi-Fi network as your PC:
+
+1. Find your PC's local IP: `ipconfig` (Windows) or `ip addr` (Linux/macOS).
+2. On your phone's browser, go to `http://<YOUR_IP>:3000`.
+3. MusicFlow works in any mobile browser. For an app-like experience, tap the browser menu → "Install app" or "Add to Home Screen".
+
+If Windows Firewall blocks the connection, allow Node.js through Defender Firewall for private networks.
+
+---
+
+## Next Steps
+
+- **Deploy to the cloud** — see [DEPLOY_GUIDE.md](DEPLOY_GUIDE.md)
+- **Build native apps** — see [BUILD_APPS.md](BUILD_APPS.md)
+- **Explore the API** — see [API.md](API.md)
+- **Contribute** — see [CONTRIBUTING.md](CONTRIBUTING.md)
