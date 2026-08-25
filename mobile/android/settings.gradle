@@ -1,0 +1,18 @@
+pluginManagement {
+    repositories {
+        google()
+        mavenCentral()
+        gradlePluginPortal()
+    }
+}
+dependencyResolutionManagement {
+    repositoriesMode.set(RepositoriesMode.PREFER_SETTINGS)
+    repositories {
+        google()
+        mavenCentral()
+        // NewPipeExtractor and its NanoHTTPD-free deps are published on JitPack.
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+rootProject.name = "MusicFlowMobile"
+include(":app")

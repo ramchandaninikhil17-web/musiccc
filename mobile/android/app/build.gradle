@@ -1,0 +1,91 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+android {
+    namespace 'com.musicflow.mobile'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.musicflow.mobile"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "3.0"
+        // Bump this when you update NewPipeExtractor so users know which
+        // extractor build they're on.
+        buildConfigField "String", "EXTRACTOR_TAG", "\"v0.24.3\""
+    }
+
+    buildFeatures {
+        buildConfig true
+    }
+
+    // The debug APK is signed with the auto-generated debug keystore, so it
+    // installs on any phone without you creating a signing key. That's all we
+    // need for a personal side-loaded app.
+    buildTypes {
+        debug {
+            minifyEnabled false
+        }
+        release {
+            minifyEnabled false
+            signingConfig signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        coreLibraryDesugaringEnabled true
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+    kotlinOptions {
+        jvmTarget = '17'
+    }
+
+    packagingOptions {
+        resources {
+            excludes += ['META-INF/DEPENDENCIES', 'META-INF/LICENSE*', 'META-INF/NOTICE*']
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+//  Copy the LIVE web UI (repo-root /public) into the APK at build time.
+//  This is why nothing in your PC project has to change: the phone app is
+//  built FROM your existing public/ folder, it never forks it. Edit public/
+//  on your PC, rebuild, and the phone app picks the changes up.
+// ---------------------------------------------------------------------------
+def webSrc = rootProject.file('../../public')
+def webDst = layout.buildDirectory.dir('generated/www').get().asFile
+
+tasks.register('copyWebAssets', Copy) {
+    from webSrc
+    into webDst
+    // sw.js is a no-op here (localhost is already instant), but harmless to keep.
+}
+
+android.sourceSets.main.assets.srcDirs += webDst
+
+tasks.named('preBuild') {
+    dependsOn 'copyWebAssets'
+}
+
+dependencies {
+    coreLibraryDesugaring 'com.android.tools:desugar_jdk_libs:2.0.4'
+
+    implementation 'androidx.core:core-ktx:1.13.1'
+    implementation 'androidx.appcompat:appcompat:1.7.0'
+    implementation 'androidx.webkit:webkit:1.11.0'
+    implementation 'androidx.media:media:1.7.0'
+
+    // The on-device YouTube engine — same library the NewPipe app uses.
+    implementation 'com.github.TeamNewPipe:NewPipeExtractor:v0.24.3'
+
+    // Tiny embedded HTTP server that answers the /api routes on 127.0.0.1.
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // HTTP client for the extractor's Downloader + audio range-proxy.
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+}

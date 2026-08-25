@@ -89,6 +89,19 @@
   --radius-lg: 16px;
   --radius-xl: 24px;
   --radius-full: 9999px;
+
+  /* Aliases for tokens that later rules were written against but which were
+     never actually defined. An unresolvable var() makes the whole declaration
+     invalid, so `background: var(--primary)` was simply dropped: the active EQ
+     preset button, the selected sleep-timer duration and several other
+     "selected" states rendered with no highlight at all, leaving no way to see
+     what was chosen. Aliased to --accent so they follow the accent picker. */
+  --primary: var(--accent);
+  --primary-hover: var(--accent-light);
+  --primary-glow: var(--accent-glow);
+  --accent-green: #10b981;
+  --radius-xs: 6px;
+
   --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --np-height: 88px;
   --sidebar-width: 220px;
@@ -275,9 +288,20 @@ a { text-decoration: none; color: inherit; }
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   display: none; z-index: 200;
+  /* Nine rows plus headings can outgrow a short window; without this the last
+     rows sit off-screen and the keyboard cursor walks into nothing. */
+  max-height: 60vh; overflow-y: auto;
 }
 
 .search-suggestions.active { display: block; }
+
+/* Section heading. Not a .suggestion-item, so keyboard navigation skips it. */
+.sug-group {
+  padding: 8px 12px 4px;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.06em;
+  text-transform: uppercase; color: var(--text-muted);
+}
+.sug-group:first-child { padding-top: 4px; }
 
 .suggestion-item {
   display: flex; align-items: center; gap: 10px;
@@ -287,9 +311,12 @@ a { text-decoration: none; color: inherit; }
 }
 
 .suggestion-item:hover { background: var(--bg-glass-hover); }
+/* The keyboard cursor. Same weight as :hover plus a left edge, so arrowing
+   through the list reads the same as pointing at it. */
+.suggestion-item.sug-active { background: var(--bg-glass-hover); box-shadow: inset 2px 0 0 var(--accent); }
 .suggestion-item .sug-icon { color: var(--text-muted); width: 14px; height: 14px; flex-shrink: 0; }
 .suggestion-item .sug-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.suggestion-item .sug-sub { color: var(--text-muted); font-size: 12px; flex-shrink: 0; }
+.suggestion-item .sug-sub { color: var(--text-muted); font-size: 12px; flex-shrink: 0; max-width: 40%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* Top Bar Actions */
 .top-bar-actions { display: flex; align-items: center; gap: 4px; }
@@ -315,6 +342,94 @@ a { text-decoration: none; color: inherit; }
 }
 
 .queue-badge.visible { opacity: 1; transform: scale(1); }
+
+/* ---------------- Voice assistant ("Hey My Ruby") ----------------
+   The mic button is deliberately NOT hidden at any breakpoint: it is the only
+   entry point to voice, and on a phone it is the most useful one. When the
+   browser has no SpeechRecognition, VoiceAssistant.init() hides it in JS.
+
+   Two live states, and the difference is the point. ".armed" is always-on
+   listening waiting for the wake phrase — it stays like that for hours, so it
+   gets a slow breathing dot rather than a filled button. ".active" is the
+   command window, which lasts seconds and can afford to shout. */
+.voice-btn.armed { color: var(--accent-light); }
+.voice-btn.armed::after {
+  content: ''; position: absolute; top: 3px; right: 3px;
+  width: 6px; height: 6px; border-radius: var(--radius-full);
+  background: var(--accent);
+  animation: voiceBreathe 2.6s ease-in-out infinite;
+}
+
+@keyframes voiceBreathe {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.2; }
+}
+
+.voice-btn.active { color: #fff; background: var(--accent); }
+.voice-btn.active::after {
+  content: ''; position: absolute; inset: -3px;
+  /* Wins over .armed::after: both can be set for a frame while the classes are
+     being swapped, and a 6px dot inside a pulsing ring looks like a glitch. */
+  top: auto; right: auto; width: auto; height: auto;
+  border-radius: var(--radius-sm); border: 1px solid var(--accent-light);
+  background: none;
+  animation: voicePulse 1.4s ease-in-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% { opacity: 0.8; transform: scale(1); }
+  50% { opacity: 0; transform: scale(1.25); }
+}
+
+.voice-hud {
+  position: fixed; bottom: calc(var(--np-height) + 14px);
+  left: 50%; transform: translateX(-50%);
+  z-index: 310; max-width: min(420px, calc(100vw - 24px));
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 12px 10px 14px;
+  background: var(--bg-modal); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  animation: fadeIn var(--transition) both;
+}
+
+.voice-hud-orb { display: flex; align-items: center; gap: 3px; height: 20px; flex: none; }
+.voice-hud-orb span {
+  width: 3px; height: 8px; border-radius: var(--radius-full);
+  background: var(--accent);
+}
+.voice-hud[data-state="listening"] .voice-hud-orb span { animation: voiceBars 0.9s ease-in-out infinite; }
+.voice-hud-orb span:nth-child(2) { animation-delay: 0.15s; }
+.voice-hud-orb span:nth-child(3) { animation-delay: 0.3s; }
+.voice-hud[data-state="working"] .voice-hud-orb span { background: var(--accent-light); animation: voiceBars 0.4s ease-in-out infinite; }
+.voice-hud[data-state="error"] .voice-hud-orb span { background: var(--accent-red); height: 16px; }
+.voice-hud[data-state="done"] .voice-hud-orb span { height: 16px; }
+
+@keyframes voiceBars {
+  0%, 100% { height: 7px; }
+  50% { height: 18px; }
+}
+
+.voice-hud-text { min-width: 0; }
+.voice-hud-state {
+  font-size: 12px; font-weight: 700; color: var(--text-primary);
+}
+.voice-hud-heard {
+  font-size: 12px; color: var(--text-muted);
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.voice-hud-close {
+  flex: none; width: 24px; height: 24px; font-size: 12px;
+  color: var(--text-muted); background: transparent; border: 0;
+  border-radius: var(--radius-sm); cursor: pointer;
+  transition: var(--transition-fast);
+}
+.voice-hud-close:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
+
+@media (prefers-reduced-motion: reduce) {
+  .voice-btn.armed::after,
+  .voice-btn.active::after,
+  .voice-hud[data-state] .voice-hud-orb span { animation: none; }
+}
 
 /* ================================================================
    Page Content
@@ -372,6 +487,24 @@ a { text-decoration: none; color: inherit; }
 /* Quick Tags */
 .quick-tags { display: flex; flex-wrap: wrap; gap: 8px; }
 
+/* Browse tabs (Mood / Genre / Activity / Language). The inactive panels stay in
+   the DOM and are hidden with display:none, so switching costs no re-render. */
+.browse-tabs {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  background: var(--bg-glass); border: 1px solid var(--border);
+  border-radius: var(--radius-full); padding: 4px;
+}
+.browse-tab {
+  padding: 6px 14px; font-size: 13px; font-weight: 600;
+  color: var(--text-muted); background: transparent; border: 0;
+  border-radius: var(--radius-full); cursor: pointer;
+  transition: var(--transition-fast); white-space: nowrap;
+}
+.browse-tab:hover { color: var(--text-primary); background: var(--bg-glass-hover); }
+.browse-tab.active { color: #fff; background: var(--accent); }
+.browse-tab:focus-visible { outline: 2px solid var(--accent-light); outline-offset: 2px; }
+.browse-panel { animation: fadeIn var(--transition) both; }
+
 .tag {
   padding: 10px 18px; font-size: 14px; font-weight: 500;
   color: var(--text-secondary); background: var(--bg-glass);
@@ -391,7 +524,7 @@ a { text-decoration: none; color: inherit; }
 .genre-card {
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 24px 12px; border-radius: var(--radius-lg);
-  background: linear-gradient(135deg, var(--gc1), var(--gc2));
+  background: linear-gradient(135deg, var(--gc1, #6366f1), var(--gc2, #ec4899));
   cursor: pointer; transition: var(--transition);
   text-align: center; user-select: none;
   min-height: 110px;
@@ -518,25 +651,37 @@ a { text-decoration: none; color: inherit; }
   -webkit-box-orient: vertical; overflow: hidden;
 }
 
-.card-meta { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+/* Two rows: channel + play count, then the action buttons. Six 30px buttons on
+   one line with the channel squeezed the channel to nothing on a grid card, so
+   the actions get their own row and spread across it. */
+.card-meta { display: flex; align-items: center; justify-content: space-between; gap: 4px 6px; flex-wrap: wrap; }
 
 .card-channel {
   font-size: 12px; color: var(--text-secondary);
   overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  flex: 1;
+  flex: 1 1 auto; min-width: 0;
 }
 
-.card-actions { display: flex; gap: 2px; }
+/* Empty for anything never played, and an empty inline element collapses to
+   zero width, so it costs no space until there is a count to show. */
+.card-playcount {
+  font-size: 11px; color: var(--text-muted); font-variant-numeric: tabular-nums;
+  flex: 0 0 auto; white-space: nowrap;
+}
+
+.card-actions { display: flex; gap: 2px; flex: 1 1 100%; justify-content: space-between; }
 
 .card-action-btn {
   width: 30px; height: 30px;
   display: flex; align-items: center; justify-content: center;
   border-radius: 50%; color: var(--text-muted);
   transition: var(--transition-fast);
+  background: none; border: none; cursor: pointer; padding: 0;
 }
 
 .card-action-btn:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
 .card-action-btn.liked { color: var(--accent-red); }
+.card-action-btn.disliked { color: var(--accent); }
 .card-action-btn svg { width: 16px; height: 16px; }
 
 /* Skeleton */
@@ -757,6 +902,38 @@ a { text-decoration: none; color: inherit; }
 .qi-remove:hover { background: rgba(248,113,113,0.15); color: #f87171; }
 .qi-remove svg { width: 12px; height: 12px; }
 
+/* Drag-and-drop reorder ------------------------------------------------- */
+.qi-grip {
+  display: flex; align-items: center; justify-content: center;
+  width: 16px; flex-shrink: 0; color: var(--text-muted);
+  opacity: 0; cursor: grab; transition: var(--transition-fast);
+}
+.queue-item:hover .qi-grip { opacity: .75; }
+.qi-grip svg { width: 14px; height: 14px; }
+.queue-item.dragging { opacity: .45; cursor: grabbing; }
+.queue-item.dragging .qi-grip { cursor: grabbing; }
+/* The drop indicator is a top border, so it must not shift the row: the
+   transparent border keeps every row the same height whether marked or not. */
+.queue-item { border-top: 2px solid transparent; }
+.queue-item.drag-over { border-top-color: var(--accent); }
+
+.qi-btn {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: var(--text-muted); opacity: 0;
+  transition: var(--transition-fast); flex-shrink: 0; background: none; border: none; cursor: pointer;
+}
+.queue-item:hover .qi-btn { opacity: 1; }
+.qi-btn:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
+.qi-btn svg { width: 12px; height: 12px; }
+
+/* Touch devices fire no HTML5 drag events at all, so the grip is meaningless
+   there while the up/down buttons are the only way to reorder — show them
+   permanently instead of on a hover that will never happen. */
+@media (hover: none), (max-width: 640px) {
+  .qi-grip { display: none; }
+  .qi-btn, .qi-remove { opacity: 1; }
+}
+
 /* ================================================================
    Now Playing Bar
    ================================================================ */
@@ -823,6 +1000,18 @@ a { text-decoration: none; color: inherit; }
 .np-like-btn.liked .heart-outline { display: none; }
 .np-like-btn.liked .heart-filled { display: block !important; color: var(--accent-red); }
 .np-like-btn svg { width: 18px; height: 18px; }
+
+.np-dislike-btn {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%; color: var(--text-muted);
+  transition: var(--transition-fast); flex-shrink: 0;
+  background: none; border: none; cursor: pointer; padding: 0;
+}
+.np-dislike-btn:hover { color: var(--text-primary); transform: scale(1.15); }
+.np-dislike-btn.disliked { color: var(--accent); }
+.np-dislike-btn.disliked svg { fill: currentColor; }
+.np-dislike-btn svg { width: 17px; height: 17px; }
 
 /* Controls */
 .np-controls { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; max-width: 560px; }
@@ -983,6 +1172,34 @@ a { text-decoration: none; color: inherit; }
 }
 
 .setting-select option { background: var(--bg-secondary); }
+
+/* Crossfade duration slider. Every colour here resolves to a variable that is
+   defined for all three themes — an undefined custom property would silently
+   throw the whole declaration away, leaving an unstyled native range input. */
+.crossfade-control { display: flex; align-items: center; gap: 10px; }
+
+.crossfade-control input[type="range"] {
+  -webkit-appearance: none; appearance: none;
+  width: 108px; height: 4px; margin: 0;
+  background: var(--border); border-radius: 2px;
+  cursor: pointer;
+}
+.crossfade-control input[type="range"]::-webkit-slider-thumb {
+  -webkit-appearance: none; appearance: none;
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+}
+.crossfade-control input[type="range"]::-moz-range-thumb {
+  width: 14px; height: 14px; border-radius: 50%;
+  background: var(--accent); border: none; cursor: pointer;
+}
+
+/* Fixed width so the row does not jiggle as the label swaps Off <-> 1s. */
+.crossfade-val {
+  font-size: 13px; font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 26px; text-align: right;
+}
 
 .modal-input {
   width: 100%; padding: 12px 16px;
@@ -1590,6 +1807,9 @@ a { text-decoration: none; color: inherit; }
   .np-track-info { min-width: 100px; width: auto; }
   .np-thumbnail-wrap { width: 42px; height: 42px; }
   .np-like-btn { display: none; }
+  /* Reachable from the More sheet (#mobileDislikeBtn) — hiding it here without
+     that entry point would make dislike impossible on a phone. */
+  .np-dislike-btn { display: none; }
   .np-right-controls { display: none; }
   .home-greeting h1 { font-size: 24px; }
 }
@@ -3178,4 +3398,310 @@ a { text-decoration: none; color: inherit; }
 
 @media (max-width: 600px) {
   .toast-action-msg { max-width: 150px; }
+}
+
+/* ================================================================
+   LAYOUT ALIGNMENT PASS
+   ----------------------------------------------------------------
+   Everything below fixes concrete misalignment rather than restyling.
+   It lives at the end of the file on purpose: these rules are meant to
+   be the final word on sizing, so the many one-off values scattered
+   through the file above stop fighting each other.
+   ================================================================ */
+
+:root {
+  /* One grid scale for the whole app. Card grids previously used five
+     different minmax values (150/160/170/180/260px) and two different
+     gaps, so the same card was a different size in every view. */
+  --card-min: 200px;   /* song cards */
+  --tile-min: 165px;   /* small square tiles: genre, mood, stats, playlists */
+  --grid-gap: 14px;
+}
+
+.results-grid { grid-template-columns: repeat(auto-fill, minmax(var(--card-min), 1fr)); gap: var(--grid-gap); }
+
+.genre-grid,
+.stats-grid,
+.playlists-grid,
+.mood-quick-grid,
+.mood-options-grid {
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+  gap: var(--grid-gap);
+}
+
+/* index.html asked for `.playlist-grid`; the stylesheet only ever defined
+   `.playlists-grid`. The Library playlist grid therefore had no grid styles at
+   all and the cards stacked full-width down the page. The markup is fixed, and
+   this alias means either spelling now lays out correctly. */
+.playlist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--tile-min), 1fr));
+  gap: var(--grid-gap);
+}
+
+/* ---- Cards line up across a row -------------------------------------------
+   .card-title is clamped to two lines, so a one-line title made the whole card
+   shorter and the channel + action-button row sat at a different height on
+   every card in the row. Making the card a column and pushing .card-meta to
+   the bottom aligns those rows no matter how the titles wrap. */
+.result-card { display: flex; flex-direction: column; }
+.result-card .card-info { flex: 1; display: flex; flex-direction: column; }
+.card-title { min-height: calc(1.4em * 2); }
+.card-meta { margin-top: auto; }
+
+/* flex:1 alone will not let an overflowing text node shrink — it needs
+   min-width:0, or a long channel name pushes the action buttons out of the card. */
+.card-channel { min-width: 0; }
+.card-actions { flex-shrink: 0; }
+
+/* ---- Library header row (had no styles at all) ---- */
+.library-header-row {
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 12px; margin-bottom: 20px;
+}
+
+/* ---- Liked Songs card + its play button (button was unstyled) ---- */
+.liked-card { gap: 14px; }
+.lib-play-btn {
+  width: 44px; height: 44px; flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: 50%;
+  background: var(--accent); color: #fff;
+  box-shadow: var(--shadow-glow);
+  transition: var(--transition-fast);
+}
+.lib-play-btn:hover { transform: scale(1.06); }
+.lib-play-btn svg { width: 18px; height: 18px; margin-left: 2px; }
+
+/* ---- Wide modals asked for .modal-large and got the default 420px ---- */
+.modal-large { max-width: 640px; }
+.modal-large .modal-body { max-height: min(70vh, 640px); overflow-y: auto; }
+
+/* ---- Playlist picker list (unstyled) ---- */
+.playlist-select-list { display: flex; flex-direction: column; gap: 6px; max-height: 320px; overflow-y: auto; }
+.playlist-select-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; border-radius: var(--radius-md);
+  border: 1px solid var(--border); background: var(--bg-glass);
+  cursor: pointer; transition: var(--transition-fast);
+}
+.playlist-select-item:hover { background: var(--bg-glass-hover); border-color: var(--border-hover); }
+.playlist-select-item .psi-icon { font-size: 18px; flex-shrink: 0; }
+.playlist-select-item .psi-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; }
+
+/* ---- Focus-modal sections (unstyled) ---- */
+.focus-music-section,
+.ambient-mixer-section { margin-top: 20px; padding-top: 18px; border-top: 1px solid var(--border); }
+
+/* ---- Decorative hero glow the markup referenced but CSS never defined ---- */
+.hero-glow-circle {
+  position: absolute; right: -60px; top: 50%; transform: translateY(-50%);
+  width: 260px; height: 260px; border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow), transparent 70%);
+  pointer-events: none; filter: blur(20px);
+}
+
+/* ---- Search failure now offers a retry instead of being a dead end ---- */
+.search-error-box {
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  text-align: center; padding: 28px 0;
+}
+
+/* ---- Batch chip label ---- */
+.batch-chip-text { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* ---- Section headers: same rhythm everywhere ---- */
+.section-header { margin-bottom: var(--grid-gap); }
+.playlist-header-actions { display: flex; align-items: center; gap: 8px; }
+
+/* Buttons that sit side by side in a header were different heights because each
+   had its own padding. One min-height keeps the row flush. */
+.playlist-header-actions .play-all-btn,
+.playlist-header-actions .pill-action-btn,
+.playlist-header-actions .text-btn,
+.library-header-row .pill-action-btn { min-height: 38px; display: inline-flex; align-items: center; gap: 6px; }
+
+/* ---- Responsive: grids step down together --------------------------------
+   The file has rules at 540/600/640/768/900px, so different views reflowed at
+   different widths and the layout looked half-broken in between. These two
+   breakpoints move every grid at the same time. */
+@media (max-width: 900px) {
+  :root { --card-min: 175px; --tile-min: 150px; }
+}
+
+@media (max-width: 640px) {
+  :root { --card-min: 150px; --tile-min: 135px; --grid-gap: 12px; }
+  .library-header-row { align-items: stretch; }
+  .library-header-row > div { width: 100%; }
+  .library-header-row .pill-action-btn { flex: 1; justify-content: center; }
+  /* Touch targets below ~40px are hard to hit accurately. */
+  .card-action-btn { width: 36px; height: 36px; }
+}
+
+/* ================================================================
+   MOBILE PLAYER SHEET
+   On phones the entire .np-right-controls block plus #shuffleBtn,
+   #repeatBtn and .np-like-btn are display:none, so nine features had
+   no entry point at all. #npMoreBtn is the phone-only door to them.
+   ================================================================ */
+.np-more-btn { display: none; flex: 0 0 auto; }
+
+.mobile-sheet-overlay {
+  position: fixed; inset: 0; z-index: 400;
+  background: rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(2px);
+  align-items: flex-end; justify-content: center;
+}
+.mobile-sheet-overlay.active { display: flex !important; }
+
+.mobile-sheet {
+  width: 100%; max-width: 520px;
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 18px 18px 0 0;
+  padding: 10px 16px calc(18px + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -12px 40px rgba(0,0,0,0.5);
+  animation: sheetUp var(--transition);
+  max-height: 80vh; overflow-y: auto;
+}
+@keyframes sheetUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+.mobile-sheet-handle {
+  width: 40px; height: 4px; border-radius: 2px;
+  background: var(--border-hover);
+  margin: 2px auto 12px;
+}
+
+.mobile-sheet-title {
+  font-size: 13px; font-weight: 600; color: var(--text-secondary);
+  margin-bottom: 14px; text-align: center;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+
+.mobile-sheet-volume { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+.mobile-sheet-volume .np-btn { flex: 0 0 auto; width: 34px; height: 34px; }
+#mobileVolumeRange {
+  flex: 1; min-width: 0; height: 28px;
+  accent-color: var(--accent);
+  background: transparent; cursor: pointer;
+}
+
+/* 3 columns keeps every label on one line at 320px. */
+.mobile-sheet-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px; margin-bottom: 14px;
+}
+
+.sheet-action {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 6px; padding: 12px 4px; min-height: 68px;
+  background: var(--bg-glass);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-size: 11px; font-weight: 500; cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+.sheet-action:hover { background: var(--bg-glass-active); }
+.sheet-action .sa-icon { font-size: 20px; line-height: 1; }
+.sheet-action.active { border-color: var(--accent); color: var(--accent); }
+.sheet-action[disabled] { opacity: 0.4; cursor: not-allowed; }
+
+.mobile-sheet-close { width: 100%; justify-content: center; min-height: 42px; }
+
+@media (max-width: 640px) {
+  .np-more-btn { display: inline-flex; }
+}
+
+/* ================================================================
+   KEYBOARD SHORTCUT HELP OVERLAY
+   ================================================================ */
+.shortcut-help-overlay {
+  position: fixed; inset: 0; z-index: 520; /* above .modal-overlay (500): it's reachable from inside Settings */
+  background: rgba(0, 0, 0, 0.62);
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.shortcut-help-overlay.active { display: flex !important; }
+
+.shortcut-help-box {
+  width: 100%; max-width: 560px; max-height: 82vh; overflow-y: auto;
+  background: var(--bg-modal);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 22px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+}
+.shortcut-help-box h3 { margin: 0 0 4px; font-size: 18px; }
+.shortcut-help-box .sh-sub { margin: 0 0 18px; font-size: 12px; color: var(--text-secondary); }
+
+.shortcut-help-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px 18px; }
+@media (max-width: 560px) { .shortcut-help-list { grid-template-columns: 1fr; } }
+
+.shortcut-row {
+  display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 7px 0; border-bottom: 1px solid var(--border);
+  font-size: 13px; min-width: 0;
+}
+.shortcut-row span { color: var(--text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.shortcut-row kbd {
+  flex: 0 0 auto;
+  font-family: inherit; font-size: 11px; font-weight: 600;
+  padding: 3px 8px; border-radius: 5px;
+  background: var(--bg-glass-hover);
+  border: 1px solid var(--border-hover);
+  border-bottom-width: 2px;
+  color: var(--text-primary);
+}
+.shortcut-help-close { width: 100%; justify-content: center; min-height: 42px; margin-top: 18px; }
+
+/* ================================================================
+   LIBRARY FILTER
+   ================================================================ */
+.library-filter-wrap {
+  position: relative; display: flex; align-items: center;
+  margin: 0 0 8px; max-width: 520px;
+}
+.library-filter-wrap .lf-icon {
+  position: absolute; left: 13px; width: 16px; height: 16px;
+  color: var(--text-secondary); pointer-events: none;
+}
+.library-filter-input {
+  width: 100%; min-width: 0;
+  padding: 10px 38px 10px 38px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-primary);
+  font-family: inherit; font-size: 13px;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+.library-filter-input::placeholder { color: var(--text-secondary); }
+.library-filter-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  background: var(--bg-glass-hover);
+}
+.lf-clear {
+  position: absolute; right: 8px;
+  display: flex; align-items: center; justify-content: center;
+  width: 26px; height: 26px; border-radius: 50%;
+  background: transparent; border: none; cursor: pointer;
+  color: var(--text-secondary);
+}
+.lf-clear:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
+.lf-clear svg { width: 14px; height: 14px; }
+
+.library-filter-status {
+  margin: 0 0 14px; font-size: 12px;
+  color: var(--text-secondary);
+  /* Queries can be long; keep the layout from jumping. */
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+
+@media (max-width: 640px) {
+  .library-filter-wrap { max-width: none; }
+  /* iOS zooms the page in on focus for any font-size below 16px. */
+  .library-filter-input { font-size: 16px; }
 }

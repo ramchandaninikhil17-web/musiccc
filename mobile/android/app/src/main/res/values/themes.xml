@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Matches manifest.json's background_color so there is no white flash
+         between the splash and the WebView painting. -->
+    <style name="Theme.MusicFlow" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/mf_bg</item>
+        <item name="android:statusBarColor">@color/mf_bg</item>
+        <item name="android:navigationBarColor">@color/mf_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+</resources>

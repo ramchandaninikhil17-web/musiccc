@@ -50,6 +50,10 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
           <span>🎭 Mood Flow</span>
         </a></li>
+        <li><a href="#profile" class="nav-link" data-page="profile" id="navProfile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Your Stats</span>
+        </a></li>
         <li><a href="#focus" class="nav-link" id="navFocus">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           <span>🧠 Focus Flow</span>
@@ -102,17 +106,25 @@
         <div class="search-bar-wrap" id="searchBarWrap">
           <div class="search-bar">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, albums..." autocomplete="off" />
+            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, albums..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
             <button class="search-clear" id="searchClear" title="Clear">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
             <div class="search-loading" id="searchLoading"><div class="spinner"></div></div>
           </div>
           <!-- Search Suggestions Dropdown -->
-          <div class="search-suggestions" id="searchSuggestions"></div>
+          <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
         </div>
 
         <div class="top-bar-actions">
+          <!-- Voice assistant. VoiceAssistant.init() hides this outright when the
+               browser has no SpeechRecognition, so it can never be a button that
+               does nothing. It is a switch for always-on listening: once the
+               first tap has granted microphone access, the mic re-arms itself on
+               every load and waits for the wake phrase. -->
+          <button class="top-btn voice-btn" id="voiceBtn" aria-label="Always-on voice control" title="Always listening — say &quot;Hey My Ruby, play Syaara&quot;. Tap to switch off.">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </button>
           <!-- Always-On-Top PiP Mini Player Button -->
           <button class="top-btn" id="pipBtnTop" title="Always-On-Top Mini Player for Work (Key: P)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
@@ -190,6 +202,16 @@
             <div class="horizontal-scroll" id="recentlyPlayedGrid"></div>
           </div>
 
+          <!-- Quick-access search history. Hidden until there is history, so a
+               fresh install never shows an empty row. -->
+          <div class="home-section" id="homeHistorySection" style="display:none;">
+            <div class="section-header">
+              <h2>🕐 Jump Back In</h2>
+              <button class="text-btn" id="clearHomeHistory">Clear</button>
+            </div>
+            <div class="search-history-tags" id="homeHistoryTags"></div>
+          </div>
+
           <!-- Quick Picks / Made For You -->
           <div class="home-section">
             <div class="section-header">
@@ -207,54 +229,73 @@
             </div>
           </div>
 
-          <!-- Browse by Mood -->
-          <div class="home-section">
+          <!-- Browse. Four ways in, one section: Mood / Genre / Activity /
+               Language used to be four stacked grids of eight cards, which meant
+               32 tiles of scrolling before the page ended. The tabs keep every
+               card reachable in one tap without the wall of tiles. All four grids
+               stay in the DOM (only the active panel is shown) so nothing has to
+               be re-rendered when switching. -->
+          <div class="home-section" id="browseSection">
             <div class="section-header">
-              <h2>🌐 Browse by Mood</h2>
+              <h2>🧭 Browse</h2>
+              <div class="browse-tabs" id="browseTabs" role="tablist" aria-label="Browse by">
+                <button class="browse-tab active" type="button" role="tab" aria-selected="true" data-browse="mood">Mood</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="genre">Genre</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="activity">Activity</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="language">Language</button>
+              </div>
             </div>
-            <div class="genre-grid" id="moodGrid">
-              <div class="genre-card" data-query="happy upbeat songs" style="--gc1:#f97316;--gc2:#eab308;"><span>😊</span><p>Happy</p></div>
-              <div class="genre-card" data-query="sad emotional songs" style="--gc1:#6366f1;--gc2:#8b5cf6;"><span>😢</span><p>Sad</p></div>
-              <div class="genre-card" data-query="romantic love songs" style="--gc1:#ec4899;--gc2:#f43f5e;"><span>❤️</span><p>Romantic</p></div>
-              <div class="genre-card" data-query="chill relaxing music" style="--gc1:#06b6d4;--gc2:#3b82f6;"><span>😌</span><p>Chill</p></div>
-              <div class="genre-card" data-query="energetic workout music" style="--gc1:#ef4444;--gc2:#f97316;"><span>💪</span><p>Energetic</p></div>
-              <div class="genre-card" data-query="focus study concentration music" style="--gc1:#10b981;--gc2:#14b8a6;"><span>🧠</span><p>Focus</p></div>
-              <div class="genre-card" data-query="party dance music" style="--gc1:#d946ef;--gc2:#a855f7;"><span>🎉</span><p>Party</p></div>
-              <div class="genre-card" data-query="sleep ambient calm music" style="--gc1:#1e3a5f;--gc2:#312e81;"><span>🌙</span><p>Sleep</p></div>
-            </div>
-          </div>
 
-          <!-- Browse by Genre -->
-          <div class="home-section">
-            <div class="section-header">
-              <h2>🎶 Browse by Genre</h2>
+            <div class="browse-panel" data-browse-panel="mood" role="tabpanel">
+              <div class="genre-grid" id="moodGrid">
+                <div class="genre-card" data-query="happy upbeat songs" style="--gc1:#f97316;--gc2:#eab308;"><span>😊</span><p>Happy</p></div>
+                <div class="genre-card" data-query="sad emotional songs" style="--gc1:#6366f1;--gc2:#8b5cf6;"><span>😢</span><p>Sad</p></div>
+                <div class="genre-card" data-query="romantic love songs" style="--gc1:#ec4899;--gc2:#f43f5e;"><span>❤️</span><p>Romantic</p></div>
+                <div class="genre-card" data-query="chill relaxing music" style="--gc1:#06b6d4;--gc2:#3b82f6;"><span>😌</span><p>Chill</p></div>
+                <div class="genre-card" data-query="energetic workout music" style="--gc1:#ef4444;--gc2:#f97316;"><span>💪</span><p>Energetic</p></div>
+                <div class="genre-card" data-query="focus study concentration music" style="--gc1:#10b981;--gc2:#14b8a6;"><span>🧠</span><p>Focus</p></div>
+                <div class="genre-card" data-query="party dance music" style="--gc1:#d946ef;--gc2:#a855f7;"><span>🎉</span><p>Party</p></div>
+                <div class="genre-card" data-query="sleep ambient calm music" style="--gc1:#1e3a5f;--gc2:#312e81;"><span>🌙</span><p>Sleep</p></div>
+              </div>
             </div>
-            <div class="genre-grid" id="genreGrid">
-              <div class="genre-card" data-query="pop music hits 2024" style="--gc1:#ec4899;--gc2:#8b5cf6;"><span>🎤</span><p>Pop</p></div>
-              <div class="genre-card" data-query="hip hop rap music 2024" style="--gc1:#f59e0b;--gc2:#ef4444;"><span>🎧</span><p>Hip Hop</p></div>
-              <div class="genre-card" data-query="rock music greatest hits" style="--gc1:#dc2626;--gc2:#991b1b;"><span>🎸</span><p>Rock</p></div>
-              <div class="genre-card" data-query="electronic dance music" style="--gc1:#7c3aed;--gc2:#2563eb;"><span>🎹</span><p>Electronic</p></div>
-              <div class="genre-card" data-query="R&B soul music" style="--gc1:#be185d;--gc2:#7c2d12;"><span>🎷</span><p>R&B / Soul</p></div>
-              <div class="genre-card" data-query="jazz smooth music" style="--gc1:#92400e;--gc2:#78350f;"><span>🎺</span><p>Jazz</p></div>
-              <div class="genre-card" data-query="classical music masterpieces" style="--gc1:#1e40af;--gc2:#1e3a5f;"><span>🎻</span><p>Classical</p></div>
-              <div class="genre-card" data-query="country music hits" style="--gc1:#b45309;--gc2:#a16207;"><span>🤠</span><p>Country</p></div>
-            </div>
-          </div>
 
-          <!-- Browse by Language -->
-          <div class="home-section">
-            <div class="section-header">
-              <h2>🌍 Browse by Language</h2>
+            <div class="browse-panel" data-browse-panel="genre" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="genreGrid">
+                <div class="genre-card" data-query="pop music hits 2024" style="--gc1:#ec4899;--gc2:#8b5cf6;"><span>🎤</span><p>Pop</p></div>
+                <div class="genre-card" data-query="hip hop rap music 2024" style="--gc1:#f59e0b;--gc2:#ef4444;"><span>🎧</span><p>Hip Hop</p></div>
+                <div class="genre-card" data-query="rock music greatest hits" style="--gc1:#dc2626;--gc2:#991b1b;"><span>🎸</span><p>Rock</p></div>
+                <div class="genre-card" data-query="electronic dance music" style="--gc1:#7c3aed;--gc2:#2563eb;"><span>🎹</span><p>Electronic</p></div>
+                <div class="genre-card" data-query="R&B soul music" style="--gc1:#be185d;--gc2:#7c2d12;"><span>🎷</span><p>R&B / Soul</p></div>
+                <div class="genre-card" data-query="jazz smooth music" style="--gc1:#92400e;--gc2:#78350f;"><span>🎺</span><p>Jazz</p></div>
+                <div class="genre-card" data-query="classical music masterpieces" style="--gc1:#1e40af;--gc2:#1e3a5f;"><span>🎻</span><p>Classical</p></div>
+                <div class="genre-card" data-query="country music hits" style="--gc1:#b45309;--gc2:#a16207;"><span>🤠</span><p>Country</p></div>
+              </div>
             </div>
-            <div class="genre-grid" id="langGrid">
-              <div class="genre-card" data-query="hindi songs latest 2024" style="--gc1:#f97316;--gc2:#dc2626;"><span>🇮🇳</span><p>Hindi</p></div>
-              <div class="genre-card" data-query="english pop songs 2024" style="--gc1:#3b82f6;--gc2:#6366f1;"><span>🇺🇸</span><p>English</p></div>
-              <div class="genre-card" data-query="punjabi songs latest" style="--gc1:#eab308;--gc2:#f97316;"><span>🎵</span><p>Punjabi</p></div>
-              <div class="genre-card" data-query="tamil songs hits 2024" style="--gc1:#10b981;--gc2:#059669;"><span>🎵</span><p>Tamil</p></div>
-              <div class="genre-card" data-query="korean k-pop music" style="--gc1:#ec4899;--gc2:#d946ef;"><span>🇰🇷</span><p>Korean</p></div>
-              <div class="genre-card" data-query="spanish latin music reggaeton" style="--gc1:#ef4444;--gc2:#b91c1c;"><span>🇪🇸</span><p>Spanish</p></div>
-              <div class="genre-card" data-query="telugu songs latest hits" style="--gc1:#8b5cf6;--gc2:#6d28d9;"><span>🎵</span><p>Telugu</p></div>
-              <div class="genre-card" data-query="japanese anime music" style="--gc1:#f43f5e;--gc2:#e11d48;"><span>🇯🇵</span><p>Japanese</p></div>
+
+            <div class="browse-panel" data-browse-panel="activity" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="activityGrid">
+                <div class="genre-card" data-query="gym workout motivation songs" style="--gc1:#f43f5e;--gc2:#b91c1c;"><span>🏋️</span><p>Workout</p></div>
+                <div class="genre-card" data-query="study music no lyrics deep focus" style="--gc1:#0ea5e9;--gc2:#4f46e5;"><span>📚</span><p>Study</p></div>
+                <div class="genre-card" data-query="road trip driving songs playlist" style="--gc1:#f59e0b;--gc2:#ea580c;"><span>🚗</span><p>Driving</p></div>
+                <div class="genre-card" data-query="coding programming focus beats" style="--gc1:#22c55e;--gc2:#0f766e;"><span>💻</span><p>Coding</p></div>
+                <div class="genre-card" data-query="feel good cooking kitchen songs" style="--gc1:#fb923c;--gc2:#e11d48;"><span>🍳</span><p>Cooking</p></div>
+                <div class="genre-card" data-query="gaming background music mix" style="--gc1:#8b5cf6;--gc2:#4338ca;"><span>🎮</span><p>Gaming</p></div>
+                <div class="genre-card" data-query="yoga meditation calm instrumental" style="--gc1:#14b8a6;--gc2:#0d9488;"><span>🧘</span><p>Yoga</p></div>
+                <div class="genre-card" data-query="morning commute upbeat songs" style="--gc1:#eab308;--gc2:#65a30d;"><span>🚉</span><p>Commute</p></div>
+              </div>
+            </div>
+
+            <div class="browse-panel" data-browse-panel="language" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="langGrid">
+                <div class="genre-card" data-query="hindi songs latest 2024" style="--gc1:#f97316;--gc2:#dc2626;"><span>🇮🇳</span><p>Hindi</p></div>
+                <div class="genre-card" data-query="english pop songs 2024" style="--gc1:#3b82f6;--gc2:#6366f1;"><span>🇺🇸</span><p>English</p></div>
+                <div class="genre-card" data-query="punjabi songs latest" style="--gc1:#eab308;--gc2:#f97316;"><span>🎵</span><p>Punjabi</p></div>
+                <div class="genre-card" data-query="tamil songs hits 2024" style="--gc1:#10b981;--gc2:#059669;"><span>🎵</span><p>Tamil</p></div>
+                <div class="genre-card" data-query="korean k-pop music" style="--gc1:#ec4899;--gc2:#d946ef;"><span>🇰🇷</span><p>Korean</p></div>
+                <div class="genre-card" data-query="spanish latin music reggaeton" style="--gc1:#ef4444;--gc2:#b91c1c;"><span>🇪🇸</span><p>Spanish</p></div>
+                <div class="genre-card" data-query="telugu songs latest hits" style="--gc1:#8b5cf6;--gc2:#6d28d9;"><span>🎵</span><p>Telugu</p></div>
+                <div class="genre-card" data-query="japanese anime music" style="--gc1:#f43f5e;--gc2:#e11d48;"><span>🇯🇵</span><p>Japanese</p></div>
+              </div>
             </div>
           </div>
         </section>
@@ -293,6 +334,17 @@
             </div>
           </div>
 
+          <!-- Library filter. With a few dozen playlists and a long liked list
+               there was no way to find anything without scrolling. -->
+          <div class="library-filter-wrap">
+            <svg class="lf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="libraryFilterInput" class="library-filter-input" placeholder="Filter your library — playlists, liked songs, local files" aria-label="Filter library" />
+            <button class="lf-clear" id="libraryFilterClear" title="Clear filter" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <p class="library-filter-status" id="libraryFilterStatus" style="display:none;"></p>
+
           <!-- Local Music Drag & Drop Area -->
           <div class="local-dropzone-card" id="localDropzone" title="Drag & drop audio files here (.mp3, .flac, .wav, .m4a)">
             <div class="dropzone-icon">🎵</div>
@@ -321,7 +373,34 @@
               <h2>📁 Playlists</h2>
               <button class="text-btn" id="createPlaylistBtn">+ New Playlist</button>
             </div>
-            <div class="playlist-grid" id="playlistGrid"></div>
+            <div class="playlists-grid" id="playlistGrid"></div>
+          </div>
+
+          <!-- Library filter results. Spans playlists, liked songs, local files
+               and the contents of every playlist. -->
+          <div class="home-section" id="libraryFilterSection" style="display:none;">
+            <div class="section-header">
+              <h2>🔎 Matching Songs</h2>
+              <span class="playlist-count" id="libraryFilterCount">0 songs</span>
+            </div>
+            <div class="results-grid" id="libraryFilterGrid"></div>
+          </div>
+
+          <!-- Local Files. Imported tracks used to be pushed into the queue and
+               nowhere else, so after a reload they were in storage but had no
+               entry point in the UI at all. -->
+          <div class="home-section" id="localSongsSection" style="display:none;">
+            <div class="section-header">
+              <h2>💾 Local Files</h2>
+              <span class="playlist-count" id="localSongsCount">0 songs</span>
+              <div class="playlist-header-actions">
+                <button class="play-all-btn" id="playLocalBtn" title="Play all local files">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Play All
+                </button>
+              </div>
+            </div>
+            <div class="results-grid" id="localSongsGrid"></div>
           </div>
 
           <!-- Liked Songs List Section -->
@@ -346,6 +425,10 @@
                 <button class="pill-action-btn" id="downloadPlaylistBtn" title="Download every track as one zip file">
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   Download All
+                </button>
+                <button class="pill-action-btn" id="playlistBatchAddBtn" title="Paste a list of songs to add to this playlist">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Songs
                 </button>
                 <button class="text-btn danger" id="deletePlaylistBtn" title="Delete this playlist">Delete</button>
                 <button class="text-btn" id="hidePlaylistBtn">Close</button>
@@ -482,6 +565,9 @@
           <svg class="heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
           <svg class="heart-filled" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
         </button>
+        <button class="np-dislike-btn" id="npDislikeBtn" title="Not interested (J)" aria-label="Not interested">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+        </button>
       </div>
 
       <!-- Controls -->
@@ -548,6 +634,76 @@
         </div>
       </div>
 
+      <!-- Mobile overflow. On phones the whole .np-right-controls block plus
+           shuffle, repeat and the like button are display:none, which left
+           Lyrics, Sleep Timer, Share, Download, Mute, Volume, Shuffle, Repeat
+           and Like with no entry point at all. This button is the phone-only
+           way in. -->
+      <button class="np-btn np-more-btn" id="npMoreBtn" title="More controls" aria-label="More controls" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============ MOBILE PLAYER SHEET ============ -->
+  <div class="mobile-sheet-overlay" id="mobileSheetOverlay" style="display:none;">
+    <div class="mobile-sheet" id="mobileSheet" role="dialog" aria-label="Player controls">
+      <div class="mobile-sheet-handle"></div>
+      <div class="mobile-sheet-title" id="mobileSheetTitle">Player controls</div>
+
+      <div class="mobile-sheet-volume">
+        <button class="np-btn" id="mobileMuteBtn" title="Mute">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+        <input type="range" id="mobileVolumeRange" min="0" max="100" step="1" value="80" aria-label="Volume" />
+      </div>
+
+      <div class="mobile-sheet-grid">
+        <button class="sheet-action" id="mobileLikeBtn"><span class="sa-icon">❤️</span><span>Like</span></button>
+        <button class="sheet-action" id="mobileDislikeBtn"><span class="sa-icon">👎</span><span>Not for me</span></button>
+        <button class="sheet-action" id="mobileShuffleBtn"><span class="sa-icon">🔀</span><span>Shuffle</span></button>
+        <button class="sheet-action" id="mobileRepeatBtn"><span class="sa-icon">🔁</span><span>Repeat</span></button>
+        <button class="sheet-action" id="mobileLyricsBtn"><span class="sa-icon">🎤</span><span>Lyrics</span></button>
+        <button class="sheet-action" id="mobileSleepBtn"><span class="sa-icon">🌙</span><span>Sleep</span></button>
+        <button class="sheet-action" id="mobileEqBtn"><span class="sa-icon">🎚️</span><span>Equalizer</span></button>
+        <button class="sheet-action" id="mobileShareBtn"><span class="sa-icon">🔗</span><span>Share</span></button>
+        <button class="sheet-action" id="mobileDownloadBtn"><span class="sa-icon">⬇️</span><span>Download</span></button>
+        <button class="sheet-action" id="mobileQualityBtn"><span class="sa-icon">✨</span><span>Quality</span></button>
+      </div>
+
+      <button class="pill-action-btn mobile-sheet-close" id="mobileSheetCloseBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- ============ KEYBOARD SHORTCUT HELP ============ -->
+  <div class="shortcut-help-overlay" id="shortcutHelpOverlay" style="display:none;">
+    <div class="shortcut-help-box" role="dialog" aria-label="Keyboard shortcuts">
+      <h3>Keyboard shortcuts</h3>
+      <p class="sh-sub">Shortcuts are ignored while you're typing in a text field.</p>
+      <div class="shortcut-help-list">
+        <div class="shortcut-row"><span>Play / pause</span><kbd>Space</kbd></div>
+        <div class="shortcut-row"><span>Next track</span><kbd>N</kbd></div>
+        <div class="shortcut-row"><span>Previous track</span><kbd>B</kbd></div>
+        <div class="shortcut-row"><span>Seek back 5s</span><kbd>←</kbd></div>
+        <div class="shortcut-row"><span>Seek forward 5s</span><kbd>→</kbd></div>
+        <div class="shortcut-row"><span>Volume up</span><kbd>↑</kbd></div>
+        <div class="shortcut-row"><span>Volume down</span><kbd>↓</kbd></div>
+        <div class="shortcut-row"><span>Mute / unmute</span><kbd>M</kbd></div>
+        <div class="shortcut-row"><span>Like current track</span><kbd>H</kbd></div>
+        <div class="shortcut-row"><span>Dislike current track</span><kbd>J</kbd></div>
+        <div class="shortcut-row"><span>Toggle shuffle</span><kbd>S</kbd></div>
+        <div class="shortcut-row"><span>Cycle repeat mode</span><kbd>R</kbd></div>
+        <div class="shortcut-row"><span>Toggle queue</span><kbd>Q</kbd></div>
+        <div class="shortcut-row"><span>Toggle lyrics</span><kbd>L</kbd></div>
+        <div class="shortcut-row"><span>Download track</span><kbd>D</kbd></div>
+        <div class="shortcut-row"><span>Picture in picture</span><kbd>P</kbd></div>
+        <div class="shortcut-row"><span>Focus timer</span><kbd>F</kbd></div>
+        <div class="shortcut-row"><span>Focus search</span><kbd>/</kbd></div>
+        <div class="shortcut-row"><span>Close panel / dialog</span><kbd>Esc</kbd></div>
+        <div class="shortcut-row"><span>This help</span><kbd>?</kbd></div>
+      </div>
+      <button class="pill-action-btn shortcut-help-close" id="shortcutHelpCloseBtn">Got it</button>
     </div>
   </div>
 
@@ -748,12 +904,23 @@
           <select class="setting-select" id="settingQuality"><option value="high">High (Best)</option><option value="low">Low (Save Data)</option></select>
         </div>
         <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Crossfade</span><span class="setting-desc">Smoothly fade between tracks — no silent gap</span></div>
+          <div class="crossfade-control">
+            <input type="range" id="settingCrossfade" min="0" max="3" step="1" value="0" aria-label="Crossfade duration in seconds" />
+            <span class="crossfade-val" id="crossfadeValLabel">Off</span>
+          </div>
+        </div>
+        <div class="setting-row">
           <div class="setting-info"><span class="setting-label">Apple Floating Transparent Orb</span><span class="setting-desc">Floating circular quick player widget</span></div>
           <select class="setting-select" id="settingOrb"><option value="show">Enabled (Floating)</option><option value="hide">Hidden</option></select>
         </div>
         <div class="setting-row">
           <div class="setting-info"><span class="setting-label">Work PiP Mini-Player</span><span class="setting-desc">Always-on-top desktop overlay</span></div>
           <button class="pill-action-btn" id="settingLaunchPipBtn" style="padding:6px 14px; font-size:13px;">🖼️ Open PiP Window</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Keyboard Shortcuts</span><span class="setting-desc">Every hotkey in one list — or press ?</span></div>
+          <button class="pill-action-btn" id="shortcutsBtn" style="padding:6px 14px; font-size:13px;">⌨️ View Shortcuts</button>
         </div>
       </div>
     </div>
@@ -1105,6 +1272,17 @@
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Voice Assistant HUD. Lives outside .app so it can never be clipped by a
+       page's overflow. Hidden by default; VoiceAssistant is the only writer. -->
+  <div class="voice-hud" id="voiceHud" style="display:none;" role="status" aria-live="polite">
+    <div class="voice-hud-orb" id="voiceHudOrb"><span></span><span></span><span></span></div>
+    <div class="voice-hud-text">
+      <div class="voice-hud-state" id="voiceHudState">Listening…</div>
+      <div class="voice-hud-heard" id="voiceHudHeard">Say “Hey My Ruby, play Syaara”</div>
+    </div>
+    <button class="voice-hud-close" id="voiceHudClose" type="button" aria-label="Stop listening">✕</button>
   </div>
 
   <!-- Toast Container -->

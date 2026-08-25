@@ -43,6 +43,10 @@ function extractFn(name) {
 const NAMES = [
   'renderRecommendationCards', 'showPlaylistDetail', 'renderActivePlaylist',
   'syncPlaylistCardCount', 'removeSongFromPlaylist', 'undoToast',
+  // Escaping helpers the card renderer calls. They are pulled in as live code
+  // rather than stubbed because a stub that escapes differently from the real
+  // one would make this suite pass while the shipped markup is unsafe.
+  'escId', 'esc', 'thumb',
 ];
 
 // The double-click guard lives in module scope, so pull the real declarations in
@@ -117,6 +121,12 @@ els.playlistGrid = {
 const toasts = [];
 const stored = [];
 const undoButtons = [];
+// New card affordances (play count badge, dislike, play-next) are driven by
+// module state the real functions read. Keep them as controllable stubs so this
+// suite can assert the *markup and dispatch*, which is what it owns.
+const playCountStub = {};
+const dislikedStub = {};
+const calls = { dislike: [], playnext: [] };
 const toastContainer = { appendChild() {} };
 let fakeNow = 1_000_000;
 // Most tests are not about the guard, so advance past it by default.
@@ -128,8 +138,9 @@ const sandbox = {
   Date: { now: () => fakeNow },
   $: (sel) => els[String(sel).replace(/^#/, '')] || null,
   toast: (m) => toasts.push(m),
-  esc: (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c =>
-    ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])),
+  // esc / escId / thumb are no longer stubbed here — they are extracted from
+  // app.js by NAMES above, and those declarations shadow anything in this
+  // sandbox. A stub would let unsafe shipped markup pass this suite.
   Storage: { set: (k, v) => stored.push({ k, n: Array.isArray(v) ? v.length : null }) },
   playlists: [],
   currentPlaylistId: null,
@@ -138,20 +149,31 @@ const sandbox = {
   // card helpers
   isCurrent: () => false,
   isLiked: () => false,
-  thumb: () => 'x.jpg',
+  isDisliked: (id) => !!dislikedStub[id],
+  getPlayCount: (id) => playCountStub[id] || 0,
   fmtDur: () => '3:00',
   // actions the renderer wires up but this test does not exercise
   playSong: () => {}, toggleLike: () => {}, addToQueue: () => {},
   openAddToPlaylist: () => {}, downloadSong: () => {},
+  toggleDislike: (s) => calls.dislike.push(s && s.title),
+  playNextInQueue: (s) => calls.playnext.push(s && s.title),
   document: {
     createElement: (tag) => {
+      let _text = '';
       const node = {
-        tagName: tag, className: '', textContent: '', type: '',
+        tagName: tag, className: '', type: '',
         _listeners: {}, children: [],
         appendChild(c) { this.children.push(c); },
         addEventListener(t, fn) { this._listeners[t] = fn; },
         classList: { add() {} },
         remove() {},
+        get textContent() { return _text; },
+        set textContent(v) { _text = v == null ? '' : String(v); },
+        // The real esc() escapes by round-tripping through textContent ->
+        // innerHTML, so the stub has to reproduce what a browser does there:
+        // &, < and > are entity-encoded, quotes are left alone (esc handles
+        // those itself). Without this the real esc() cannot be exercised.
+        get innerHTML() { return _text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); },
       };
       return node;
     },
@@ -202,6 +224,43 @@ const other = makeGrid();
 fns.renderRecommendationCards(other, [song('d'.repeat(11), 'Delta')]);
 check('remove button absent outside the playlist view',
   !/data-action="removepl"/.test(other.innerHTML));
+
+/* ---------- new card affordances -------------------------------------- */
+console.log('\nCard affordances (play count, dislike, play next)');
+const pcId = 'p'.repeat(11);
+const dlId = 'q'.repeat(11);
+playCountStub[pcId] = 4;
+playCountStub[dlId] = 1;
+dislikedStub[dlId] = true;
+const affGrid = makeGrid();
+fns.renderRecommendationCards(affGrid, [song(pcId, 'Played Four'), song(dlId, 'Hated One')]);
+check('play count badge rendered for a played track',
+  /class="card-playcount"[^>]*>4×</.test(affGrid.innerHTML),
+  (/class="card-playcount"[^>]*>[^<]*</.exec(affGrid.innerHTML) || [])[0]);
+check('play count title is pluralised', /Played 4 times/.test(affGrid.innerHTML));
+check('single play reads "1 time", not "1 times"',
+  /Played 1 time"/.test(affGrid.innerHTML) && !/Played 1 times/.test(affGrid.innerHTML));
+const unplayed = makeGrid();
+fns.renderRecommendationCards(unplayed, [song('r'.repeat(11), 'Never Played')]);
+check('unplayed track shows no badge text and no title',
+  /class="card-playcount" title="">\s*</.test(unplayed.innerHTML.replace(/\n/g, '')),
+  (/class="card-playcount"[^>]*>[^<]*</.exec(unplayed.innerHTML) || [])[0]);
+check('dislike button reflects stored dislike state',
+  (affGrid.innerHTML.match(/card-action-btn disliked" data-action="dislike"/g) || []).length === 1,
+  (affGrid.innerHTML.match(/card-action-btn[^"]*" data-action="dislike"/g) || []).join(' | '));
+check('every card offers dislike and play next',
+  (affGrid.innerHTML.match(/data-action="dislike"/g) || []).length === 2 &&
+  (affGrid.innerHTML.match(/data-action="playnext"/g) || []).length === 2);
+affGrid.cards[1].fire('dislike');
+check('dislike click routes to toggleDislike with the clicked song',
+  JSON.stringify(calls.dislike) === JSON.stringify(['Hated One']), JSON.stringify(calls.dislike));
+affGrid.cards[0].fire('playnext');
+check('play next click routes to playNextInQueue with the clicked song',
+  JSON.stringify(calls.playnext) === JSON.stringify(['Played Four']), JSON.stringify(calls.playnext));
+// A card click that lands on no button must still play, not fall through to an action.
+affGrid.cards[0].fire(null);
+check('body click does not fire dislike or play next',
+  calls.dislike.length === 1 && calls.playnext.length === 1);
 
 /* ---------- the click actually reaches the handler -------------------- */
 console.log('\nClick dispatch');

@@ -1096,8 +1096,79 @@ function buildSafeFilename(rawTitle) {
     .replace(/^\.+/, '')                // no leading dots -> no "." or ".."
     .trim()
     .slice(0, 120)
+    .replace(/[. ]+$/, '')              // Windows silently drops trailing dots/spaces
     .trim();
   return cleaned || 'MusicFlow_Track';
+}
+
+// Strips the noise YouTube uploaders bolt onto titles. Without this a saved file
+// is called "Song (Official Video) [4K] | Full HD Lyrical" instead of "Song".
+function tidyTrackTitle(rawTitle) {
+  return String(rawTitle || '')
+    .replace(/\((?:official\s*)?(?:music\s*)?(?:video|audio|lyric[s]?|lyrical|visualizer|hd|4k|full\s*song|full\s*video)[^)]*\)/gi, '')
+    .replace(/\[(?:official\s*)?(?:music\s*)?(?:video|audio|lyric[s]?|lyrical|visualizer|hd|4k|full\s*song|full\s*video)[^\]]*\]/gi, '')
+    .replace(/\b(?:official\s+(?:video|audio|music\s+video)|lyric\s+video|full\s+video\s+song)\b/gi, '')
+    .replace(/[|–—-]\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// A download must never be named just "Track". Two of those in one folder and the
+// browser starts appending "(1)", "(2)" — which is the whole complaint this
+// function exists to prevent. The chain always ends on something unique.
+//
+// `artist` is only appended when the title does not already carry it, because
+// YouTube titles are usually "Artist - Song" and "Artist - Song - Artist" is worse
+// than no artist at all.
+function buildTrackFilename(rawTitle, rawArtist, videoId) {
+  const title = tidyTrackTitle(rawTitle);
+  const artist = tidyTrackTitle(rawArtist)
+    .replace(/\s*-\s*Topic$/i, '')      // YouTube auto-generated artist channels
+    .replace(/\bVEVO$/i, '')
+    .trim();
+
+  if (!title) {
+    // Nothing usable came back. The video id is unique, so even a total metadata
+    // failure produces a distinct, re-identifiable filename.
+    return buildSafeFilename(artist ? `${artist} - ${videoId}` : `MusicFlow_${videoId}`);
+  }
+
+  const haveArtist = artist && artist.length > 1;
+  const titleHasArtist = haveArtist &&
+    title.toLowerCase().replace(/\s+/g, '').includes(artist.toLowerCase().replace(/\s+/g, ''));
+
+  return buildSafeFilename(haveArtist && !titleHasArtist ? `${title} - ${artist}` : title);
+}
+
+// Query strings are attacker-shaped input: cap the length before it reaches a
+// filename or a response header.
+function readTitleHint(value) {
+  return typeof value === 'string' ? value.slice(0, 200) : '';
+}
+
+// Makes every `name` in the list unique, in place, comparing case-insensitively
+// because Windows and macOS filesystems do. "Song.mp3" twice becomes "Song.mp3"
+// and "Song (2).mp3"; the first occurrence is never renamed.
+function dedupeEntryNames(entries) {
+  const used = new Map();
+  for (const entry of entries) {
+    const original = entry.name;
+    const dot = original.lastIndexOf('.');
+    const stem = dot > 0 ? original.slice(0, dot) : original;
+    const ext = dot > 0 ? original.slice(dot) : '';
+
+    let candidate = original;
+    let key = candidate.toLowerCase();
+    let n = 1;
+    while (used.has(key)) {
+      n++;
+      candidate = `${stem} (${n})${ext}`;
+      key = candidate.toLowerCase();
+    }
+    used.set(key, true);
+    entry.name = candidate;
+  }
+  return entries;
 }
 
 app.get('/api/download/:videoId', async (req, res) => {
@@ -1140,16 +1211,27 @@ app.get('/api/download/:videoId', async (req, res) => {
   };
 
   try {
-    let info = { title: 'Track', channel: '' };
+    // The client already knows the title from the search result that produced this
+    // click, so a metadata failure no longer has to guess. This used to default to
+    // the literal string 'Track', which is why repeat downloads piled up as
+    // "Track.mp3", "Track (1).mp3", "Track (2).mp3".
+    const hintedTitle = readTitleHint(req.query.title);
+    const hintedArtist = readTitleHint(req.query.artist);
+
+    let info = {};
     try {
       const infoStdout = await runYtDlp([
         `https://www.youtube.com/watch?v=${videoId}`,
         '--dump-json', '--no-warnings', '--skip-download',
       ], 10000);
-      if (infoStdout) info = JSON.parse(infoStdout);
+      if (infoStdout) info = JSON.parse(infoStdout) || {};
     } catch (e) {}
 
-    const safeTitle = buildSafeFilename(info.title);
+    const safeTitle = buildTrackFilename(
+      info.title || hintedTitle,
+      info.artist || info.creator || info.uploader || info.channel || hintedArtist,
+      videoId
+    );
 
     const dlArgs = [
       ...BASE_YTDLP_ARGS,
@@ -1192,10 +1274,15 @@ app.get('/api/download/:videoId', async (req, res) => {
       // ERR_INVALID_CHAR. So the legacy `filename=` parameter gets an ASCII-only
       // fallback and the real Unicode title travels in RFC 5987 `filename*=`,
       // which every current browser prefers anyway.
+      //
+      // A wholly non-Latin title (Hindi, Tamil, CJK) strips to nothing here, so the
+      // fallback is keyed on the video id rather than a shared constant — otherwise
+      // every Hindi download would collide on one name and get "(1)"-suffixed.
       const asciiFallback = safeTitle
         .replace(/[^\x20-\x7e]/g, '')
         .replace(/["\\]/g, '')
-        .trim() || 'MusicFlow_Track';
+        .replace(/\s+/g, ' ')
+        .trim() || `MusicFlow_${videoId}`;
       const encodedFilename = encodeURIComponent(`${safeTitle}.mp3`);
 
       res.setHeader('Content-Type', 'audio/mpeg');
@@ -1305,7 +1392,7 @@ async function runPlaylistJob(job) {
     try {
       const file = await transcodeTrack(track.id, job.workDir, i);
       if (file) {
-        done.push({ path: file, name: `${buildSafeFilename(track.title || track.id)}.mp3`, index: i });
+        done.push({ path: file, name: `${buildTrackFilename(track.title, track.artist, track.id)}.mp3`, index: i });
         job.completed++;
       } else {
         job.failed++;
@@ -1337,6 +1424,12 @@ async function runPlaylistJob(job) {
   try {
     // Preserve the playlist's own ordering, which mapConcurrent does not.
     done.sort((a, b) => a.index - b.index);
+    // Two tracks with the same title (a remix next to its original, or two live
+    // versions) would otherwise write two identical entry names into the archive,
+    // and every extractor resolves that clash as "name (1).mp3" — the exact
+    // pattern this pass is fixing. Numbering duplicates ourselves keeps the names
+    // stable and meaningful instead of leaving it to the extractor.
+    dedupeEntryNames(done);
     job.zipPath = path.join(tempDownloadsDir, `${job.id}.zip`);
     job.zipSize = await writeStoredZip(done, job.zipPath);
     job.status = 'ready';
@@ -1365,7 +1458,13 @@ app.post('/api/playlist-download', (req, res) => {
     const id = t && typeof t.id === 'string' ? t.id : null;
     if (!id || !isYouTubeId(id) || seen.has(id)) continue;
     seen.add(id);
-    tracks.push({ id, title: typeof t.title === 'string' ? t.title : id });
+    tracks.push({
+      id,
+      title: typeof t.title === 'string' ? t.title : id,
+      // Carried through so archive entries get "Song - Artist.mp3" like single
+      // downloads do, instead of a bare title.
+      artist: readTitleHint(t.artist || t.channel),
+    });
     if (tracks.length >= MAX_PLAYLIST_TRACKS) break;
   }
 

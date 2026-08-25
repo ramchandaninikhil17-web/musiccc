@@ -23,7 +23,13 @@ run() {
 
 run "ZIP writer (unit)"        node test/zip.test.js
 run "DOM wiring (static)"      node test/dom-ids.test.js
+run "UI features (static)"     node test/ui-features.test.js
 run "Playlist remove (logic)"  node test/playlist-remove.test.js
+run "Queue & reorder (logic)"  node test/queue-reorder.test.js
+run "Crossfade (logic)"        node test/crossfade.test.js
+run "Search suggest (logic)"   node test/search-suggest.test.js
+run "Browse & discovery"       node test/browse-discovery.test.js
+run "Voice assistant (logic)"  node test/voice.test.js
 run "Download API (end-to-end)" bash test/api-download.test.sh
 
 # The client test drives the real app.js code against a real server, so it needs

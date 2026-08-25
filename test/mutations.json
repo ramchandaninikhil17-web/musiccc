@@ -1,0 +1,231 @@
+[
+  { "label": "recognizer back to one session per phrase",
+    "file": "public/js/app.js",
+    "find": "      rec.continuous = true;",
+    "replace": "      rec.continuous = false;" },
+
+  { "label": "no watchdog interval",
+    "file": "public/js/app.js",
+    "find": "      this.watchdog = setInterval(() => this.check(), VOICE_WATCHDOG_MS);",
+    "replace": "      this.watchdog = null;" },
+
+  { "label": "no visibilitychange listener",
+    "file": "public/js/app.js",
+    "find": "      document.addEventListener('visibilitychange', () => { if (!document.hidden) this.check(); });",
+    "replace": "      void 0;" },
+
+  { "label": "visibilitychange ignores document.hidden",
+    "file": "public/js/app.js",
+    "find": "() => { if (!document.hidden) this.check(); });",
+    "replace": "() => { this.check(); });" },
+
+  { "label": "wake gate matches the phrase anywhere, not just leading",
+    "file": "public/js/app.js",
+    "find": "        if (t === w || t.indexOf(w + ' ') === 0) return true;",
+    "replace": "        if (t.indexOf(w) >= 0) return true;" },
+
+  { "label": "bare names allowed to wake an open mic",
+    "file": "public/js/app.js",
+    "find": "      VOICE_WAKE_STRICT.push(VOICE_WAKE_LEADS[li] + ' ' + VOICE_WAKE_NAMES[ni]);",
+    "replace": "      VOICE_WAKE_STRICT.push(VOICE_WAKE_LEADS[li] + ' ' + VOICE_WAKE_NAMES[ni], VOICE_WAKE_NAMES[ni]);" },
+
+  { "label": "armed mode acts on everything it hears",
+    "file": "public/js/app.js",
+    "find": "        if (!VoiceCommands.wakeStrict(text)) return;",
+    "replace": "        if (false) return;" },
+
+  { "label": "no chime on wake",
+    "file": "public/js/app.js",
+    "find": "      VoiceChime.wake();",
+    "replace": "      void 0;" },
+
+  { "label": "wake chime falls instead of rising",
+    "file": "public/js/app.js",
+    "find": "    wake() { this.play([784, 1175], 0.16); }",
+    "replace": "    wake() { this.play([1175, 784], 0.16); }" },
+
+  { "label": "chime nodes never disconnect",
+    "file": "public/js/app.js",
+    "find": "          osc.onended = () => { try { osc.disconnect(); gain.disconnect(); } catch (e) { /* already gone */ } };",
+    "replace": "          void 0;" },
+
+  { "label": "chime rebuilds its AudioContext every time",
+    "file": "public/js/app.js",
+    "find": "      if (!this.ctx) {",
+    "replace": "      if (true) {" },
+
+  { "label": "auto-arm regardless of permission state",
+    "file": "public/js/app.js",
+    "find": "        if (!status || status.state !== 'granted') return;",
+    "replace": "        if (!status) return;" },
+
+  { "label": "permission asked even when always-on was never enabled",
+    "file": "public/js/app.js",
+    "find": "      if (!this.always || !this.supported || this.disabled) return;",
+    "replace": "      if (!this.supported || this.disabled) return;" },
+
+  { "label": "preference synced to the server instead of stored device-local",
+    "file": "public/js/app.js",
+    "find": "      Storage.setLocal('voiceAlwaysOn', this.always);",
+    "replace": "      Storage.set('voiceAlwaysOn', this.always);" },
+
+  { "label": "a truthy stored preference is read as on",
+    "file": "public/js/app.js",
+    "find": "      this.always = Storage.get('voiceAlwaysOn', false) === true;",
+    "replace": "      this.always = !!Storage.get('voiceAlwaysOn', false);" },
+
+  { "label": "the gesture primer is never registered",
+    "file": "public/js/app.js",
+    "find": "        this.primeOnGesture();",
+    "replace": "        void 0;" },
+
+  { "label": "the gesture primer is not one-shot",
+    "file": "public/js/app.js",
+    "find": "      const once = { once: true, passive: true };",
+    "replace": "      const once = { passive: true };" },
+
+  { "label": "standDown switches always-on off instead of returning to armed",
+    "file": "public/js/app.js",
+    "find": "      if (this.always && !this.disabled && this.mode !== 'off') {\n        this.mode = 'wake';",
+    "replace": "      if (false) {\n        this.mode = 'wake';" },
+
+  { "label": "a command closes the mic even under always-on",
+    "file": "public/js/app.js",
+    "find": "      if (this.always && this.mode !== 'off') {\n        this.mode = 'wake';",
+    "replace": "      if (false) {\n        this.mode = 'wake';" },
+
+  { "label": "a spent restart budget switches always-on off for the day",
+    "file": "public/js/app.js",
+    "find": "        if (this.always) {\n          this.restarts = 0;",
+    "replace": "        if (false) {\n          this.restarts = 0;" },
+
+  { "label": "openMic() no longer knows a session is already running",
+    "file": "public/js/app.js",
+    "find": "      if (this.sessionOpen) return true;          // already listening: nothing to do",
+    "replace": "      void 0;" },
+
+  { "label": "check() jumps the queue ahead of a pending restart",
+    "file": "public/js/app.js",
+    "find": "      if (this.restartTimer) return;\n      this.openMic();",
+    "replace": "      this.openMic();" },
+
+  { "label": "start() ignores a mic that refused to open",
+    "file": "public/js/app.js",
+    "find": "      if (!this.openMic()) {",
+    "replace": "      this.openMic();\n      if (false) {" },
+
+  { "label": "voice plays result #1 instead of the official version",
+    "file": "public/js/app.js",
+    "find": "        playAllResults(VoicePick.best(searchResults, query));",
+    "replace": "        playAllResults();" },
+
+  { "label": "no penalty for words the result is missing",
+    "file": "public/js/app.js",
+    "find": "        if (hit < words.length) s -= (words.length - hit) * 120;",
+    "replace": "        void 0;" },
+
+  { "label": "no duration sanity check (hour-long mixes allowed)",
+    "file": "public/js/app.js",
+    "find": "      else if (dur > 600) s -= 350;",
+    "replace": "      else if (dur > 600) s -= 0;" },
+
+  { "label": "short clips not penalised",
+    "file": "public/js/app.js",
+    "find": "      else if (dur > 0 && dur < 50) s -= 250;",
+    "replace": "      else if (dur > 0 && dur < 50) s -= 0;" },
+
+  { "label": "karaoke/cover/loop titles not penalised",
+    "file": "public/js/app.js",
+    "find": "      if (VOICE_BAD_RE.test(title)) s -= 500;",
+    "replace": "      void 0;" },
+
+  { "label": "official-audio channels get no credit",
+    "file": "public/js/app.js",
+    "find": "      if (/-\\s*topic$/i.test(channel.trim())) s += 550;",
+    "replace": "      void 0;" },
+
+  { "label": "record labels get no credit",
+    "file": "public/js/app.js",
+    "find": "      if (VOICE_LABEL_RE.test(channel)) s += 700;",
+    "replace": "      void 0;" },
+
+  { "label": "views counted linearly instead of by magnitude",
+    "file": "public/js/app.js",
+    "find": "      if (views > 0) s += Math.min(450, Math.log10(views + 1) * 50);",
+    "replace": "      if (views > 0) s += views;" },
+
+  { "label": "YouTube's own order no longer breaks ties",
+    "file": "public/js/app.js",
+    "find": "      return s - (Number(i) || 0) * 4;",
+    "replace": "      return s;" },
+
+  { "label": "best() returns null on an all-malformed list",
+    "file": "public/js/app.js",
+    "find": "      return bestItem || results[0];",
+    "replace": "      return bestItem;" },
+
+  { "label": "best() does not check it was handed an array",
+    "file": "public/js/app.js",
+    "find": "      if (!Array.isArray(results) || !results.length) return null;",
+    "replace": "      if (!results.length) return null;" },
+
+  { "label": "an item with no id is scored like any other",
+    "file": "public/js/app.js",
+    "find": "      if (!item || !item.id) return -Infinity;",
+    "replace": "      if (!item) return -Infinity;" },
+
+  { "label": "playAllResults trusts a start song that is not in the list",
+    "file": "public/js/app.js",
+    "find": "    const first = startSong && startSong.id && queue.some(s => s.id === startSong.id) ? startSong : queue[0];",
+    "replace": "    const first = startSong ? startSong : queue[0];" },
+
+  { "label": "Play All button passes its click event through as a start song",
+    "file": "public/js/app.js",
+    "find": "playAllBtn?.addEventListener('click', () => playAllResults());",
+    "replace": "playAllBtn?.addEventListener('click', playAllResults);" },
+
+  { "label": "armed button state has no styling of its own",
+    "file": "public/css/style.css",
+    "find": ".voice-btn.armed { color: var(--accent-light); }",
+    "replace": ".voice-btn.active { color: var(--accent-light); }" },
+
+  { "label": "armed dot geometry not reset by the awake state",
+    "file": "public/css/style.css",
+    "find": "  top: auto; right: auto; width: auto; height: auto;",
+    "replace": "  right: auto; height: auto;" },
+
+  { "label": "armed animation left running under prefers-reduced-motion",
+    "file": "public/css/style.css",
+    "find": "  .voice-btn.armed::after,\n  .voice-btn.active::after,",
+    "replace": "  .voice-btn.active::after," },
+
+  { "label": "the mic tooltip no longer says it is always listening",
+    "file": "public/index.html",
+    "find": "title=\"Always listening",
+    "replace": "title=\"Voice control" },
+
+  { "label": "the aria-label goes back to push-to-talk wording",
+    "file": "public/index.html",
+    "find": "aria-label=\"Always-on voice control\"",
+    "replace": "aria-label=\"Voice control\"" },
+
+  { "label": "paintButton stops distinguishing armed from awake",
+    "file": "public/js/app.js",
+    "find": "      this.btn.classList.toggle('armed', this.mode === 'wake');",
+    "replace": "      this.btn.classList.toggle('armed', false);" },
+
+  { "label": "errors while merely armed are painted on screen",
+    "file": "public/js/app.js",
+    "find": "      if (this.mode === 'wake') return;\n      this.paint('error',",
+    "replace": "      if (false) return;\n      this.paint('error'," },
+
+  { "label": "hearing speech does not reset the restart budget",
+    "file": "public/js/app.js",
+    "find": "      this.restarts = 0;\n      if (this.mode === 'wake') {",
+    "replace": "      void 0;\n      if (this.mode === 'wake') {" },
+
+  { "label": "an interim wake does not wait for the final transcript",
+    "file": "public/js/app.js",
+    "find": "        if (!isFinal) return;\n      }\n      if (!isFinal) {",
+    "replace": "        if (false) return;\n      }\n      if (!isFinal) {" }
+]
