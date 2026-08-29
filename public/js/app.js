@@ -223,6 +223,262 @@
   let history = Storage.get('history', []); // [{song, playedAt, listenedSec}]
   let searchHistory = Storage.get('searchHistory', []);
 
+  /* ================================================================
+     STREAM WATCHDOG — Auto-reconnect on stall/buffering
+     Detects when audio playback stalls for too long and automatically
+     reconnects by re-fetching the stream URL while preserving position.
+     ================================================================ */
+  const StreamWatchdog = {
+    stallTimer: null,
+    reconnectCount: 0,
+    MAX_RECONNECTS: 3,
+    STALL_TIMEOUT_MS: 8000, // 8 seconds before auto-reconnect
+    isReconnecting: false,
+    lastSong: null,
+
+    reset() {
+      this.clearStallTimer();
+      this.reconnectCount = 0;
+      this.isReconnecting = false;
+      this.lastSong = null;
+    },
+
+    onTrackChange(song) {
+      this.clearStallTimer();
+      this.reconnectCount = 0;
+      this.isReconnecting = false;
+      this.lastSong = song;
+    },
+
+    clearStallTimer() {
+      if (this.stallTimer) { clearTimeout(this.stallTimer); this.stallTimer = null; }
+    },
+
+    onStalled() {
+      if (this.isReconnecting || !currentSong || currentSong.isLocal) return;
+      this.clearStallTimer();
+      this.stallTimer = setTimeout(() => this.attemptReconnect(), this.STALL_TIMEOUT_MS);
+    },
+
+    onWaiting() {
+      if (this.isReconnecting || !currentSong || currentSong.isLocal) return;
+      // Only start the watchdog if we've been waiting and haven't started playing
+      this.clearStallTimer();
+      this.stallTimer = setTimeout(() => this.attemptReconnect(), this.STALL_TIMEOUT_MS);
+    },
+
+    onPlaying() {
+      // Audio is flowing again, cancel any pending reconnect
+      this.clearStallTimer();
+      this.isReconnecting = false;
+    },
+
+    onCanPlay() {
+      this.clearStallTimer();
+    },
+
+    attemptReconnect() {
+      const song = currentSong;
+      if (!song || this.isReconnecting) return;
+      if (song.isLocal || song.isCloud) return; // only for yt-dlp streams
+      if (this.reconnectCount >= this.MAX_RECONNECTS) {
+        toast(`\u26a0\ufe0f Stream failed after ${this.MAX_RECONNECTS} retries. Skipping...`);
+        this.reconnectCount = 0;
+        setTimeout(() => { if (currentSong === song) playNext(); }, 1500);
+        return;
+      }
+
+      this.isReconnecting = true;
+      this.reconnectCount++;
+      const savedTime = audioPlayer.currentTime || 0;
+      toast(`\ud83d\udd04 Reconnecting... (attempt ${this.reconnectCount}/${this.MAX_RECONNECTS})`);
+
+      // Re-fetch stream with cache-bust
+      const newSrc = `/api/stream/${song.id}?quality=${audioQuality}&retry=${this.reconnectCount}&t=${Date.now()}`;
+      audioPlayer.src = newSrc;
+
+      // Wait for enough data to seek back
+      const onCanPlayAfterReconnect = () => {
+        audioPlayer.removeEventListener('canplay', onCanPlayAfterReconnect);
+        if (currentSong !== song) return;
+        if (savedTime > 1 && audioPlayer.duration > savedTime) {
+          try { audioPlayer.currentTime = savedTime; } catch (e) {}
+        }
+        this.isReconnecting = false;
+        toast('\u2705 Reconnected successfully');
+      };
+      audioPlayer.addEventListener('canplay', onCanPlayAfterReconnect);
+      startPlayback(song);
+
+      // Safety: if canplay never fires, clear the flag
+      setTimeout(() => {
+        audioPlayer.removeEventListener('canplay', onCanPlayAfterReconnect);
+        this.isReconnecting = false;
+      }, 15000);
+    },
+  };
+
+  /* ================================================================
+     QUERY CLEANER — Auto-fix common music search typos
+     Client-side dictionary of frequent misspellings for music searches.
+     No external API needed, zero latency added.
+     ================================================================ */
+  const QueryCleaner = {
+    enabled: Storage.get('autoFixSearch', true) !== false,
+    lastCorrected: null,
+
+    // Common music artist/term misspellings
+    corrections: {
+      'arjit': 'arijit', 'arjit singh': 'arijit singh', 'arjith': 'arijit',
+      'emimem': 'eminem', 'eminam': 'eminem', 'emniem': 'eminem',
+      'bts': 'BTS', 'blackpink': 'BLACKPINK',
+      'coldpaly': 'coldplay', 'codplay': 'coldplay',
+      'imagin dragons': 'imagine dragons', 'imgaine dragons': 'imagine dragons',
+      'ed sheran': 'ed sheeran', 'ed sheeren': 'ed sheeran', 'ed sheerin': 'ed sheeran',
+      'tayler swift': 'taylor swift', 'talor swift': 'taylor swift',
+      'billie eilsh': 'billie eilish', 'billie elish': 'billie eilish',
+      'weeknd': 'the weeknd', 'wekknd': 'the weeknd',
+      'marron 5': 'maroon 5', 'marroon 5': 'maroon 5',
+      'linkin park': 'linkin park', 'linken park': 'linkin park', 'linkn park': 'linkin park',
+      'beyonce': 'beyoncé', 'beyonc': 'beyoncé',
+      'rhianna': 'rihanna', 'riahna': 'rihanna',
+      'adelle': 'adele',
+      'arianna grande': 'ariana grande', 'ariana grand': 'ariana grande',
+      'drake ': 'drake', 'drak ': 'drake',
+      'jutin bieber': 'justin bieber', 'justine bieber': 'justin bieber', 'justin beiber': 'justin bieber',
+      'selena gomaz': 'selena gomez', 'selna gomez': 'selena gomez',
+      'shawn mendes': 'shawn mendes', 'shaun mendes': 'shawn mendes',
+      'dua lipa': 'dua lipa', 'dua lippa': 'dua lipa',
+      'bad buny': 'bad bunny', 'bad banny': 'bad bunny',
+      'the chainsmoker': 'the chainsmokers', 'chainsmoker': 'the chainsmokers',
+      'marshmello': 'marshmello', 'marshmallow dj': 'marshmello',
+      'post malon': 'post malone', 'post malone': 'post malone',
+      'kayne west': 'kanye west', 'kanye': 'kanye west',
+      'neha kakker': 'neha kakkar', 'neha kakar': 'neha kakkar',
+      'atif aslm': 'atif aslam', 'aatif aslam': 'atif aslam',
+      'shreya ghosal': 'shreya ghoshal', 'shreya goshal': 'shreya ghoshal',
+      'pritam': 'pritam', 'preetam': 'pritam',
+      'ar rehman': 'a.r. rahman', 'ar rahman': 'a.r. rahman',
+      'honey sing': 'honey singh', 'yo yo honey': 'yo yo honey singh',
+      'badshaah': 'badshah', 'baadshah singer': 'badshah',
+      // Common word fixes
+      'favourit': 'favorite', 'favourites': 'favorites',
+      'musci': 'music', 'muisc': 'music', 'muscic': 'music',
+      'snog': 'song', 'snogs': 'songs', 'sonds': 'songs',
+      'bollwood': 'bollywood', 'bolywood': 'bollywood',
+      'playlis': 'playlist', 'plalist': 'playlist',
+      'romanitc': 'romantic', 'romanic': 'romantic',
+      'acustic': 'acoustic', 'accoustic': 'acoustic',
+      'instramental': 'instrumental', 'instrumetal': 'instrumental',
+      'unpluged': 'unplugged', 'unplgged': 'unplugged',
+      'lates': 'latest', 'latset': 'latest',
+      'tredning': 'trending', 'trendig': 'trending',
+    },
+
+    clean(query) {
+      if (!this.enabled || !query) return query;
+      let cleaned = query.trim().replace(/\s+/g, ' ');
+      const lower = cleaned.toLowerCase();
+      this.lastCorrected = null;
+
+      // Check exact match first
+      if (this.corrections[lower]) {
+        this.lastCorrected = this.corrections[lower];
+        return this.lastCorrected;
+      }
+
+      // Check word-by-word
+      let changed = false;
+      const words = cleaned.split(' ');
+      const fixedWords = words.map(w => {
+        const wl = w.toLowerCase();
+        if (this.corrections[wl] && this.corrections[wl].indexOf(' ') === -1) {
+          changed = true;
+          // Preserve original casing style if the word was capitalized
+          if (w[0] === w[0].toUpperCase()) {
+            return this.corrections[wl][0].toUpperCase() + this.corrections[wl].slice(1);
+          }
+          return this.corrections[wl];
+        }
+        return w;
+      });
+
+      if (changed) {
+        this.lastCorrected = fixedWords.join(' ');
+        return this.lastCorrected;
+      }
+
+      // Check multi-word phrases
+      for (const [bad, good] of Object.entries(this.corrections)) {
+        if (bad.includes(' ') && lower.includes(bad)) {
+          cleaned = cleaned.replace(new RegExp(bad.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'gi'), good);
+          this.lastCorrected = cleaned;
+          changed = true;
+        }
+      }
+
+      return cleaned;
+    },
+  };
+
+  /* ================================================================
+     SESSION MANAGER — Fresh Start / Memory Refresh
+     Archives current session to server and clears ephemeral state
+     while preserving persistent user data (likes, playlists, settings).
+     ================================================================ */
+  const SessionManager = {
+    async freshStart() {
+      const confirmMsg = 'This will archive your current queue, history, and search history, then start fresh. Your playlists, liked songs, and settings will be preserved.\n\nContinue?';
+      if (!confirm(confirmMsg)) return;
+
+      toast('\ud83d\udce6 Archiving session...');
+
+      // Collect session data to archive
+      const sessionData = {
+        queue: queue.map(s => ({ id: s.id, title: s.title, channel: s.channel })),
+        history: history.slice(0, 100),
+        searchHistory: searchHistory.slice(0, 50),
+        currentSong: currentSong ? { id: currentSong.id, title: currentSong.title } : null,
+        playCounts: { ...playCounts },
+        totalListenMinutes: Storage.get('totalListenMinutes', 0),
+      };
+
+      // Archive to server
+      try {
+        await fetch('/api/archive-session', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sessionData),
+        });
+      } catch (e) {
+        console.warn('[SessionManager] Archive failed, continuing with local reset:', e.message);
+      }
+
+      // Stop playback
+      try {
+        audioPlayer.pause();
+        audioPlayer.removeAttribute('src');
+        audioPlayer.load();
+      } catch (e) {}
+
+      // Clear ephemeral state from localStorage
+      const ephemeralKeys = [
+        'queue', 'history', 'searchHistory', 'resume',
+        'cached_recommendations', 'playCounts',
+      ];
+      ephemeralKeys.forEach(key => {
+        try { localStorage.removeItem('mf_' + key); } catch (e) {}
+      });
+
+      // Persistent keys preserved: likes, dislikes, playlists, theme, quality,
+      // volume, shuffle, repeat, orb, crossfade, autoQueue, autoFixSearch,
+      // accent, totalListenMinutes
+
+      toast('\u2705 Session archived! Reloading...');
+      setTimeout(() => window.location.reload(), 800);
+    },
+  };
+
   // Anything persisted by an older build (or a partially-written sync) can be
   // the wrong shape. Normalize once here so no renderer has to defend itself.
   if (!Array.isArray(likedSongs)) likedSongs = [];
@@ -454,6 +710,12 @@
     audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); ResumeManager.save(); CrossfadeManager.onPause(); });
     audioPlayer?.addEventListener('error', onAudioError);
 
+    // Stream watchdog: auto-reconnect on stall
+    audioPlayer?.addEventListener('stalled', () => StreamWatchdog.onStalled());
+    audioPlayer?.addEventListener('waiting', () => StreamWatchdog.onWaiting());
+    audioPlayer?.addEventListener('playing', () => StreamWatchdog.onPlaying());
+    audioPlayer?.addEventListener('canplay', () => StreamWatchdog.onCanPlay());
+
     // Closing the tab used to discard the current track's listen time and any
     // queued sync. pagehide fires reliably where beforeunload does not (iOS).
     window.addEventListener('pagehide', () => {
@@ -496,6 +758,20 @@
       });
     }
     
+    // Fresh Start button
+    $('#freshStartBtn')?.addEventListener('click', () => SessionManager.freshStart());
+
+    // Auto-fix search spelling
+    const autoFixEl = $('#settingAutoFix');
+    if (autoFixEl) {
+      autoFixEl.checked = QueryCleaner.enabled;
+      autoFixEl.addEventListener('change', (e) => {
+        QueryCleaner.enabled = !!e.target.checked;
+        Storage.set('autoFixSearch', QueryCleaner.enabled);
+        toast(e.target.checked ? '\ud83d\udd24 Auto-fix search ON' : '\ud83d\udd24 Auto-fix search OFF');
+      });
+    }
+
     // Orb Setting
     const settingOrbEl = $('#settingOrb');
     if (settingOrbEl) {
@@ -1086,6 +1362,12 @@
   async function doSearch(query) {
     query = query.trim().slice(0, 160);
     if (!query) return;
+
+    // Auto-fix spelling before search
+    const originalQuery = query;
+    query = QueryCleaner.clean(query);
+    const wasCorrected = QueryCleaner.lastCorrected && QueryCleaner.lastCorrected !== originalQuery;
+
     if (activeSearchController) activeSearchController.abort();
     const requestId = ++searchRequestId;
     const controller = new AbortController();
@@ -1093,7 +1375,7 @@
     lastQuery = query;
     navigateTo('search');
 
-    // Save to search history
+    // Save to search history (save the corrected version)
     searchHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 20);
     Storage.set('searchHistory', searchHistory);
     // navigateTo() above painted the pills before this query was added, so the
@@ -1106,7 +1388,13 @@
     // clearing the box and clicking outside all close it explicitly.
 
     resultsHeader.style.display = 'flex';
-    resultsTitle.textContent = `Results for "${query}"`;
+    // Show correction indicator
+    if (wasCorrected) {
+      resultsTitle.innerHTML = `Results for \u201c${esc(query)}\u201d <span class="search-correction">\ud83d\udd24 corrected from \u201c${esc(originalQuery)}\u201d</span>`;
+      if (searchInput) searchInput.value = query;
+    } else {
+      resultsTitle.textContent = `Results for \u201c${query}\u201d`;
+    }
     showSkeletons();
     searchLoading.classList.add('active');
 
@@ -1257,6 +1545,9 @@
     currentIndex = idx;
     currentSong = song;
     noteSongPlayed(song);
+
+    // Reset stream watchdog for new track
+    StreamWatchdog.onTrackChange(song);
 
     // Before any src is set: this may drop the element to silence so the new
     // track can rise from nothing, and it clears any ramp the outgoing track
@@ -3638,7 +3929,6 @@
       /^[a-zA-Z0-9_-]{11}$/.test(stem);
   }
 
-  // Prefer the name the server picked; it knows the real video title.
   function filenameFromDisposition(header) {
     if (!header) return null;
     const utf8 = /filename\*\s*=\s*UTF-8''([^;]+)/i.exec(header);
@@ -3649,10 +3939,9 @@
     return plain ? plain[1].trim() : null;
   }
 
-  async function downloadSong(song) {
+  async function downloadSong(song, isRetry = false) {
     if (!song || !song.id) { toast('No song selected'); return; }
     if (song.isLocal) {
-      // After a reload the persisted blob URL is gone, so re-mint it first.
       const url = await LocalFileManager.resolveStreamUrl(song);
       if (!url) {
         toast('This local file is no longer stored. Re-import it from your device.');
@@ -3660,9 +3949,6 @@
       }
       const a = document.createElement('a');
       a.href = url;
-      // Local imports kept their title but lost their extension entirely, so the
-      // saved file arrived with no type and would not open in a music player.
-      // The original filename is the best source for the real extension.
       const localExt = (/\.([a-z0-9]{2,4})$/i.exec(song.fileName || song.originalName || '') || [])[1];
       a.download = `${buildTrackFilename(song)}.${(localExt || 'mp3').toLowerCase()}`;
       document.body.appendChild(a);
@@ -3683,15 +3969,18 @@
     toast(`⏳ Preparing MP3 download for "${(song.title || 'track').slice(0, 25)}..."`);
 
     let objectUrl = null;
+    const downloadController = new AbortController();
+    const downloadTimeout = setTimeout(() => downloadController.abort(), 180000);
+
     try {
-      // Passing the title we already have means a yt-dlp metadata failure no longer
-      // degrades the filename to a placeholder.
       const params = new URLSearchParams({ title: song.title || '', artist: song.channel || '' });
-      const response = await fetch(`/api/download/${encodeURIComponent(song.id)}?${params}`);
+      const response = await fetch(`/api/download/${encodeURIComponent(song.id)}?${params}`, {
+        signal: downloadController.signal,
+      });
+
+      clearTimeout(downloadTimeout);
 
       if (!response.ok) {
-        // The server explains itself in JSON; passing that through beats a
-        // generic "Server busy" for every failure mode.
         let detail = `Server responded ${response.status}`;
         try {
           const body = await response.json();
@@ -3705,7 +3994,6 @@
 
       const serverName = filenameFromDisposition(response.headers.get('Content-Disposition'));
       const localName = buildTrackFilename(song);
-      // The server's name wins only when it is actually informative.
       let filename = (serverName && !isPlaceholderName(serverName))
         ? safeDownloadName(serverName)
         : localName;
@@ -3720,11 +4008,28 @@
       a.remove();
       toast(`✅ Saved "${filename}" to your downloads.`);
     } catch (err) {
+      clearTimeout(downloadTimeout);
       console.warn('[download]', err);
-      toast(`⚠️ Download failed: ${err.message || 'unknown error'}`);
+      const isTimeout = err.name === 'AbortError';
+      const msg = isTimeout ? 'Download timed out (3 min)' : (err.message || 'unknown error');
+
+      if (!isRetry) {
+        const toastEl = document.createElement('div');
+        toastEl.className = 'toast';
+        toastEl.innerHTML = `⚠️ Download failed: ${msg.length > 40 ? msg.slice(0, 40) + '...' : msg} <button class="toast-retry-btn" style="margin-left:8px;padding:2px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:12px;">🔄 Retry</button>`;
+        toastEl.querySelector('.toast-retry-btn')?.addEventListener('click', () => {
+          toastEl.remove();
+          downloadSong(song, true);
+        });
+        if (toastContainer) {
+          toastContainer.appendChild(toastEl);
+          setTimeout(() => { try { toastEl.remove(); } catch(e) {} }, 8000);
+        }
+      } else {
+        toast(`⚠️ Download failed: ${msg}`);
+      }
     } finally {
-      // Revoking too early cancels the save in some browsers; 60s is safe and
-      // still bounded, unlike leaking the blob for the whole session.
+      clearTimeout(downloadTimeout);
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
       activeDownloads.delete(song.id);
     }

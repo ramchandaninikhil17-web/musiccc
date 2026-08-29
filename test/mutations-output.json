@@ -1,0 +1,251 @@
+[
+  { "label": "mono downmix sums at unity instead of halving (+6 dB clip)",
+    "file": "public/js/app.js",
+    "find": "return { aLL: 0.5 * gL, aRL: 0.5 * gL, aLR: 0.5 * gR, aRR: 0.5 * gR };",
+    "replace": "return { aLL: gL, aRL: gL, aLR: gR, aRR: gR };" },
+
+  { "label": "mono flag ignored entirely",
+    "file": "public/js/app.js",
+    "find": "if (!mono) return { aLL: gL, aLR: 0, aRL: 0, aRR: gR };",
+    "replace": "return { aLL: gL, aLR: 0, aRL: 0, aRR: gR };" },
+
+  { "label": "balance boosts the near channel instead of attenuating the far one",
+    "file": "public/js/app.js",
+    "find": "const gL = b <= 0 ? 1 : 1 - b;",
+    "replace": "const gL = b <= 0 ? 1 - b : 1;" },
+
+  { "label": "balance right channel taper dropped",
+    "file": "public/js/app.js",
+    "find": "const gR = b >= 0 ? 1 : 1 + b;",
+    "replace": "const gR = 1;" },
+
+  { "label": "balance not clamped to [-1, 1]",
+    "file": "public/js/app.js",
+    "find": "const b = Math.max(-1, Math.min(1, Number(balance) || 0));",
+    "replace": "const b = Number(balance) || 0;" },
+
+  { "label": "output stage bypassed: widener wired straight to the speakers",
+    "file": "public/js/app.js",
+    "find": "this.outStage.output.connect(this.audioCtx.destination);",
+    "replace": "this.widener.output.connect(this.audioCtx.destination);" },
+
+  { "label": "splitter feeds R->R from the left input channel",
+    "file": "public/js/app.js",
+    "find": "      splitter.connect(aRR, 1);",
+    "replace": "      splitter.connect(aRR, 0);" },
+
+  { "label": "merger lands R->R on the left output channel",
+    "file": "public/js/app.js",
+    "find": "      aRR.connect(merger, 0, 1);",
+    "replace": "      aRR.connect(merger, 0, 0);" },
+
+  { "label": "cross-gains default to unity, so a fresh graph is not transparent",
+    "file": "public/js/app.js",
+    "find": "const aLR = ctx.createGain(); aLR.gain.value = 0;",
+    "replace": "const aLR = ctx.createGain(); aLR.gain.value = 1;" },
+
+  { "label": "stored balance/mono never pushed into a freshly built graph",
+    "file": "public/js/app.js",
+    "find": "this.setChannelMatrix(OutputDeviceManager.balance, OutputDeviceManager.mono, 0);",
+    "replace": "void 0;" },
+
+  { "label": "graph build ramps the matrix instead of setting it outright",
+    "file": "public/js/app.js",
+    "find": "      const secs = ramp === undefined ? 0.05 : ramp;",
+    "replace": "      const secs = 0.05;" },
+
+  { "label": "setChannelMatrix claims success with no output stage",
+    "file": "public/js/app.js",
+    "find": "      if (!this.outStage) return false;",
+    "replace": "      if (!this.outStage) return true;" },
+
+  { "label": "bypass gate removed from ensureAudioContext",
+    "file": "public/js/app.js",
+    "find": "      if (this.bypassed) return false;",
+    "replace": "      if (false) return false;" },
+
+  { "label": "equalizer context never registered for routing",
+    "file": "public/js/app.js",
+    "find": "OutputDeviceManager.registerContext(this.audioCtx, 'equalizer');",
+    "replace": "void 0;" },
+
+  { "label": "ambient (Pomodoro) context never registered for routing",
+    "file": "public/js/app.js",
+    "find": "OutputDeviceManager.registerContext(this.audioCtx, 'ambient');",
+    "replace": "void 0;" },
+
+  { "label": "resolveDesired trusts the saved id without checking presence",
+    "file": "public/js/app.js",
+    "find": "if (this.devices.some(d => d.deviceId === this.desiredId)) return this.desiredId;",
+    "replace": "return this.desiredId;" },
+
+  { "label": "no label fallback when a deviceId has been re-salted",
+    "file": "public/js/app.js",
+    "find": "const byLabel = this.devices.find(d => d.label && d.label === this.desiredLabel);",
+    "replace": "const byLabel = null;" },
+
+  { "label": "apply() treats a missing device as a success",
+    "file": "public/js/app.js",
+    "find": "      const id = this.resolveDesired();\n      if (id === null) {",
+    "replace": "      const id = this.resolveDesired();\n      if (false) {" },
+
+  { "label": "a late context is force-routed to a device that is not present",
+    "file": "public/js/app.js",
+    "find": "      if (id !== null && typeof ctx.setSinkId === 'function') {\n        Promise.resolve(ctx.setSinkId(id))",
+    "replace": "      if (typeof ctx.setSinkId === 'function') {\n        Promise.resolve(ctx.setSinkId(id))" },
+
+  { "label": "pushSink skips every registered context",
+    "file": "public/js/app.js",
+    "find": "      this.contexts.forEach(({ ctx, name }) => {",
+    "replace": "      [].forEach(({ ctx, name }) => {" },
+
+  { "label": "pushSink reports success even when no layer answered",
+    "file": "public/js/app.js",
+    "find": "return { any: layers.length > 0, layers, error };",
+    "replace": "return { any: true, layers, error };" },
+
+  { "label": "routingBlocked never fires, so the dead end is never explained",
+    "file": "public/js/app.js",
+    "find": "return this.graphActive() && !this.canSinkContext();",
+    "replace": "return false;" },
+
+  { "label": "devicechange acted on immediately instead of debounced",
+    "file": "public/js/app.js",
+    "find": "this._debounce = setTimeout(() => this.handleDeviceChange(), 400);",
+    "replace": "this.handleDeviceChange();" },
+
+  { "label": "first scan reports every existing device as newly arrived",
+    "file": "public/js/app.js",
+    "find": "      if (this._seeded && this.knownIds) {",
+    "replace": "      if (this.knownIds || (this.knownIds = new Set())) {" },
+
+  { "label": "non-audiooutput devices kept in the list",
+    "file": "public/js/app.js",
+    "find": "const outs = (list || []).filter(d => d && d.kind === 'audiooutput');",
+    "replace": "const outs = (list || []).filter(d => !!d);" },
+
+  { "label": "the system-default device row is dropped as a placeholder",
+    "file": "public/js/app.js",
+    "find": "this.devices = outs.filter(d => d.deviceId !== undefined && d.deviceId !== null);",
+    "replace": "this.devices = outs.filter(d => !!d.deviceId);" },
+
+  { "label": "auto-follow ignores the user's preference",
+    "file": "public/js/app.js",
+    "find": "      if (this.autoFollow && fresh.length) {",
+    "replace": "      if (fresh.length) {" },
+
+  { "label": "auto-follow chases the Windows default/communications aliases",
+    "file": "public/js/app.js",
+    "find": ".filter(d => d && d.deviceId !== 'default' && d.deviceId !== 'communications');",
+    "replace": ".filter(d => !!d);" },
+
+  { "label": "headphones no longer preferred among newly arrived devices",
+    "file": "public/js/app.js",
+    "find": "      return headphone || real[0];",
+    "replace": "      return real[0];" },
+
+  { "label": "a disconnect forgets the requested device",
+    "file": "public/js/app.js",
+    "find": "        toast('Output device disconnected — back on the system default.');",
+    "replace": "        this.desiredId = ''; this.desiredLabel = ''; toast('Output device disconnected — back on the system default.');" },
+
+  { "label": "a reconnected device is never re-routed to",
+    "file": "public/js/app.js",
+    "find": "      if (this.desiredId && wanted !== null && wanted !== this.activeId) {",
+    "replace": "      if (false) {" },
+
+  { "label": "the salted deviceId is synced to the server instead of stored locally",
+    "file": "public/js/app.js",
+    "find": "Storage.setLocal('outputRouting', {",
+    "replace": "Storage.set('outputRouting', {" },
+
+  { "label": "repair seeks the element (which /api/stream transcode cannot serve)",
+    "file": "public/js/app.js",
+    "find": "            const p = audioPlayer.play();",
+    "replace": "            audioPlayer.currentTime = audioPlayer.currentTime + 0.001; const p = audioPlayer.play();" },
+
+  { "label": "repair leaves suspended contexts suspended",
+    "file": "public/js/app.js",
+    "find": "if (ctx.state === 'suspended' && typeof ctx.resume === 'function') ctx.resume().catch(() => {});",
+    "replace": "void ctx;" },
+
+  { "label": "repair restarts a paused track",
+    "file": "public/js/app.js",
+    "find": "        if (audioPlayer && !audioPlayer.paused) {",
+    "replace": "        if (audioPlayer) {" },
+
+  { "label": "repair never hands a stranded crossfade volume back",
+    "file": "public/js/app.js",
+    "find": "          CrossfadeManager.restoreIfLowered();",
+    "replace": "          void 0;" },
+
+  { "label": "sample-rate mismatch never detected",
+    "file": "public/js/app.js",
+    "find": "const bad = this.contexts.find(({ ctx }) => ctx.sampleRate && deviceRate && ctx.sampleRate !== deviceRate);",
+    "replace": "const bad = null;" },
+
+  { "label": "the sample-rate probe context is leaked",
+    "file": "public/js/app.js",
+    "find": "if (probe && typeof probe.close === 'function') probe.close().catch(() => {});",
+    "replace": "void probe;" },
+
+  { "label": "test tone envelope ramps to exactly zero",
+    "file": "public/js/app.js",
+    "find": "gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.24);",
+    "replace": "gain.gain.exponentialRampToValueAtTime(0, at + 0.24);" },
+
+  { "label": "test tone context leaked",
+    "file": "public/js/app.js",
+    "find": "setTimeout(() => { try { dying.close(); } catch (e) {} }, 1200);",
+    "replace": "void dying;" },
+
+  { "label": "test tone claims a route it could not target",
+    "file": "public/js/app.js",
+    "find": "          : '🔔 Test tone on whatever the system default is — this browser cannot target a device.');",
+    "replace": "          : '🔔 Test tone playing.');" },
+
+  { "label": "device labels interpolated into the markup unescaped",
+    "file": "public/js/app.js",
+    "find": "data-device-label=\"${esc(d.label || '')}\">",
+    "replace": "data-device-label=\"${d.label || ''}\">" },
+
+  { "label": "the OS default row is marked In use alongside the system row",
+    "file": "public/js/app.js",
+    "find": "const isActive = this.desiredId ? d.deviceId === activeResolved : false;",
+    "replace": "const isActive = this.desiredId ? d.deviceId === activeResolved : d.deviceId === 'default';" },
+
+  { "label": "the mono/3D conflict hint is always visible",
+    "file": "public/js/app.js",
+    "find": "if (hint) hint.style.display = this.mono && $('#spatialAudioToggle')?.checked ? '' : 'none';",
+    "replace": "if (hint) hint.style.display = this.mono ? '' : 'none';" },
+
+  { "label": "the label-permission mic track is held open",
+    "file": "public/js/app.js",
+    "find": "(stream.getTracks() || []).forEach(t => { try { t.stop(); } catch (e) {} });",
+    "replace": "void stream;" },
+
+  { "label": "balance/mono silently no-op when the engine is off",
+    "file": "public/js/app.js",
+    "find": "      if (!EqualizerManager.ensureAudioContext()) {",
+    "replace": "      if (false) {" },
+
+  { "label": "the panel shows a balance the audio is not using",
+    "file": "public/js/app.js",
+    "find": "if (bal) bal.value = String(Math.round(this.balance * 100));",
+    "replace": "if (bal) bal.value = '0';" },
+
+  { "label": "the saved device is not re-asserted on a cold start",
+    "file": "public/js/app.js",
+    "find": "this.refresh().then(() => { if (this.desiredId) this.apply(false); });",
+    "replace": "this.refresh();" },
+
+  { "label": "player volume and mute hidden from diagnostics",
+    "file": "public/js/app.js",
+    "find": "? `${Math.round((audioPlayer.volume || 0) * 100)}%${audioPlayer.muted ? ' (muted)' : ''}`",
+    "replace": "? 'n/a'" },
+
+  { "label": "diagnostics interpolate the requested label unescaped",
+    "file": "public/js/app.js",
+    "find": "${this.desiredId ? esc(this.desiredLabel || this.desiredId) : 'system default'}",
+    "replace": "${this.desiredId ? (this.desiredLabel || this.desiredId) : 'system default'}" }
+]

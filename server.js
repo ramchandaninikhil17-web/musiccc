@@ -1,13 +1,31 @@
 const express = require('express');
 const cors = require('cors');
-const { execFile, spawn } = require('child_process');
+const { execFile, spawn, spawnSync } = require('child_process');
 const path = require('path');
 const https = require('https');
 const http = require('http');
 const fs = require('fs');
 const os = require('os');
 const zlib = require('zlib');
-const ffmpegPath = require('ffmpeg-static');
+
+// ffmpeg path resolution with fallback to system ffmpeg
+let ffmpegPath;
+try {
+  ffmpegPath = require('ffmpeg-static');
+} catch (e) {
+  ffmpegPath = null;
+}
+if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
+  // Try system ffmpeg
+  const check = spawnSync(process.platform === 'win32' ? 'where' : 'which', ['ffmpeg'], { windowsHide: true });
+  if (check && check.status === 0 && check.stdout) {
+    ffmpegPath = check.stdout.toString().trim().split(/\r?\n/)[0];
+    console.log(`[MusicFlow] ✅ Using system ffmpeg: ${ffmpegPath}`);
+  } else {
+    ffmpegPath = 'ffmpeg'; // last resort, hope it's in PATH
+    console.warn('[MusicFlow] ⚠️ ffmpeg-static not found, falling back to system ffmpeg');
+  }
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -253,6 +271,32 @@ function setCache(key, data) {
     searchCache.delete(firstKey);
   }
   searchCache.set(key, { data, ts: Date.now() });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Audio URL Cache — YouTube CDN URLs expire after ~6h                */
+/* ------------------------------------------------------------------ */
+const audioUrlCache = new Map();
+const AUDIO_URL_TTL = 1000 * 60 * 180; // 3 hours — well before 6h expiry
+
+function getCachedAudioUrl(videoId, quality) {
+  const key = `${videoId}_${quality}`;
+  const item = audioUrlCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.ts > AUDIO_URL_TTL) {
+    audioUrlCache.delete(key);
+    return null;
+  }
+  return item.url;
+}
+
+function setCachedAudioUrl(videoId, quality, url) {
+  const key = `${videoId}_${quality}`;
+  if (audioUrlCache.size > 200) {
+    const firstKey = audioUrlCache.keys().next().value;
+    audioUrlCache.delete(firstKey);
+  }
+  audioUrlCache.set(key, { url, ts: Date.now() });
 }
 
 // Concurrency limiter for fast parallel tasks
@@ -669,6 +713,7 @@ const httpsAgent = new https.Agent({
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';
+  const isRetry = req.query.retry ? parseInt(req.query.retry, 10) : 0;
 
   if (!isYouTubeId(videoId)) {
     return res.status(400).json({ error: 'Invalid YouTube ID for yt-dlp stream' });
@@ -679,19 +724,40 @@ app.get('/api/stream/:videoId', async (req, res) => {
     high: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
   };
 
-  // Tier 1: Try direct audio URL extraction via yt-dlp
-  try {
-    const audioUrl = await runYtDlp([
-      `https://www.youtube.com/watch?v=${videoId}`,
-      '-f', formatMap[quality] || formatMap.high,
-      '-g', '--no-warnings',
-    ], 45000);
-
-    if (audioUrl && audioUrl.startsWith('http')) {
-      return fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
+  // Check cached audio URL first (skip on retry to force fresh extraction)
+  if (!isRetry) {
+    const cachedUrl = getCachedAudioUrl(videoId, quality);
+    if (cachedUrl) {
+      try {
+        return fetchAndProxyAudio(cachedUrl, req, res, videoId, 0);
+      } catch (err) {
+        // Cached URL may have expired, continue to fresh extraction
+        audioUrlCache.delete(`${videoId}_${quality}`);
+      }
     }
-  } catch (err) {
-    console.warn(`[Stream Tier 1 Warning for ${videoId}]`, err.message);
+  }
+
+  // Tier 1: Try direct audio URL extraction via yt-dlp (with retry)
+  const maxTier1Attempts = isRetry ? 1 : 2;
+  for (let attempt = 0; attempt < maxTier1Attempts; attempt++) {
+    try {
+      const audioUrl = await runYtDlp([
+        `https://www.youtube.com/watch?v=${videoId}`,
+        '-f', formatMap[quality] || formatMap.high,
+        '-g', '--no-warnings',
+      ], 90000);
+
+      if (audioUrl && audioUrl.startsWith('http')) {
+        setCachedAudioUrl(videoId, quality, audioUrl);
+        return fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
+      }
+    } catch (err) {
+      console.warn(`[Stream Tier 1 Attempt ${attempt + 1} for ${videoId}]`, err.message);
+      if (attempt < maxTier1Attempts - 1) {
+        // Brief pause before retry
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
   }
 
   // Tier 2: Try direct stdout pipe via yt-dlp
@@ -746,6 +812,7 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0, isF
       method: 'GET',
       headers,
       agent: isHttps ? httpsAgent : undefined,
+      timeout: 30000, // 30s connection timeout to prevent hung sockets
     };
 
     const proxyReq = protocol.request(options, (proxyRes) => {
@@ -760,6 +827,11 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0, isF
       if (!proxyRes.statusCode || proxyRes.statusCode >= 400) {
         console.warn(`[Stream Proxy] CDN HTTP ${proxyRes.statusCode}, falling back...`);
         proxyRes.resume();
+        // Invalidate cached URL on 403/410 (expired)
+        if (proxyRes.statusCode === 403 || proxyRes.statusCode === 410) {
+          audioUrlCache.delete(`${videoId}_high`);
+          audioUrlCache.delete(`${videoId}_low`);
+        }
         return giveUp(`CDN HTTP ${proxyRes.statusCode}`);
       }
 
@@ -784,6 +856,13 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0, isF
         // the connection rather than serve a silently truncated track.
         try { res.destroy(); } catch (e) {}
       });
+    });
+
+    // Socket timeout: if the CDN connection hangs, abort and fall back
+    proxyReq.on('timeout', () => {
+      console.warn(`[Stream Proxy] Socket timeout for ${videoId}`);
+      proxyReq.destroy();
+      giveUp('socket timeout');
     });
 
     proxyReq.on('error', (err) => {
@@ -887,21 +966,70 @@ function streamViaPipeFallback(videoId, req, res) {
 }
 
 // Tier 3: Serverless Piped / Invidious API Fallback (Works on Vercel / Cloud Functions with 0 binaries!)
+// Dynamic Invidious instance discovery with fallback to hardcoded list
+let cachedInvidiousInstances = null;
+let invidiousInstanceFetchedAt = 0;
+const INVIDIOUS_INSTANCE_TTL = 1000 * 60 * 60; // refresh every hour
+
+async function getInvidiousInstances() {
+  if (cachedInvidiousInstances && (Date.now() - invidiousInstanceFetchedAt < INVIDIOUS_INSTANCE_TTL)) {
+    return cachedInvidiousInstances;
+  }
+  try {
+    const data = await new Promise((resolve, reject) => {
+      const r = https.get('https://api.invidious.io/instances.json?sort_by=health', {
+        timeout: 5000,
+        headers: { 'User-Agent': 'Mozilla/5.0 MusicFlow-Server' },
+      }, (resp) => {
+        if (!resp.statusCode || resp.statusCode >= 400) { resp.resume(); return reject(new Error(`HTTP ${resp.statusCode}`)); }
+        let body = '';
+        resp.setEncoding('utf8');
+        resp.on('data', c => { body += c; if (body.length > 2 * 1024 * 1024) { r.destroy(); reject(new Error('too large')); } });
+        resp.on('end', () => { try { resolve(JSON.parse(body)); } catch (e) { reject(e); } });
+        resp.on('error', reject);
+      });
+      r.on('error', reject);
+      r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
+    });
+    // Filter for instances with API enabled and HTTPS
+    const instances = data
+      .filter(([, info]) => info && info.api === true && info.type === 'https' && info.uri)
+      .slice(0, 8)
+      .map(([, info]) => info.uri);
+    if (instances.length > 0) {
+      cachedInvidiousInstances = instances;
+      invidiousInstanceFetchedAt = Date.now();
+      console.log(`[MusicFlow] ✅ Fetched ${instances.length} Invidious instances`);
+      return instances;
+    }
+  } catch (err) {
+    console.warn('[MusicFlow] ⚠️ Could not fetch Invidious instances:', err.message);
+  }
+  // Fallback hardcoded list
+  return [
+    'https://vid.puffyan.us',
+    'https://invidious.snopyta.org',
+    'https://yewtu.be',
+    'https://inv.nadeko.net',
+  ];
+}
+
 async function streamViaServerlessApi(videoId, req, res) {
   if (res.headersSent || res.writableEnded) return;
 
+  // Build API list from dynamic Invidious instances + Piped
+  const invidiousHosts = await getInvidiousInstances();
   const apis = [
-    `https://invidious.privacydev.net/api/v1/videos/${videoId}`,
-    `https://yewtu.be/api/v1/videos/${videoId}`,
-    `https://inv.nadeko.net/api/v1/videos/${videoId}`,
+    ...invidiousHosts.map(host => `${host}/api/v1/videos/${videoId}`),
     `https://pipedapi.kavin.rocks/streams/${videoId}`,
     `https://api.piped.video/streams/${videoId}`,
+    `https://pipedapi.adminforge.de/streams/${videoId}`,
   ];
 
   for (const apiUrl of apis) {
     try {
       const data = await new Promise((resolve, reject) => {
-        const r = https.get(apiUrl, { timeout: 6000, agent: httpsAgent }, (resp) => {
+        const r = https.get(apiUrl, { timeout: 8000, agent: httpsAgent }, (resp) => {
           if (!resp.statusCode || resp.statusCode >= 400) {
             resp.resume();
             return reject(new Error(`HTTP ${resp.statusCode}`));
@@ -1679,6 +1807,49 @@ app.post('/api/user-data', async (req, res) => {
   } catch (err) {
     console.error('[UserData Save Error]', err.message);
     res.status(500).json({ error: 'Failed to save data' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/archive-session — Archive current session for restart   */
+/* ------------------------------------------------------------------ */
+const archivesDir = path.join(dataDir, 'archives');
+
+app.post('/api/archive-session', async (req, res) => {
+  const sessionData = req.body;
+  if (!sessionData || typeof sessionData !== 'object') {
+    return res.status(400).json({ error: 'Body must be a JSON object' });
+  }
+
+  try {
+    if (!fs.existsSync(archivesDir)) {
+      fs.mkdirSync(archivesDir, { recursive: true });
+    }
+
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const archiveFile = path.join(archivesDir, `session_${timestamp}.json`);
+    const archivePayload = {
+      archivedAt: new Date().toISOString(),
+      ...sessionData,
+    };
+
+    await fs.promises.writeFile(archiveFile, JSON.stringify(archivePayload, null, 2), 'utf8');
+
+    // Clean old archives (keep last 20)
+    try {
+      const files = fs.readdirSync(archivesDir)
+        .filter(f => f.startsWith('session_') && f.endsWith('.json'))
+        .sort()
+        .reverse();
+      for (const old of files.slice(20)) {
+        try { fs.unlinkSync(path.join(archivesDir, old)); } catch (e) {}
+      }
+    } catch (e) {}
+
+    res.json({ success: true, archiveFile: path.basename(archiveFile) });
+  } catch (err) {
+    console.error('[Archive Session Error]', err.message);
+    res.status(500).json({ error: 'Failed to archive session' });
   }
 });
 
