@@ -59,31 +59,27 @@ app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 
 /* ------------------------------------------------------------------ */
 /*  Standard extractor arguments for reliable local YouTube access     */
 /* ------------------------------------------------------------------ */
-const YOUTUBE_ANDROID_USER_AGENT = 'com.google.android.youtube/19.29.37 (Linux; U; Android 11) gzip';
+// NO explicit --extractor-args player_client override. As of mid-2026 YouTube
+// gates the android, web, tv and ios player clients behind PO tokens / SOCS
+// cookies — requesting them without a token yields "The page needs to be
+// reloaded" or a degraded 360p-only ladder. Letting yt-dlp pick its own
+// default client (currently visionos) returns the full DASH ladder from 144p
+// to 4K without any tokens and adapts automatically when yt-dlp ships a new
+// client strategy in future updates.
 const BASE_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
   '--no-playlist',
-  '--extractor-args', 'youtube:player_client=android,web,tv'
 ];
 
-// Video downloads: which YouTube "player_client" we ask through decides whether
-// the full high-res DASH ladder is even visible. Since 2024 YouTube requires a
-// per-request "PO token" for the `web` client — without one it hands back only a
-// degraded ~360p rung, which is exactly why "every resolution downloads the same
-// 360p file" even with a fresh yt-dlp. The `tv` and `ios` clients still expose
-// the full ladder up to 4K WITHOUT a PO token, so they must come first; `web` is
-// kept only as a last-resort fallback. `android` is dropped here: it no longer
-// returns usable high-res video and only adds a failing round-trip. yt-dlp merges
-// the formats from every client it can reach, and --format-sort res (set on the
-// download) then picks the largest frame across all of them.
-// NOTE for tests: the fake ladder only collapses to 360p when `android` is FIRST,
-// so any tv/ios-first order keeps the enumeration tests green.
+// Video downloads use the same base args. yt-dlp's default client returns the
+// full high-res DASH ladder (up to 4K) without needing PO tokens or cookies.
+// --format-sort on the download call then picks the largest frame within the
+// requested height cap.
 const VIDEO_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
   '--no-playlist',
-  '--extractor-args', 'youtube:player_client=tv,ios,web'
 ];
 
 /* ------------------------------------------------------------------ */

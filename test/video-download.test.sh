@@ -58,18 +58,18 @@ streams() { "$FP" -v error -show_entries stream=codec_type -of csv=p=0 "$1" | tr
 vheight() { "$FP" -v error -select_streams v:0 -show_entries stream=height -of csv=p=0 "$1" | tr -d '\r\n'; }
 
 echo
-echo "Server config: video is enumerated through a high-res-capable client first"
-# The reported bug ("every resolution downloads the same 360p file") was caused by
-# asking YouTube through the `web` player_client first: since 2024 `web` needs a
-# per-request PO token and without one only exposes a ~360p rung. `tv`/`ios` still
-# expose the full 4K ladder without a token, so the video client list MUST lead
-# with one of them (never `web` or the now-dead `android`). This is a static guard
-# — the fake ladder can't tell these clients apart, so pin the ordering here.
-vc=$(awk '/const VIDEO_YTDLP_ARGS/{f=1} f&&/player_client=/{print; exit}' "$SRC/server.js" \
-  | sed -n 's/.*player_client=\([a-z_,]*\).*/\1/p')
-first_vc="${vc%%,*}"
-check "$([ "$first_vc" = "tv" ] || [ "$first_vc" = "ios" ] && echo 1)" \
-  "video client list leads with tv/ios, not PO-token-gated web or dead android" "clients=$vc"
+echo "Server config: no explicit player_client override (yt-dlp uses its default)"
+# As of mid-2026 YouTube gates android, web, tv and ios player clients behind
+# PO tokens / SOCS cookies. Specifying any of them without a token causes
+# "The page needs to be reloaded" or a degraded 360p-only ladder. yt-dlp's
+# default client (currently visionos) returns the full DASH ladder without
+# tokens. The server must NOT set an explicit player_client override.
+has_override=$(grep -c 'player_client=' "$SRC/server.js" | tr -d '\r')
+# Only comments should mention player_client, never actual args arrays.
+active_override=$(awk '/^[[:space:]]*(const|let|var).*YTDLP_ARGS/,/\]/' "$SRC/server.js" \
+  | grep -c 'player_client=' | tr -d '\r')
+check "$([ "$active_override" = "0" ] && echo 1)" \
+  "no explicit player_client in YTDLP_ARGS (yt-dlp uses default)" "active_overrides=$active_override"
 
 echo
 echo "Real video source"
@@ -143,26 +143,13 @@ check "$([ "$r3hdr" = "720" ] && echo 1)" "X-Video-Height reports the true 720" 
 check "$([ "$r3req" = "1440" ] && echo 1)" "X-Video-Requested preserves the 1440 ask" "req=$r3req"
 
 echo
-echo "4K is visible AND downloadable even though the android client under-reports it"
-# The reported bug: a video that plays in 4K on YouTube showed "best is 360p".
-# Cause: the android player_client (BASE_YTDLP_ARGS) only exposes a ~360p rung,
-# while the web client (VIDEO_YTDLP_ARGS) exposes the full DASH ladder. Enumerate
-# with the wrong client and "available" != "downloadable". First prove the fake
-# actually behaves that way, otherwise the guard below would be hollow:
-amax=$(SMART_FFMPEG="$FF" "$RUN/yt-dlp" "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
-  --dump-json --extractor-args "youtube:player_client=android,web,tv" \
-  | grep -oE '"height":[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
-wmax=$(SMART_FFMPEG="$FF" "$RUN/yt-dlp" "https://www.youtube.com/watch?v=dQw4w9WgXcQ" \
-  --dump-json --extractor-args "youtube:player_client=web,tv,android" \
-  | grep -oE '"height":[0-9]+' | grep -oE '[0-9]+' | sort -n | tail -1)
-check "$([ "$amax" = "360" ] && echo 1)" "android client only sees 360p for the 4K track" "amax=$amax"
-check "$([ "$wmax" = "2160" ] && echo 1)" "web client sees the full 2160p ladder" "wmax=$wmax"
-
-# The server MUST enumerate with the web client, so /api/formats reports the real
-# 4K ceiling — reverting it to the android client makes this drop to 360.
+echo "4K is visible AND downloadable via the default client (no PO token needed)"
+# The server uses yt-dlp's default client (no explicit player_client override),
+# which returns the full DASH ladder. /api/formats must report the real 4K
+# ceiling so available == downloadable.
 curl -s "localhost:$PORT/api/formats/dQw4w9WgXcQ" -o /tmp/f4.json
 f4max=$(tr -d ' ' < /tmp/f4.json | grep -o '"maxHeight":[0-9]*' | grep -o '[0-9]*')
-check "$([ "$f4max" = "2160" ] && echo 1)" "/api/formats enumerates via web client (2160, not the android 360)" "maxHeight=$f4max"
+check "$([ "$f4max" = "2160" ] && echo 1)" "/api/formats reports 2160 (full ladder via default client)" "maxHeight=$f4max"
 
 # ...and a 4K request downloads a real 2160p file: the clamp must not cap it to 360.
 get "/api/download/dQw4w9WgXcQ?format=video&quality=2160&title=Song" /tmp/r4.h /tmp/r4.bin

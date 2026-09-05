@@ -3994,6 +3994,7 @@
     toast(`⏳ Preparing ${isVideo ? 'video' : 'MP3'} download for "${(song.title || 'track').slice(0, 25)}..."`);
 
     let objectUrl = null;
+    let progressToast = null;
     const downloadController = new AbortController();
     const downloadTimeout = setTimeout(() => downloadController.abort(), isVideo ? 600000 : 180000);
 
@@ -4019,7 +4020,67 @@
         throw new Error(detail);
       }
 
-      const blob = await response.blob();
+      // --- Download with progress bar ---
+      const contentLength = parseInt(response.headers.get('Content-Length') || '0', 10);
+      const trackLabel = (song.title || 'track').slice(0, 30);
+
+      // Build a persistent progress toast
+      progressToast = document.createElement('div');
+      progressToast.className = 'toast dl-progress-toast';
+      progressToast.innerHTML =
+        `<div class="dl-progress-info">` +
+          `<span class="dl-progress-title">⬇️ ${trackLabel}</span>` +
+          `<span class="dl-progress-pct">0%</span>` +
+        `</div>` +
+        `<div class="dl-progress-track"><div class="dl-progress-fill"></div></div>` +
+        `<div class="dl-progress-size"></div>`;
+      if (toastContainer) toastContainer.appendChild(progressToast);
+
+      const pctEl = progressToast.querySelector('.dl-progress-pct');
+      const fillEl = progressToast.querySelector('.dl-progress-fill');
+      const sizeEl = progressToast.querySelector('.dl-progress-size');
+
+      const fmtBytes = (b) => {
+        if (b < 1024) return b + ' B';
+        if (b < 1048576) return (b / 1024).toFixed(1) + ' KB';
+        return (b / 1048576).toFixed(1) + ' MB';
+      };
+
+      let blob;
+      if (response.body && typeof response.body.getReader === 'function' && contentLength > 0) {
+        const reader = response.body.getReader();
+        const chunks = [];
+        let received = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          chunks.push(value);
+          received += value.length;
+          const pct = Math.min(100, Math.round((received / contentLength) * 100));
+          if (pctEl) pctEl.textContent = pct + '%';
+          if (fillEl) fillEl.style.width = pct + '%';
+          if (sizeEl) sizeEl.textContent = fmtBytes(received) + ' / ' + fmtBytes(contentLength);
+        }
+        // Mark 100% before assembling blob
+        if (pctEl) pctEl.textContent = '100%';
+        if (fillEl) fillEl.style.width = '100%';
+        if (sizeEl) sizeEl.textContent = fmtBytes(received) + ' / ' + fmtBytes(contentLength);
+        blob = new Blob(chunks, { type: response.headers.get('Content-Type') || '' });
+      } else {
+        // Fallback: no Content-Length or no ReadableStream — indeterminate progress
+        if (fillEl) { fillEl.style.width = '100%'; fillEl.style.opacity = '0.4'; }
+        if (pctEl) pctEl.textContent = '⏳';
+        if (sizeEl) sizeEl.textContent = 'downloading…';
+        blob = await response.blob();
+        if (pctEl) pctEl.textContent = '100%';
+        if (fillEl) { fillEl.style.width = '100%'; fillEl.style.opacity = '1'; }
+        if (sizeEl) sizeEl.textContent = fmtBytes(blob.size);
+      }
+
+      // Dismiss progress toast with a brief success flash
+      if (pctEl) pctEl.textContent = '✅';
+      setTimeout(() => { progressToast.classList.add('removing'); setTimeout(() => progressToast.remove(), 300); }, 1500);
+
       if (!blob || blob.size === 0) throw new Error('The server returned an empty file');
 
       // If the server reports the track carried no real video stream, what we got
@@ -4066,6 +4127,8 @@
       }
     } catch (err) {
       clearTimeout(downloadTimeout);
+      // Dismiss progress bar on error
+      if (progressToast) { try { progressToast.remove(); } catch(e) {} progressToast = null; }
       console.warn('[download]', err);
       const isTimeout = err.name === 'AbortError';
       const msg = isTimeout ? `Download timed out (${isVideo ? '10' : '3'} min)` : (err.message || 'unknown error');
