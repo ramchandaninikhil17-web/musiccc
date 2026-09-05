@@ -31,6 +31,7 @@ run "Search suggest (logic)"   node test/search-suggest.test.js
 run "Browse & discovery"       node test/browse-discovery.test.js
 run "Voice assistant (logic)"  node test/voice.test.js
 run "Download API (end-to-end)" bash test/api-download.test.sh
+run "Video download (end-to-end)" bash test/video-download.test.sh
 
 # The client test drives the real app.js code against a real server, so it needs
 # one running first.
@@ -46,7 +47,7 @@ cp -r "$ROOT/lib" "$ROOT/public" "$RUN/"
 ln -s "$ROOT/node_modules" "$RUN/node_modules" 2>/dev/null || true
 cp "$ROOT/test/fixtures/fake-yt-dlp.sh" "$RUN/yt-dlp"; chmod +x "$RUN/yt-dlp"
 
-( cd "$RUN" && FAKE_FAIL_IDS=FAILFAILFA1 FAKE_DELAY_MS=500 PORT=$PORT \
+( cd "$RUN" && FAKE_FAIL_IDS=FAILFAILFA1 FAKE_DELAY_MS=500 NODE_ENV=test PORT=$PORT \
     node server.js > /tmp/mf-client.log 2>&1 ) &
 SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT

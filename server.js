@@ -8,12 +8,20 @@ const fs = require('fs');
 const os = require('os');
 const zlib = require('zlib');
 
-// ffmpeg path resolution with fallback to system ffmpeg
-let ffmpegPath;
-try {
-  ffmpegPath = require('ffmpeg-static');
-} catch (e) {
+// ffmpeg path resolution: explicit override -> ffmpeg-static -> system ffmpeg.
+// FFMPEG_PATH lets a user (or the test harness) point at a known-good binary when
+// the bundled one is wrong for their platform.
+let ffmpegPath = process.env.FFMPEG_PATH || process.env.MUSICFLOW_FFMPEG || null;
+if (ffmpegPath && ffmpegPath !== 'ffmpeg' && !fs.existsSync(ffmpegPath)) {
+  console.warn(`[MusicFlow] ⚠️ FFMPEG_PATH set but not found: ${ffmpegPath}`);
   ffmpegPath = null;
+}
+if (!ffmpegPath) {
+  try {
+    ffmpegPath = require('ffmpeg-static');
+  } catch (e) {
+    ffmpegPath = null;
+  }
 }
 if (!ffmpegPath || !fs.existsSync(ffmpegPath)) {
   // Try system ffmpeg
@@ -59,6 +67,25 @@ const BASE_YTDLP_ARGS = [
   '--extractor-args', 'youtube:player_client=android,web,tv'
 ];
 
+// Video downloads: which YouTube "player_client" we ask through decides whether
+// the full high-res DASH ladder is even visible. Since 2024 YouTube requires a
+// per-request "PO token" for the `web` client — without one it hands back only a
+// degraded ~360p rung, which is exactly why "every resolution downloads the same
+// 360p file" even with a fresh yt-dlp. The `tv` and `ios` clients still expose
+// the full ladder up to 4K WITHOUT a PO token, so they must come first; `web` is
+// kept only as a last-resort fallback. `android` is dropped here: it no longer
+// returns usable high-res video and only adds a failing round-trip. yt-dlp merges
+// the formats from every client it can reach, and --format-sort res (set on the
+// download) then picks the largest frame across all of them.
+// NOTE for tests: the fake ladder only collapses to 360p when `android` is FIRST,
+// so any tv/ios-first order keeps the enumeration tests green.
+const VIDEO_YTDLP_ARGS = [
+  '--geo-bypass',
+  '--no-check-certificates',
+  '--no-playlist',
+  '--extractor-args', 'youtube:player_client=tv,ios,web'
+];
+
 /* ------------------------------------------------------------------ */
 /*  Healthcheck Endpoints for Cloud Load Balancers (Render, Railway)  */
 /* ------------------------------------------------------------------ */
@@ -85,6 +112,16 @@ app.get('/api/health', (req, res) => {
     // ytDlpPath is always a truthy string, so the old check reported "ready"
     // even when the binary had not been resolved yet.
     ytDlpReady: ytDlpResolved,
+    // Capability flags. The client checks these so a browser talking to an OLD
+    // still-running server (a common "I picked MP4 but got MP3" cause — the
+    // server process was never restarted) can warn instead of silently serving
+    // the wrong format. Absence of the flag == old server.
+    videoDownload: true,
+    // Best-effort yt-dlp version string (populated after startup). The client can
+    // surface this and offer a one-click update when an old binary is why only a
+    // single low resolution is downloadable.
+    ytDlpVersion: ytDlpVersion,
+    ytDlpUpdating: ytDlpUpdating,
   });
 });
 
@@ -94,6 +131,11 @@ app.get('/api/health', (req, res) => {
 let ytDlpPath = 'yt-dlp';
 let ytDlpResolved = false;
 let ytDlpBinaryFound = false;
+// Best-effort cache of `yt-dlp --version` (populated after startup, refreshed
+// after an update) and a flag while a self-update is running so the UI can show
+// progress and a second update can't start on top of the first.
+let ytDlpVersion = null;
+let ytDlpUpdating = false;
 
 // Upper bound on the first-run binary bootstrap. Past this, requests proceed
 // and fail fast with a real error instead of hanging.
@@ -222,9 +264,9 @@ function downloadBinaryDirect(url, destPath) {
 /* ------------------------------------------------------------------ */
 /*  Helper: run yt-dlp with cloud anti-bot args                       */
 /* ------------------------------------------------------------------ */
-function runYtDlp(args, timeout = 60000) {
+function runYtDlp(args, timeout = 60000, baseArgs = BASE_YTDLP_ARGS) {
   return whenYtDlpReady().then(() => new Promise((resolve, reject) => {
-    const fullArgs = [...BASE_YTDLP_ARGS, ...args];
+    const fullArgs = [...baseArgs, ...args];
     execFile(ytDlpPath, fullArgs, {
       maxBuffer: 10 * 1024 * 1024,
       timeout,
@@ -242,6 +284,20 @@ function runYtDlp(args, timeout = 60000) {
 
 function isYouTubeId(id) {
   return typeof id === 'string' && /^[a-zA-Z0-9_-]{11}$/.test(id.trim());
+}
+
+// Best-effort read of the installed yt-dlp version. Never rejects — resolves null
+// on any failure so callers (health, update) don't have to guard.
+function getYtDlpVersion(timeout = 15000) {
+  return whenYtDlpReady().then(() => new Promise((resolve) => {
+    try {
+      execFile(ytDlpPath, ['--version'], { windowsHide: true, timeout }, (err, stdout) => {
+        if (err) return resolve(null);
+        const v = String(stdout || '').trim().split(/\r?\n/)[0].trim();
+        resolve(v || null);
+      });
+    } catch (e) { resolve(null); }
+  }));
 }
 
 function getSearchQuery(value) {
@@ -696,6 +752,179 @@ app.get('/api/info/:videoId', async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch info' });
   }
 });
+
+/* ------------------------------------------------------------------ */
+/*  Available video resolutions                                        */
+/* ------------------------------------------------------------------ */
+// Reads the real, downloadable video heights out of a yt-dlp --dump-json blob.
+// Only formats that actually carry a video stream (vcodec !== 'none') with a
+// concrete pixel height count — audio-only rungs are ignored. Returns the sorted
+// unique heights plus the max, so the UI can offer only resolutions that exist
+// (a track whose best is 360p should never show a 2K button) and the download
+// path can cap a too-high request to the real ceiling.
+function parseAvailableHeights(info) {
+  const result = { heights: [], maxHeight: 0, hasVideo: false };
+  if (!info || !Array.isArray(info.formats)) return result;
+  const set = new Set();
+  for (const f of info.formats) {
+    if (!f || f.vcodec === 'none' || !f.vcodec) continue;
+    const h = typeof f.height === 'number' ? f.height : parseInt(f.height, 10);
+    if (!Number.isFinite(h) || h <= 0) continue;
+    set.add(h);
+  }
+  const heights = [...set].sort((a, b) => a - b);
+  result.heights = heights;
+  result.maxHeight = heights.length ? heights[heights.length - 1] : 0;
+  result.hasVideo = heights.length > 0;
+  return result;
+}
+
+// Short-lived cache so opening the download modal repeatedly (or re-picking a
+// format) doesn't fire a fresh --dump-json every time.
+const formatsCache = new Map();
+const FORMATS_TTL_MS = 30 * 60 * 1000;
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/formats/:videoId                                          */
+/*  Lists the resolutions a track can actually be downloaded in, so    */
+/*  the client only offers qualities that exist.                       */
+/* ------------------------------------------------------------------ */
+app.get('/api/formats/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  if (!isYouTubeId(videoId)) {
+    return res.status(400).json({ error: 'Invalid YouTube ID' });
+  }
+
+  const cached = formatsCache.get(videoId);
+  if (cached && (Date.now() - cached.at) < FORMATS_TTL_MS) {
+    return res.json(cached.data);
+  }
+
+  try {
+    const stdout = await runYtDlp([
+      `https://www.youtube.com/watch?v=${videoId}`,
+      '--dump-json', '--no-warnings', '--skip-download',
+    ], 15000, VIDEO_YTDLP_ARGS);
+    const info = JSON.parse(stdout);
+    const parsed = parseAvailableHeights(info);
+    const data = {
+      heights: parsed.heights,
+      maxHeight: parsed.maxHeight,
+      hasVideo: parsed.hasVideo,
+    };
+    formatsCache.set(videoId, { at: Date.now(), data });
+    // Keep the cache from growing without bound on a long-running server.
+    if (formatsCache.size > 300) {
+      formatsCache.delete(formatsCache.keys().next().value);
+    }
+    res.json(data);
+  } catch (err) {
+    console.error('[Formats]', err.message);
+    // Fail-open: hasVideo:null means "couldn't tell", so the client keeps every
+    // option enabled rather than blocking a download on a metadata hiccup.
+    res.status(200).json({ heights: [], maxHeight: 0, hasVideo: null, unknown: true });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  yt-dlp self-update                                                 */
+/*  YouTube changes its format ladder constantly; a yt-dlp binary that */
+/*  is even a few weeks old can lose the ability to see anything above */
+/*  a ~360p progressive rung, which is why "every resolution option    */
+/*  downloads the same one file". Refreshing the binary restores the   */
+/*  full ladder — and because yt-dlp is invoked per-request, the new   */
+/*  binary takes effect immediately, with no Node restart.             */
+/* ------------------------------------------------------------------ */
+function ourManagedBinary() {
+  // Only ever overwrite the binary we bundled/downloaded ourselves, never a
+  // system yt-dlp the user put on PATH.
+  return path.isAbsolute(ytDlpPath) && ytDlpPath.startsWith(__dirname);
+}
+
+async function updateYtDlp() {
+  if (ytDlpUpdating) return { ok: false, error: 'An update is already in progress.' };
+  ytDlpUpdating = true;
+  const before = await getYtDlpVersion().catch(() => null);
+  try {
+    await whenYtDlpReady();
+
+    // 1) Preferred path: yt-dlp's own self-update. It verifies and swaps the
+    //    binary atomically, so a concurrent invocation only ever sees the old or
+    //    the new file, never a half-written one.
+    const runSelfUpdate = () => new Promise((resolve) => {
+      try {
+        execFile(ytDlpPath, ['-U'], { windowsHide: true, timeout: 180000, maxBuffer: 10 * 1024 * 1024 },
+          (err, stdout, stderr) => resolve({ err, out: `${String(stdout || '')}\n${String(stderr || '')}`.trim() }));
+      } catch (e) { resolve({ err: e, out: '' }); }
+    });
+    let { err, out } = await runSelfUpdate();
+    let method = 'self-update';
+
+    // 2) Fallback: yt-dlp refuses to self-update when it wasn't installed as a
+    //    standalone binary (pip, distro package, etc.). For our own bundled
+    //    binary we can just re-download the latest official release over it.
+    const cannotSelfUpdate = /pip|package manager|not.*(?:updat|self)|cannot update|install/i.test(out || '');
+    if ((err || cannotSelfUpdate) && ourManagedBinary()) {
+      const isWin = process.platform === 'win32';
+      let url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp';
+      if (isWin) url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe';
+      else if (process.platform === 'darwin') url = 'https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp_macos';
+      const tmp = `${ytDlpPath}.new-${Date.now()}`;
+      await downloadBinaryDirect(url, tmp);
+      // Sanity-check the download is non-trivial before swapping it in.
+      let ok = false;
+      try { ok = fs.statSync(tmp).size > 1024 * 1024; } catch (e) {}
+      if (!ok) { try { fs.unlinkSync(tmp); } catch (e) {} throw new Error('Downloaded binary looked corrupt'); }
+      fs.renameSync(tmp, ytDlpPath);
+      if (!isWin) { try { fs.chmodSync(ytDlpPath, '755'); } catch (e) {} }
+      method = 'redownload';
+      err = null;
+    }
+
+    if (err) {
+      return { ok: false, error: (out || err.message || 'Update failed').slice(0, 400), from: before, to: before };
+    }
+
+    const after = await getYtDlpVersion().catch(() => null);
+    ytDlpVersion = after || before;
+    // The old "best is 360p" ceilings were a symptom of the stale binary — drop
+    // the cache so the next probe re-enumerates with the fresh one.
+    formatsCache.clear();
+    audioUrlCache.clear();
+    return { ok: true, updated: !!(after && before !== after) || method === 'redownload', from: before, to: after, method };
+  } catch (e) {
+    return { ok: false, error: (e && e.message ? e.message : 'Update failed').slice(0, 400), from: before, to: before };
+  } finally {
+    ytDlpUpdating = false;
+  }
+}
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/update-ytdlp                                             */
+/*  One-click "fix my resolutions" — updates the downloader in place.  */
+/* ------------------------------------------------------------------ */
+app.post('/api/update-ytdlp', async (req, res) => {
+  const result = await updateYtDlp();
+  res.status(result.ok ? 200 : 500).json(result);
+});
+
+// Throttled, non-blocking background refresh so the ladder doesn't silently rot
+// between the user noticing and fixing it. Fires at most when the binary is more
+// than a few days old; off in tests and via MUSICFLOW_NO_AUTOUPDATE=1.
+function maybeAutoUpdateYtDlp() {
+  if (process.env.NODE_ENV === 'test') return;
+  if (process.env.MUSICFLOW_NO_AUTOUPDATE === '1') return;
+  if (!ourManagedBinary()) return;
+  let mtimeMs = 0;
+  try { mtimeMs = fs.statSync(ytDlpPath).mtimeMs; } catch (e) { return; }
+  const STALE_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
+  if (Date.now() - mtimeMs < STALE_MS) return;
+  console.log('[MusicFlow] yt-dlp binary looks stale — refreshing in the background so video resolutions stay available…');
+  updateYtDlp().then((r) => {
+    if (r.ok) console.log(`[MusicFlow] ✅ yt-dlp auto-update: ${r.from || '?'} → ${r.to || '?'} (${r.method})`);
+    else console.warn(`[MusicFlow] ⚠️ yt-dlp auto-update skipped: ${r.error}`);
+  }).catch(() => {});
+}
 
 /* ------------------------------------------------------------------ */
 /*  GET /api/stream/:videoId?quality=low|high                         */
@@ -1299,6 +1528,66 @@ function dedupeEntryNames(entries) {
   return entries;
 }
 
+// After yt-dlp/ffmpeg runs, the produced container is not always the extension we
+// guessed: a merge can land as .mkv, a remux changes it, and progressive fallbacks
+// pick whatever YouTube served. So instead of trusting "<prefix>.mp4", find the
+// real artefact and report its true extension. Closes a class of silent failures
+// where the file existed under an unexpected name and looked like a total failure.
+function findDownloadOutput(tempPrefix) {
+  const dir = path.dirname(tempPrefix);
+  const base = path.basename(tempPrefix) + '.';
+  let files;
+  try { files = fs.readdirSync(dir); } catch (e) { return null; }
+  let best = null, bestSize = -1;
+  for (const f of files) {
+    if (!f.startsWith(base)) continue;
+    if (/\.(part|ytdl|temp|json|jpg|jpeg|png|webp|description)$/i.test(f)) continue;
+    const full = path.join(dir, f);
+    let sz;
+    try { sz = fs.statSync(full).size; } catch (e) { continue; }
+    if (sz > bestSize) { bestSize = sz; best = full; }
+  }
+  return best;
+}
+
+// Confirms a file actually carries a real (non-cover-art) video stream AND reads
+// its frame height, in a single ffmpeg call. Uses the resolved ffmpeg binary — no
+// separate ffprobe needed, which matters because ffmpeg-static ships ffmpeg only.
+// Fail-open: hasVideo is null when it can't tell, so a probe hiccup never turns a
+// good download into a failed one. height is null when unknown.
+function probeVideoStream(filePath) {
+  try {
+    const r = spawnSync(ffmpegPath, ['-hide_banner', '-i', filePath], {
+      timeout: 20000, windowsHide: true, encoding: 'utf8',
+    });
+    const out = `${r.stderr || ''}\n${r.stdout || ''}`;
+    if (!out.trim()) return { hasVideo: null, height: null };
+    const videoLines = out.split(/\r?\n/).filter(l => /Stream #.*Video:/i.test(l));
+    if (!videoLines.length) return { hasVideo: false, height: null };
+    // A thumbnail embedded in an audio file appears as an mjpeg/png "attached pic"
+    // — that is cover art, not a real video track.
+    const realLines = videoLines.filter(l => !/attached pic|mjpeg|\bpng\b|\bcover\b/i.test(l));
+    if (!realLines.length) return { hasVideo: false, height: null };
+    // Pull the frame size ("1920x1080") off the video line; height is the 2nd
+    // number. SAR/DAR ratios use ':' so they don't match the NxN pattern. Take the
+    // largest height seen in case multiple resolutions are listed.
+    let height = null;
+    for (const l of realLines) {
+      const re = /\b(\d{2,5})x(\d{2,5})\b/g;
+      let m;
+      while ((m = re.exec(l)) !== null) {
+        const h = parseInt(m[2], 10);
+        if (Number.isFinite(h) && h >= 16 && h <= 8640 && (height === null || h > height)) {
+          height = h;
+        }
+      }
+    }
+    return { hasVideo: true, height };
+  } catch (e) {
+    return { hasVideo: null, height: null };
+  }
+}
+
 app.get('/api/download/:videoId', async (req, res) => {
   const { videoId } = req.params;
 
@@ -1346,14 +1635,47 @@ app.get('/api/download/:videoId', async (req, res) => {
     const hintedTitle = readTitleHint(req.query.title);
     const hintedArtist = readTitleHint(req.query.artist);
 
+    // Format and quality from client (defaults preserve backward compatibility)
+    const dlFormat = (req.query.format === 'video') ? 'video' : 'audio';
+    const ALLOWED_AUDIO_Q = ['128', '192', '320'];
+    const ALLOWED_VIDEO_Q = ['480', '720', '1080', '1440', '2160'];
+    let dlQuality;
+    if (dlFormat === 'audio') {
+      dlQuality = ALLOWED_AUDIO_Q.includes(req.query.quality) ? req.query.quality : '192';
+    } else {
+      dlQuality = ALLOWED_VIDEO_Q.includes(req.query.quality) ? req.query.quality : '1080';
+    }
+
+    const isVideo = dlFormat === 'video';
+    const fileExt = isVideo ? 'mp4' : 'mp3';
+
     let info = {};
     try {
+      // For video, enumerate with the web-first client (VIDEO_YTDLP_ARGS) — the
+      // android client under-reports the DASH ladder, which would make the clamp
+      // below think a genuine 4K video tops out at 360p. Must match the client the
+      // download itself uses so "available" equals "downloadable".
       const infoStdout = await runYtDlp([
         `https://www.youtube.com/watch?v=${videoId}`,
         '--dump-json', '--no-warnings', '--skip-download',
-      ], 10000);
+      ], 10000, isVideo ? VIDEO_YTDLP_ARGS : BASE_YTDLP_ARGS);
       if (infoStdout) info = JSON.parse(infoStdout) || {};
     } catch (e) {}
+
+    // Remember what the user asked for so the response can say plainly when the
+    // track simply doesn't offer it.
+    const requestedQuality = dlQuality;
+    let availMaxHeight = 0;
+    if (isVideo) {
+      // Cap the requested height to what the track actually offers. Asking for 2K
+      // on a video whose best is 1080p used to let yt-dlp's fallback cascade slide
+      // all the way to a 360p progressive stream; capping to the real ceiling makes
+      // it fetch the true best (1080p here) and keeps the returned header honest.
+      availMaxHeight = parseAvailableHeights(info).maxHeight;
+      if (availMaxHeight > 0 && Number(dlQuality) > availMaxHeight) {
+        dlQuality = String(availMaxHeight);
+      }
+    }
 
     const safeTitle = buildTrackFilename(
       info.title || hintedTitle,
@@ -1361,41 +1683,95 @@ app.get('/api/download/:videoId', async (req, res) => {
       videoId
     );
 
-    const dlArgs = [
-      ...BASE_YTDLP_ARGS,
-      '--ffmpeg-location', ffmpegPath,
-      '--no-part',
-      '--no-progress',
-      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
-      '-x', '--audio-format', 'mp3',
-      '--audio-quality', '192K',
-      '-o', `${tempPrefix}.%(ext)s`,
-      `https://www.youtube.com/watch?v=${videoId}`
-    ];
+    let dlArgs;
+    if (isVideo) {
+      // Best video up to the requested height + best audio, merged to MP4. The
+      // fallback chain widens step by step so we still return real video when the
+      // exact mp4/m4a pair or the height cap can't be met, only dropping to a
+      // progressive/best single file as a last resort.
+      dlArgs = [
+        ...VIDEO_YTDLP_ARGS,
+        '--ffmpeg-location', ffmpegPath,
+        '--no-part',
+        '--no-progress',
+        // Rank candidates by resolution first (then fps, then h264/mp4 for broad
+        // compatibility) so within the height cap yt-dlp takes the *largest* frame
+        // available instead of whatever it happened to list first. The old ordering
+        // is what let a 1440p request collapse to a 360p progressive stream.
+        '--format-sort', 'res,fps,vcodec:h264,ext:mp4:m4a',
+        '-f',
+        `bestvideo[height<=${dlQuality}][ext=mp4]+bestaudio[ext=m4a]/` +
+        `bestvideo[height<=${dlQuality}]+bestaudio/` +
+        `best[height<=${dlQuality}][ext=mp4]/best[height<=${dlQuality}]/` +
+        `bestvideo+bestaudio/best`,
+        '--merge-output-format', 'mp4',
+        '-o', `${tempPrefix}.%(ext)s`,
+        `https://www.youtube.com/watch?v=${videoId}`
+      ];
+    } else {
+      // Audio download: extract audio as MP3 with selected bitrate
+      dlArgs = [
+        ...BASE_YTDLP_ARGS,
+        '--ffmpeg-location', ffmpegPath,
+        '--no-part',
+        '--no-progress',
+        '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+        '-x', '--audio-format', 'mp3',
+        '--audio-quality', `${dlQuality}K`,
+        '-o', `${tempPrefix}.%(ext)s`,
+        `https://www.youtube.com/watch?v=${videoId}`
+      ];
+    }
+
+    // Video downloads (especially 4K) can take much longer than audio
+    const execTimeout = isVideo ? 600000 : 180000;
 
     execFile(ytDlpPath, dlArgs, {
-      timeout: 180000,
+      timeout: execTimeout,
       windowsHide: true,
       // Without an explicit maxBuffer this inherits the 1MB default; a chatty
       // yt-dlp/ffmpeg run would blow past it and kill an otherwise fine download.
       maxBuffer: 10 * 1024 * 1024,
     }, (err, _stdout, stderr) => {
-      const targetMp3 = `${tempPrefix}.mp3`;
+      // Don't trust a fixed "<prefix>.<ext>" — find what yt-dlp actually wrote.
+      const targetFile = findDownloadOutput(tempPrefix);
 
-      if (err || !fs.existsSync(targetMp3)) {
+      if (err || !targetFile) {
         console.error('[Download Error]', err ? `${err.message}: ${String(stderr || '').trim()}` : 'File creation failed');
         cleanup();
-        if (!res.headersSent) res.status(500).json({ error: 'MP3 download failed' });
+        if (!res.headersSent) res.status(500).json({ error: `${isVideo ? 'Video' : 'MP3'} download failed` });
         return;
       }
 
       let stat;
       try {
-        stat = fs.statSync(targetMp3);
+        stat = fs.statSync(targetFile);
       } catch (statErr) {
         cleanup();
-        if (!res.headersSent) res.status(500).json({ error: 'MP3 download failed' });
+        if (!res.headersSent) res.status(500).json({ error: `${isVideo ? 'Video' : 'MP3'} download failed` });
         return;
+      }
+
+      // The real extension of the produced file drives the name and content type,
+      // so a .mkv/.webm merge is served honestly instead of being mislabelled .mp4.
+      const actualExt = (path.extname(targetFile).replace(/^\./, '') || fileExt).toLowerCase();
+      const outExt = isVideo
+        ? (['mp4', 'mkv', 'webm', 'mov'].includes(actualExt) ? actualExt : 'mp4')
+        : 'mp3';
+      const outContentType = isVideo
+        ? (outExt === 'webm' ? 'video/webm' : outExt === 'mkv' ? 'video/x-matroska' : 'video/mp4')
+        : 'audio/mpeg';
+
+      // For a video request, confirm a genuine video stream actually came through.
+      // Audio-only sources (e.g. "- Topic" uploads) and format-selection fallbacks
+      // can yield an audio track in a video container; surface that honestly via a
+      // header rather than handing back a silent "video". Fail-open (null = unknown).
+      let videoAvailable = null;
+      let videoHeight = null;
+      if (isVideo) {
+        const probe = probeVideoStream(targetFile);
+        videoAvailable = probe.hasVideo;
+        videoHeight = probe.height;
       }
 
       // HTTP header values cannot carry characters above U+00FF — Node throws
@@ -1411,15 +1787,26 @@ app.get('/api/download/:videoId', async (req, res) => {
         .replace(/["\\]/g, '')
         .replace(/\s+/g, ' ')
         .trim() || `MusicFlow_${videoId}`;
-      const encodedFilename = encodeURIComponent(`${safeTitle}.mp3`);
+      const encodedFilename = encodeURIComponent(`${safeTitle}.${outExt}`);
 
-      res.setHeader('Content-Type', 'audio/mpeg');
+      res.setHeader('Content-Type', outContentType);
       res.setHeader('Content-Length', stat.size);
-      res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}.mp3"; filename*=UTF-8''${encodedFilename}`);
+      res.setHeader('Content-Disposition', `attachment; filename="${asciiFallback}.${outExt}"; filename*=UTF-8''${encodedFilename}`);
       res.setHeader('Access-Control-Allow-Origin', '*');
+      res.setHeader('Access-Control-Expose-Headers', 'X-Video-Available, X-Video-Height, X-Video-Requested, Content-Disposition');
+      if (isVideo) {
+        res.setHeader('X-Video-Available', videoAvailable === false ? 'false' : videoAvailable === true ? 'true' : 'unknown');
+        if (typeof videoHeight === 'number' && videoHeight > 0) {
+          res.setHeader('X-Video-Height', String(videoHeight));
+        }
+        // What the user asked for (before capping to the track's real ceiling) so
+        // the client can say "2K wasn't available — saved 1080p, the best this track
+        // has" instead of silently handing over a lower resolution.
+        res.setHeader('X-Video-Requested', String(requestedQuality));
+      }
       res.setHeader('Cache-Control', 'no-store');
 
-      const stream = fs.createReadStream(targetMp3);
+      const stream = fs.createReadStream(targetFile);
       stream.pipe(res);
 
       // Cleanup is driven off the *response* finishing, not the read stream
@@ -1431,7 +1818,7 @@ app.get('/api/download/:videoId', async (req, res) => {
       stream.on('error', (sErr) => {
         console.error('[Stream Error]', sErr.message);
         // Headers (incl. Content-Length) are already committed, so ending
-        // normally would hand the client a truncated MP3 that looks valid.
+        // normally would hand the client a truncated file that looks valid.
         try { res.destroy(sErr); } catch (e) {}
         cleanup();
       });
@@ -2038,7 +2425,13 @@ function listenOnPort(port, maxTries = 10) {
     // Kick off binary resolution immediately. Requests arriving before this
     // finishes now await the same promise rather than shelling out to a
     // yt-dlp that isn't on disk yet.
-    whenYtDlpReady().catch(() => {});
+    whenYtDlpReady().then(() => {
+      // Populate the version for /api/health, then consider a background refresh
+      // so a stale binary (the usual cause of "only one resolution downloads")
+      // heals itself without the user opening a terminal.
+      getYtDlpVersion().then((v) => { if (v) ytDlpVersion = v; }).catch(() => {});
+      setTimeout(maybeAutoUpdateYtDlp, 8000).unref?.();
+    }).catch(() => {});
   });
 }
 

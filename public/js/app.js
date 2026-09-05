@@ -581,6 +581,7 @@
     SuggestionEngine.init();
     BrowseTabs.init();
     VoiceAssistant.init();
+    DownloadOptionsManager.init();
 
     // Instant cache hydration: render home from localStorage before network
     const cachedRecs = Storage.get('cached_recommendations', null);
@@ -3924,7 +3925,7 @@
   // produced "Track.mp3", "Track (1).mp3", "Track (2).mp3" in the user's folder —
   // in that case the title we already have on the card is strictly better.
   function isPlaceholderName(name) {
-    const stem = String(name || '').replace(/\.mp3$/i, '').trim();
+    const stem = String(name || '').replace(/\.(mp3|mp4|m4a|webm|mkv|mov)$/i, '').trim();
     return !stem || /^(track|video|audio|musicflow_track|untitled|unknown)$/i.test(stem) ||
       /^[a-zA-Z0-9_-]{11}$/.test(stem);
   }
@@ -3939,7 +3940,17 @@
     return plain ? plain[1].trim() : null;
   }
 
-  async function downloadSong(song, isRetry = false) {
+  // Human label for a video height. 1440→"2K", 2160→"4K", everything else "<h>p".
+  // Used in download toasts so the user sees the same wording as the picker.
+  function qualityLabel(height) {
+    const h = parseInt(height, 10);
+    if (!Number.isFinite(h) || h <= 0) return 'video';
+    if (h >= 2160) return '4K (2160p)';
+    if (h >= 1440) return '2K (1440p)';
+    return `${h}p`;
+  }
+
+  async function downloadSong(song, isRetry = false, dlFormat, dlQuality) {
     if (!song || !song.id) { toast('No song selected'); return; }
     if (song.isLocal) {
       const url = await LocalFileManager.resolveStreamUrl(song);
@@ -3960,20 +3971,38 @@
       toast('Downloads are available for YouTube search results.');
       return;
     }
+
+    // If no format/quality specified, open the download options modal
+    if (!dlFormat && !isRetry) {
+      DownloadOptionsManager.open(song);
+      return;
+    }
+
+    // Use provided or defaults
+    const format = dlFormat || 'audio';
+    const quality = dlQuality || (format === 'audio' ? '192' : '1080');
+
     if (activeDownloads.has(song.id)) {
       toast('That download is already running.');
       return;
     }
 
     activeDownloads.add(song.id);
-    toast(`⏳ Preparing MP3 download for "${(song.title || 'track').slice(0, 25)}..."`);
+    const isVideo = format === 'video';
+    const ext = isVideo ? 'mp4' : 'mp3';
+    toast(`⏳ Preparing ${isVideo ? 'video' : 'MP3'} download for "${(song.title || 'track').slice(0, 25)}..."`);
 
     let objectUrl = null;
     const downloadController = new AbortController();
-    const downloadTimeout = setTimeout(() => downloadController.abort(), 180000);
+    const downloadTimeout = setTimeout(() => downloadController.abort(), isVideo ? 600000 : 180000);
 
     try {
-      const params = new URLSearchParams({ title: song.title || '', artist: song.channel || '' });
+      const params = new URLSearchParams({
+        title: song.title || '',
+        artist: song.channel || '',
+        format: format,
+        quality: quality,
+      });
       const response = await fetch(`/api/download/${encodeURIComponent(song.id)}?${params}`, {
         signal: downloadController.signal,
       });
@@ -3992,12 +4021,27 @@
       const blob = await response.blob();
       if (!blob || blob.size === 0) throw new Error('The server returned an empty file');
 
+      // If the server reports the track carried no real video stream, what we got
+      // is audio inside a video container. Still save it (better than nothing) but
+      // tell the user plainly instead of pretending it's a video.
+      const noVideo = isVideo && response.headers.get('X-Video-Available') === 'false';
+      // The true frame height of the saved file and what was originally requested,
+      // so we can confirm the resolution — or explain honestly when the track
+      // simply didn't offer the picked quality.
+      const actualHeight = isVideo ? parseInt(response.headers.get('X-Video-Height') || '', 10) : NaN;
+      const requestedHeight = isVideo ? parseInt(response.headers.get('X-Video-Requested') || '', 10) : NaN;
+
       const serverName = filenameFromDisposition(response.headers.get('Content-Disposition'));
       const localName = buildTrackFilename(song);
       let filename = (serverName && !isPlaceholderName(serverName))
         ? safeDownloadName(serverName)
         : localName;
-      if (!/\.mp3$/i.test(filename)) filename += '.mp3';
+      // Trust the container the server actually produced (mp4/webm/mkv/…), falling
+      // back to the requested ext. Strip any existing media extension first so we
+      // never emit "Song.mp3.mp4" or "Song.webm.mp4".
+      const serverExt = (/\.(mp4|mkv|webm|mov|m4a|mp3)$/i.exec(serverName || '') || [])[1];
+      const finalExt = (serverExt || ext).toLowerCase();
+      filename = filename.replace(/\.(mp4|mkv|webm|mov|m4a|mp3)$/i, '') + '.' + finalExt;
 
       objectUrl = URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -4006,12 +4050,24 @@
       document.body.appendChild(a);
       a.click();
       a.remove();
-      toast(`✅ Saved "${filename}" to your downloads.`);
+      if (noVideo) {
+        toast(`⚠️ No video available for this track — saved audio as ${finalExt.toUpperCase()}.`);
+      } else if (isVideo && Number.isFinite(actualHeight) && actualHeight > 0) {
+        // Report the resolution actually delivered, and flag when it fell short of
+        // the pick because that's the most the track had.
+        if (Number.isFinite(requestedHeight) && actualHeight < requestedHeight) {
+          toast(`⚠️ ${qualityLabel(requestedHeight)} wasn't available — saved ${qualityLabel(actualHeight)} (the best this track has).`);
+        } else {
+          toast(`✅ Saved "${filename}" in ${qualityLabel(actualHeight)}.`);
+        }
+      } else {
+        toast(`✅ Saved "${filename}" to your downloads.`);
+      }
     } catch (err) {
       clearTimeout(downloadTimeout);
       console.warn('[download]', err);
       const isTimeout = err.name === 'AbortError';
-      const msg = isTimeout ? 'Download timed out (3 min)' : (err.message || 'unknown error');
+      const msg = isTimeout ? `Download timed out (${isVideo ? '10' : '3'} min)` : (err.message || 'unknown error');
 
       if (!isRetry) {
         const toastEl = document.createElement('div');
@@ -4019,7 +4075,7 @@
         toastEl.innerHTML = `⚠️ Download failed: ${msg.length > 40 ? msg.slice(0, 40) + '...' : msg} <button class="toast-retry-btn" style="margin-left:8px;padding:2px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.3);background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;font-size:12px;">🔄 Retry</button>`;
         toastEl.querySelector('.toast-retry-btn')?.addEventListener('click', () => {
           toastEl.remove();
-          downloadSong(song, true);
+          downloadSong(song, true, format, quality);
         });
         if (toastContainer) {
           toastContainer.appendChild(toastEl);
@@ -4033,6 +4089,327 @@
       if (objectUrl) setTimeout(() => URL.revokeObjectURL(objectUrl), 60000);
       activeDownloads.delete(song.id);
     }
+  }
+
+  /* ================================================================
+     DOWNLOAD OPTIONS MODAL MANAGER
+     ================================================================ */
+  const DownloadOptionsManager = {
+    song: null,
+    format: 'audio',
+    audioQuality: '192',
+    videoQuality: '1080',
+
+    init() {
+      // Restore last-used preferences
+      this.format = Storage.get('dl_format', 'audio');
+      this.audioQuality = Storage.get('dl_audio_quality', '192');
+      this.videoQuality = Storage.get('dl_video_quality', '1080');
+
+      const modal = $('#downloadOptionsModal');
+      if (!modal) return;
+
+      // Close button
+      $('#dlModalClose')?.addEventListener('click', () => this.close());
+
+      // Overlay click to close
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) this.close();
+      });
+
+      // Format toggle
+      const toggle = $('#dlFormatToggle');
+      if (toggle) {
+        toggle.querySelectorAll('.dl-format-btn').forEach(btn => {
+          btn.addEventListener('click', () => this.setFormat(btn.dataset.format));
+        });
+      }
+
+      // Audio quality buttons
+      $('#dlAudioQualities')?.querySelectorAll('.dl-quality-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          this.audioQuality = btn.dataset.quality;
+          Storage.setLocal('dl_audio_quality', this.audioQuality);
+          this._highlightQuality('dlAudioQualities', this.audioQuality);
+          this._updateEstimate();
+        });
+      });
+
+      // Video quality buttons
+      $('#dlVideoQualities')?.querySelectorAll('.dl-quality-option').forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Ignore rungs the current track can't actually provide.
+          if (btn.disabled || btn.classList.contains('dl-q-unavailable')) return;
+          this.videoQuality = btn.dataset.quality;
+          Storage.setLocal('dl_video_quality', this.videoQuality);
+          this._highlightQuality('dlVideoQualities', this.videoQuality);
+          this._updateEstimate();
+        });
+      });
+
+      // Download button
+      $('#dlStartBtn')?.addEventListener('click', () => this._startDownload());
+
+      // One-click downloader refresh — the fix for "only one low resolution is
+      // available" when the bundled yt-dlp has gone stale.
+      $('#dlUpdateYtdlpBtn')?.addEventListener('click', () => this._updateYtdlp());
+    },
+
+    open(song) {
+      this.song = song;
+      const modal = $('#downloadOptionsModal');
+      if (!modal) return;
+
+      // Populate song title
+      const titleEl = $('#dlSongTitle');
+      if (titleEl) titleEl.textContent = song.title || 'Unknown Track';
+
+      // Reset any prior availability gating, then probe this track's real
+      // resolutions so we only offer qualities that actually exist.
+      this._resetVideoAvailability();
+      this._loadAvailableQualities(song);
+
+      // Restore saved format
+      this.setFormat(this.format, true);
+
+      modal.style.display = '';
+    },
+
+    // Clears the "only show available" gating back to the full ladder. Called on
+    // every open so a low-res track doesn't leave buttons disabled for the next one.
+    _resetVideoAvailability() {
+      this._availToken = (this._availToken || 0) + 1;
+      const grid = $('#dlVideoQualities');
+      if (!grid) return;
+      grid.querySelectorAll('.dl-quality-option').forEach(btn => {
+        btn.disabled = false;
+        btn.classList.remove('dl-q-unavailable');
+        btn.removeAttribute('title');
+      });
+      const note = $('#dlVideoNote');
+      if (note) { note.textContent = ''; note.style.display = 'none'; }
+      const upd = $('#dlUpdateYtdlpBtn');
+      if (upd) { upd.style.display = 'none'; upd.disabled = false; upd.classList.remove('updating'); }
+    },
+
+    // Fetches the track's real downloadable heights and disables any quality button
+    // above the ceiling, auto-selecting the closest available rung. Fail-open: on a
+    // network/metadata hiccup every option stays enabled.
+    async _loadAvailableQualities(song) {
+      if (!song || !song.id || !/^[a-zA-Z0-9_-]{11}$/.test(song.id)) return;
+      const token = this._availToken;
+      let data;
+      try {
+        const r = await fetch(`/api/formats/${encodeURIComponent(song.id)}`, { cache: 'no-store' });
+        if (!r.ok) return;
+        data = await r.json();
+      } catch (e) {
+        return;
+      }
+      // A newer open() superseded this probe, or we couldn't tell — leave as-is.
+      if (token !== this._availToken) return;
+      if (!data || data.hasVideo === null || !data.maxHeight) return;
+
+      const max = data.maxHeight;
+      const grid = $('#dlVideoQualities');
+      if (!grid) return;
+
+      const buttons = [...grid.querySelectorAll('.dl-quality-option')];
+      let firstEnabled = null;
+      buttons.forEach(btn => {
+        const q = parseInt(btn.dataset.quality, 10);
+        const available = q <= max;
+        btn.disabled = !available;
+        btn.classList.toggle('dl-q-unavailable', !available);
+        if (!available) {
+          btn.title = `Not available for this track (best is ${max}p)`;
+        } else {
+          btn.removeAttribute('title');
+          if (firstEnabled === null) firstEnabled = btn;
+        }
+      });
+
+      // If the saved pick is now unavailable, drop to the highest that fits.
+      if (parseInt(this.videoQuality, 10) > max) {
+        const enabled = buttons.filter(b => !b.disabled);
+        const best = enabled.length ? enabled[enabled.length - 1] : null;
+        if (best) {
+          this.videoQuality = best.dataset.quality;
+          this._highlightQuality('dlVideoQualities', this.videoQuality);
+          this._updateEstimate();
+        }
+      }
+
+      const note = $('#dlVideoNote');
+      const updBtn = $('#dlUpdateYtdlpBtn');
+      if (note) {
+        if (max <= 480) {
+          // A video that plays in HD/4K on YouTube but reports only ≤480p here
+          // almost always means the bundled yt-dlp is too old to extract YouTube's
+          // current DASH streams. Offer to fix it in one click instead of sending
+          // the user to a terminal — the update applies live, no restart needed.
+          note.textContent = `ℹ️ Only ${max}p is available right now. This usually means the downloader is out of date — update it to unlock 720p/1080p/4K.`;
+          note.style.display = '';
+          if (updBtn) updBtn.style.display = '';
+        } else if (max < 2160) {
+          // Genuinely not a 4K upload — just say what the ceiling is.
+          note.textContent = `ℹ️ This track's best is ${max}p — higher options are unavailable.`;
+          note.style.display = '';
+          if (updBtn) updBtn.style.display = 'none';
+        } else {
+          note.textContent = '';
+          note.style.display = 'none';
+          if (updBtn) updBtn.style.display = 'none';
+        }
+      }
+    },
+
+    // Updates the yt-dlp binary in place via the server, then re-probes the track
+    // so the higher resolution rungs light up immediately. This is the one-click
+    // remedy for "every option downloads the same one low-res file".
+    async _updateYtdlp() {
+      const btn = $('#dlUpdateYtdlpBtn');
+      const label = $('#dlUpdateYtdlpLabel');
+      const song = this.song;
+      if (btn && btn.disabled) return;
+      if (btn) { btn.disabled = true; btn.classList.add('updating'); }
+      if (label) label.textContent = 'Updating downloader…';
+      toast('⏳ Updating the downloader — this can take a moment…');
+      try {
+        const r = await fetch('/api/update-ytdlp', { method: 'POST' });
+        const data = await r.json().catch(() => ({}));
+        if (r.ok && data && data.ok) {
+          toast(`✅ Downloader updated${data.to ? ' to ' + data.to : ''}. Re-checking available resolutions…`);
+          // The server cleared its formats cache on update; re-probe the same
+          // track so any now-available rungs enable without reopening the modal.
+          if (song && this.song && song.id === this.song.id) {
+            this._resetVideoAvailability();
+            await this._loadAvailableQualities(song);
+          }
+        } else {
+          const msg = (data && data.error) ? String(data.error) : 'Update failed';
+          toast(`⚠️ Couldn't update automatically: ${msg.slice(0, 70)}. As a fallback, run "yt-dlp -U" and restart MusicFlow.`);
+        }
+      } catch (e) {
+        toast('⚠️ Update request failed — check your connection and try again.');
+      } finally {
+        if (btn) { btn.disabled = false; btn.classList.remove('updating'); }
+        if (label) label.textContent = 'Update downloader & re-check';
+      }
+    },
+
+    close() {
+      const modal = $('#downloadOptionsModal');
+      if (modal) modal.style.display = 'none';
+      this.song = null;
+    },
+
+    setFormat(fmt, skipSave) {
+      this.format = fmt;
+      if (!skipSave) Storage.setLocal('dl_format', fmt);
+
+      const toggle = $('#dlFormatToggle');
+      if (toggle) {
+        toggle.setAttribute('data-active', fmt);
+        toggle.querySelectorAll('.dl-format-btn').forEach(b => {
+          b.classList.toggle('active', b.dataset.format === fmt);
+        });
+      }
+
+      const audioGrid = $('#dlAudioQualities');
+      const videoGrid = $('#dlVideoQualities');
+      if (audioGrid) audioGrid.style.display = fmt === 'audio' ? '' : 'none';
+      if (videoGrid) videoGrid.style.display = fmt === 'video' ? '' : 'none';
+
+      // Highlight saved quality
+      if (fmt === 'audio') {
+        this._highlightQuality('dlAudioQualities', this.audioQuality);
+      } else {
+        this._highlightQuality('dlVideoQualities', this.videoQuality);
+      }
+
+      // Update the download button text
+      const startBtn = $('#dlStartBtn');
+      if (startBtn) {
+        const span = startBtn.querySelector('span');
+        if (span) span.textContent = fmt === 'audio' ? 'Download MP3' : 'Download MP4';
+      }
+
+      this._updateEstimate();
+    },
+
+    _highlightQuality(gridId, quality) {
+      const grid = $('#' + gridId);
+      if (!grid) return;
+      grid.querySelectorAll('.dl-quality-option').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.quality === quality);
+      });
+    },
+
+    _updateEstimate() {
+      const el = $('#dlEstimateText');
+      if (!el) return;
+
+      const dur = (this.song && this.song.duration) ? this.song.duration : 240;
+      const minutes = dur / 60;
+      let sizeMB;
+
+      if (this.format === 'audio') {
+        const kbps = parseInt(this.audioQuality) || 192;
+        sizeMB = (kbps * minutes * 60) / 8 / 1024;
+      } else {
+        // Rough video size estimates based on quality
+        const videoRates = { '480': 2.5, '720': 5, '1080': 8, '1440': 16, '2160': 35 };
+        const mbPerMin = videoRates[this.videoQuality] || 8;
+        sizeMB = mbPerMin * minutes;
+      }
+
+      if (sizeMB < 1) {
+        el.textContent = `Estimated size: ~${Math.round(sizeMB * 1024)} KB`;
+      } else {
+        el.textContent = `Estimated size: ~${sizeMB.toFixed(sizeMB < 10 ? 1 : 0)} MB`;
+      }
+    },
+
+    async _startDownload() {
+      if (!this.song) return;
+      const song = this.song;
+      const format = this.format;
+      const quality = format === 'audio' ? this.audioQuality : this.videoQuality;
+
+      // A very common cause of "I picked MP4 but got MP3" is that the MusicFlow
+      // server process is still the OLD build that predates video support — a
+      // browser refresh does not restart it. Detect that here (the current server
+      // advertises videoDownload:true on /api/health) and tell the user to restart
+      // instead of silently handing them an audio file.
+      if (format === 'video') {
+        const ok = await serverSupportsVideo();
+        if (ok === false) {
+          toast('⚠️ Please fully restart MusicFlow — the running app is an older version that only makes MP3. Close it completely and reopen (or run restart-musicflow).');
+          return;
+        }
+      }
+
+      this.close();
+      downloadSong(song, false, format, quality);
+    },
+  };
+
+  // Cached probe of the running server's capabilities. Returns true if it can do
+  // video, false if it's an old server, null if we couldn't tell (fail-open: we
+  // then attempt the download rather than block a working setup).
+  let _videoCapCache;
+  async function serverSupportsVideo() {
+    if (_videoCapCache !== undefined) return _videoCapCache;
+    try {
+      const r = await fetch('/api/health', { cache: 'no-store' });
+      if (!r.ok) { _videoCapCache = null; return null; }
+      const data = await r.json();
+      _videoCapCache = data && data.videoDownload === true ? true : false;
+    } catch (e) {
+      _videoCapCache = null;
+    }
+    return _videoCapCache;
   }
 
   /* ================================================================

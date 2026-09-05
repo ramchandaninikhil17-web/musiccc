@@ -25,7 +25,7 @@ chmod +x "$RUN/yt-dlp"
 
 cd "$RUN"
 FAKE_FAIL_IDS=FAILFAILFA1 FAKE_EMPTY_IDS=EMPTYEMPTY1 FAKE_BIG_IDS=GGGGGGGGGG7 FAKE_DELAY_MS=350 \
-  PORT=$PORT node server.js > /tmp/mf-itest.log 2>&1 &
+  NODE_ENV=test PORT=$PORT node server.js > /tmp/mf-itest.log 2>&1 &
 SRV=$!
 trap 'kill $SRV 2>/dev/null' EXIT
 

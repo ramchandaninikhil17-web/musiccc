@@ -3725,3 +3725,250 @@ a { text-decoration: none; color: inherit; }
   from { opacity: 0; transform: translateY(-4px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
+/* ================================================================
+   Download Options Modal
+   ================================================================ */
+.dl-options-modal { max-width: 460px; }
+
+.dl-song-title {
+  max-width: 280px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.dl-section-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.2px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+}
+
+.dl-format-section { margin-bottom: 22px; }
+
+.dl-format-toggle {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 4px;
+  overflow: hidden;
+}
+
+.dl-format-btn {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  border-radius: calc(var(--radius-md) - 2px);
+  cursor: pointer;
+  transition: color 0.25s ease;
+  background: transparent;
+  border: none;
+}
+
+.dl-format-btn.active { color: var(--text-primary); }
+
+.dl-format-btn svg { flex-shrink: 0; }
+
+.dl-format-slider {
+  position: absolute;
+  z-index: 1;
+  top: 4px; left: 4px;
+  width: calc(50% - 4px);
+  height: calc(100% - 8px);
+  background: var(--bg-glass-hover);
+  border-radius: calc(var(--radius-md) - 2px);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dl-format-toggle[data-active="video"] .dl-format-slider {
+  transform: translateX(100%);
+}
+
+.dl-quality-section { margin-bottom: 18px; }
+
+.dl-quality-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 8px;
+}
+
+.dl-quality-option {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 14px 8px 10px;
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  background: var(--bg-glass);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  overflow: hidden;
+}
+
+.dl-quality-option::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: var(--accent-gradient);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  border-radius: inherit;
+}
+
+.dl-quality-option:hover {
+  border-color: var(--text-muted);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.dl-quality-option.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow), 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.dl-quality-option.active::before { opacity: 0.08; }
+
+/* A rung the current track can't provide: greyed, non-interactive, but still
+   readable so the user understands why 2K/4K are off for a low-res video. */
+.dl-quality-option.dl-q-unavailable,
+.dl-quality-option:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(1);
+}
+.dl-quality-option.dl-q-unavailable:hover,
+.dl-quality-option:disabled:hover {
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
+}
+
+/* Explains a clipped ladder ("this track's best is 720p"). */
+.dl-video-note {
+  margin: 10px 2px 0;
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+/* One-click "update the downloader" action, shown next to the note when a stale
+   yt-dlp is capping every resolution to one low rung. */
+.dl-update-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 2px 0;
+  padding: 7px 13px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.dl-update-btn:hover { transform: translateY(-1px); opacity: 0.92; }
+.dl-update-btn:disabled { opacity: 0.6; cursor: progress; transform: none; }
+.dl-update-btn.updating svg { animation: dl-update-spin 0.9s linear infinite; }
+@keyframes dl-update-spin { to { transform: rotate(360deg); } }
+
+.dl-q-value {
+  position: relative;
+  z-index: 1;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  line-height: 1.1;
+}
+
+.dl-q-unit {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 1px;
+}
+
+.dl-q-label {
+  position: relative;
+  z-index: 1;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.dl-quality-option.active .dl-q-value { color: var(--accent); }
+.dl-quality-option.active .dl-q-label { color: var(--text-secondary); }
+
+.dl-q-badge {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  font-size: 10px;
+  z-index: 1;
+  opacity: 0.7;
+}
+
+.dl-quality-option.active .dl-q-badge { opacity: 1; }
+
+.dl-estimate {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  font-size: 12px;
+  color: var(--text-muted);
+  background: var(--bg-glass);
+  border-radius: var(--radius-sm);
+  margin-bottom: 16px;
+}
+
+.dl-start-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 15px;
+  padding: 14px;
+}
+
+.dl-start-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Responsive: smaller screens */
+@media (max-width: 480px) {
+  .dl-options-modal { max-width: 95vw; }
+  .dl-quality-grid { grid-template-columns: repeat(3, 1fr); }
+  .dl-format-btn { font-size: 12px; padding: 8px 10px; }
+  .dl-q-value { font-size: 15px; }
+}

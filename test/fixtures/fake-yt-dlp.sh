@@ -17,6 +17,12 @@ if [ "${1:-}" = "--version" ]; then
   exit 0
 fi
 
+# Simulate `yt-dlp -U` self-update as a harmless no-op success (some code paths
+# may trigger a background refresh; this keeps the audio suite unaffected).
+case "${1:-}" in
+  -U|--update|--update-to) echo "yt-dlp is up to date (2099.01.01)"; exit 0 ;;
+esac
+
 out=""
 url=""
 prev=""

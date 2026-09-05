@@ -1294,6 +1294,112 @@
     <button class="voice-hud-close" id="voiceHudClose" type="button" aria-label="Stop listening">✕</button>
   </div>
 
+  <!-- ============ DOWNLOAD OPTIONS MODAL ============ -->
+  <div class="modal-overlay" id="downloadOptionsModal" style="display:none;">
+    <div class="modal dl-options-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">⬇️ Download</h3>
+          <p class="modal-subtitle dl-song-title" id="dlSongTitle">Song Title</p>
+        </div>
+        <button class="modal-close" id="dlModalClose" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Format Toggle -->
+        <div class="dl-format-section">
+          <label class="dl-section-label">Format</label>
+          <div class="dl-format-toggle" id="dlFormatToggle">
+            <button class="dl-format-btn active" data-format="audio" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span>Audio (MP3)</span>
+            </button>
+            <button class="dl-format-btn" data-format="video" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+              <span>Video (MP4)</span>
+            </button>
+            <div class="dl-format-slider" id="dlFormatSlider"></div>
+          </div>
+        </div>
+
+        <!-- Quality Options -->
+        <div class="dl-quality-section">
+          <label class="dl-section-label">Quality</label>
+
+          <!-- Audio Quality Options -->
+          <div class="dl-quality-grid" id="dlAudioQualities">
+            <button class="dl-quality-option" data-quality="128" type="button">
+              <span class="dl-q-value">128</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">Standard</span>
+            </button>
+            <button class="dl-quality-option active" data-quality="192" type="button">
+              <span class="dl-q-value">192</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">High</span>
+            </button>
+            <button class="dl-quality-option" data-quality="320" type="button">
+              <span class="dl-q-value">320</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">Best</span>
+              <span class="dl-q-badge">★</span>
+            </button>
+          </div>
+
+          <!-- Video Quality Options -->
+          <div class="dl-quality-grid" id="dlVideoQualities" style="display:none;">
+            <button class="dl-quality-option active" data-quality="480" type="button">
+              <span class="dl-q-value">480p</span>
+              <span class="dl-q-label">SD</span>
+            </button>
+            <button class="dl-quality-option" data-quality="720" type="button">
+              <span class="dl-q-value">720p</span>
+              <span class="dl-q-label">HD</span>
+            </button>
+            <button class="dl-quality-option" data-quality="1080" type="button">
+              <span class="dl-q-value">1080p</span>
+              <span class="dl-q-label">Full HD</span>
+              <span class="dl-q-badge">★</span>
+            </button>
+            <button class="dl-quality-option" data-quality="1440" type="button">
+              <span class="dl-q-value">1440p</span>
+              <span class="dl-q-label">2K</span>
+            </button>
+            <button class="dl-quality-option" data-quality="2160" type="button">
+              <span class="dl-q-value">2160p</span>
+              <span class="dl-q-label">4K</span>
+              <span class="dl-q-badge">👑</span>
+            </button>
+          </div>
+
+          <!-- Availability note: shown when a track's best resolution is below the
+               top of the ladder, so unavailable rungs are explained not just greyed. -->
+          <p class="dl-video-note" id="dlVideoNote" style="display:none;"></p>
+          <!-- One-click fix for the #1 cause of "only one resolution downloads": a
+               stale yt-dlp that can't see YouTube's full ladder. Updates the
+               downloader in place (no restart) and re-checks the resolutions. -->
+          <button class="dl-update-btn" id="dlUpdateYtdlpBtn" type="button" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span id="dlUpdateYtdlpLabel">Update downloader &amp; re-check</span>
+          </button>
+        </div>
+
+        <!-- File size estimate -->
+        <div class="dl-estimate" id="dlEstimate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span id="dlEstimateText">Estimated size: ~5 MB</span>
+        </div>
+
+        <!-- Download Button -->
+        <button class="modal-submit-btn dl-start-btn" type="button" id="dlStartBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download MP3</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
   <!-- Toast Container -->
   <div class="toast-container" id="toastContainer"></div>
 
