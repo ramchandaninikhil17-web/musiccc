@@ -910,6 +910,30 @@
             <span class="crossfade-val" id="crossfadeValLabel">Off</span>
           </div>
         </div>
+        <div class="setting-row" id="settingAudioDeviceRow">
+          <div class="setting-info">
+            <span class="setting-label">🎧 Audio Output Device</span>
+            <span class="setting-desc" id="settingAudioDeviceDesc">Route sound to Headphones, Speakers, or Bluetooth</span>
+          </div>
+          <div class="audio-output-wrapper">
+            <div class="audio-output-controls">
+              <select class="setting-select audio-device-select" id="settingAudioDevice" aria-label="Select audio output device">
+                <option value="default">💻 Default Output</option>
+              </select>
+              <button class="setting-icon-btn" id="audioDeviceTestBtn" title="Play test chime on selected device" aria-label="Test audio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                <span class="setting-icon-tooltip">Test</span>
+              </button>
+              <button class="setting-icon-btn" id="audioDeviceRefreshBtn" title="Scan & refresh connected audio devices" aria-label="Refresh audio devices">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span class="setting-icon-tooltip">Refresh</span>
+              </button>
+            </div>
+            <button type="button" class="device-perm-link" id="unlockDeviceNamesBtn" style="display:none;" title="Show actual headphone & speaker names">
+              ✨ Unlock Device Names
+            </button>
+          </div>
+        </div>
         <div class="setting-row">
           <div class="setting-info"><span class="setting-label">Apple Floating Transparent Orb</span><span class="setting-desc">Floating circular quick player widget</span></div>
           <select class="setting-select" id="settingOrb"><option value="show">Enabled (Floating)</option><option value="hide">Hidden</option></select>

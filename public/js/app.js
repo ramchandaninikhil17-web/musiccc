@@ -568,8 +568,9 @@
     PomodoroManager.init();
     setupMediaSessionHandlers();
 
-    // Advanced Audio DSP Equalizer, Local Files, Sleep Timer & Theme Studio
+    // Advanced Audio DSP Equalizer, Audio Output Device Router, Local Files, Sleep Timer & Theme Studio
     EqualizerManager.init();
+    AudioOutputManager.init();
     LocalFileManager.init();
     SleepTimerManager.init();
     ThemeStudioManager.init();
@@ -5894,6 +5895,10 @@
         // Push the saved curve/bass/spatial state into the fresh graph, or the
         // sliders would show a setting the audio isn't actually using.
         this.applyStoredToGraph();
+        if (typeof this.audioCtx.setSinkId === 'function' && typeof AudioOutputManager !== 'undefined') {
+          const sid = AudioOutputManager.currentDeviceId === 'default' ? '' : AudioOutputManager.currentDeviceId;
+          if (sid) this.audioCtx.setSinkId(sid).catch(() => {});
+        }
         return true;
       } catch (e) {
         // createMediaElementSource() cannot be retried or undone, so give up
@@ -6125,6 +6130,345 @@
       probe.src = url;
     });
   }
+
+  /* ================================================================
+     AUDIO OUTPUT DEVICE MANAGER
+     Handles routing audio to headphones, speakers, or Bluetooth devices
+     with automatic headphone-plug-in detection and test chime.
+     ================================================================ */
+  const AudioOutputManager = {
+    devices: [],
+    currentDeviceId: 'default',
+    currentDeviceLabel: 'System Default Output',
+    isSupported: false,
+    _chimeUrl: null,
+    _previousDeviceIds: new Set(),
+    _initialized: false,
+
+    init() {
+      // Feature detect HTMLMediaElement setSinkId
+      this.isSupported = typeof HTMLMediaElement !== 'undefined' && 'setSinkId' in HTMLMediaElement.prototype;
+      this.currentDeviceId = Storage.get('audioOutputDeviceId', 'default');
+      this.currentDeviceLabel = Storage.get('audioOutputDeviceLabel', 'System Default Output');
+
+      const select = $('#settingAudioDevice');
+      const testBtn = $('#audioDeviceTestBtn');
+      const refreshBtn = $('#audioDeviceRefreshBtn');
+      const unlockBtn = $('#unlockDeviceNamesBtn');
+
+      if (!this.isSupported) {
+        if (select) {
+          select.innerHTML = '<option value="default">💻 System Default Output</option>';
+          select.disabled = true;
+        }
+        if (testBtn) testBtn.style.display = 'none';
+        if (refreshBtn) refreshBtn.style.display = 'none';
+        const desc = $('#settingAudioDeviceDesc');
+        if (desc) desc.textContent = 'Device switching not supported in this browser (Chrome / Edge recommended)';
+        return;
+      }
+
+      // Initial scan
+      this.refreshDevices(false);
+
+      // Listen for physical device connects/disconnects (headphones, AirPods, Bluetooth headsets, etc.)
+      if (navigator.mediaDevices && typeof navigator.mediaDevices.addEventListener === 'function') {
+        navigator.mediaDevices.addEventListener('devicechange', () => {
+          this.handleDeviceChange();
+        });
+      }
+
+      // Select change event
+      select?.addEventListener('change', async (e) => {
+        const selectedId = e.target.value;
+        const selectedOpt = e.target.options[e.target.selectedIndex];
+        const label = selectedOpt ? selectedOpt.textContent.trim() : selectedId;
+        await this.setOutputDevice(selectedId, label, true);
+      });
+
+      // Test chime button
+      testBtn?.addEventListener('click', () => {
+        this.playTestSound();
+      });
+
+      // Refresh button
+      refreshBtn?.addEventListener('click', async () => {
+        const svg = refreshBtn.querySelector('svg');
+        if (svg) {
+          svg.style.transition = 'transform 0.4s ease';
+          svg.style.transform = 'rotate(360deg)';
+          setTimeout(() => { svg.style.transform = ''; }, 450);
+        }
+        await this.refreshDevices(true);
+        toast('🔄 Audio devices refreshed');
+      });
+
+      // Permission unlock button
+      unlockBtn?.addEventListener('click', async () => {
+        await this.requestDeviceLabels();
+      });
+
+      // Re-scan whenever settings modal opens
+      $('#settingsBtn')?.addEventListener('click', () => {
+        this.refreshDevices(false);
+      });
+
+      // Apply initial saved sinkId
+      if (this.currentDeviceId && this.currentDeviceId !== 'default') {
+        this.applySinkId(this.currentDeviceId).catch(() => {});
+      }
+
+      this._initialized = true;
+    },
+
+    async refreshDevices(isManual = false) {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+
+      try {
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputs = allDevices.filter(d => d.kind === 'audiooutput');
+        this.devices = audioOutputs;
+
+        // Determine if device names are hidden by privacy permissions
+        const hasLabels = audioOutputs.some(d => d.label && d.label.trim().length > 0);
+        const unlockBtn = $('#unlockDeviceNamesBtn');
+        if (unlockBtn) {
+          unlockBtn.style.display = (audioOutputs.length > 0 && !hasLabels) ? 'inline-block' : 'none';
+        }
+
+        const select = $('#settingAudioDevice');
+        if (!select) return;
+
+        select.innerHTML = '';
+
+        // Default option
+        const defaultOpt = document.createElement('option');
+        defaultOpt.value = 'default';
+        defaultOpt.textContent = '💻 System Default Output';
+        select.appendChild(defaultOpt);
+
+        let deviceFound = this.currentDeviceId === 'default';
+
+        audioOutputs.forEach((dev, idx) => {
+          if (dev.deviceId === 'default') return;
+
+          const opt = document.createElement('option');
+          opt.value = dev.deviceId;
+
+          const label = dev.label || `Audio Output ${idx + 1}`;
+          const lower = label.toLowerCase();
+          let icon = '🔊';
+          if (lower.includes('headphone') || lower.includes('headset') || lower.includes('earphone') || lower.includes('buds') || lower.includes('airpod') || lower.includes('wh-') || lower.includes('wf-')) {
+            icon = '🎧';
+          } else if (lower.includes('bluetooth') || lower.includes('wireless') || lower.includes('hands-free')) {
+            icon = '📶';
+          } else if (lower.includes('speaker') || lower.includes('realtek') || lower.includes('high definition') || lower.includes('stereo')) {
+            icon = '🔊';
+          }
+
+          opt.textContent = `${icon} ${label}`;
+          if (dev.deviceId === this.currentDeviceId) {
+            opt.selected = true;
+            deviceFound = true;
+          }
+          select.appendChild(opt);
+        });
+
+        if (!deviceFound && this.currentDeviceId !== 'default') {
+          select.value = 'default';
+          this.currentDeviceId = 'default';
+          this.currentDeviceLabel = 'System Default Output';
+          Storage.set('audioOutputDeviceId', 'default');
+          Storage.set('audioOutputDeviceLabel', 'System Default Output');
+          this.applySinkId('');
+        } else {
+          select.value = this.currentDeviceId;
+        }
+
+        this._previousDeviceIds = new Set(audioOutputs.map(d => d.deviceId));
+      } catch (err) {
+        console.warn('[AudioOutput] Failed to enumerate devices:', err);
+      }
+    },
+
+    async handleDeviceChange() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) return;
+
+      try {
+        const allDevices = await navigator.mediaDevices.enumerateDevices();
+        const audioOutputs = allDevices.filter(d => d.kind === 'audiooutput');
+
+        const newDevices = audioOutputs.filter(d => d.deviceId !== 'default' && !this._previousDeviceIds.has(d.deviceId));
+
+        await this.refreshDevices(false);
+
+        if (newDevices.length > 0) {
+          const newHeadphones = newDevices.find(d => {
+            const l = (d.label || '').toLowerCase();
+            return l.includes('headphone') || l.includes('headset') || l.includes('earphone') || l.includes('buds') || l.includes('airpod') || l.includes('bluetooth');
+          }) || newDevices[0];
+
+          const name = newHeadphones.label || 'Headphones';
+          await this.setOutputDevice(newHeadphones.deviceId, name, false);
+          toast(`🎧 Headphones connected: ${name}. Audio switched!`, 4000);
+        } else {
+          if (this.currentDeviceId !== 'default' && !audioOutputs.some(d => d.deviceId === this.currentDeviceId)) {
+            await this.setOutputDevice('default', 'System Default Output', false);
+            toast('🔊 Audio device disconnected. Switched to Default Output.', 3500);
+          }
+        }
+      } catch (e) {
+        console.warn('[AudioOutput] Error during devicechange handling:', e);
+      }
+    },
+
+    async setOutputDevice(deviceId, deviceLabel = '', showToast = true) {
+      this.currentDeviceId = deviceId || 'default';
+      this.currentDeviceLabel = deviceLabel || (deviceId === 'default' ? 'System Default Output' : deviceId);
+      Storage.set('audioOutputDeviceId', this.currentDeviceId);
+      Storage.set('audioOutputDeviceLabel', this.currentDeviceLabel);
+
+      const sinkVal = this.currentDeviceId === 'default' ? '' : this.currentDeviceId;
+      const ok = await this.applySinkId(sinkVal);
+
+      const select = $('#settingAudioDevice');
+      if (select && select.value !== this.currentDeviceId) {
+        select.value = this.currentDeviceId;
+      }
+
+      if (showToast) {
+        const cleanName = this.currentDeviceLabel.replace(/^[🎧🔊💻📶]\s*/, '');
+        const isHp = /headphone|headset|earphone|buds|airpod/i.test(cleanName);
+        const icon = isHp ? '🎧' : '🔊';
+        if (ok) {
+          toast(`${icon} Output switched: ${cleanName}`);
+        } else {
+          toast(`⚠️ Unable to route audio to ${cleanName}`);
+        }
+      }
+    },
+
+    async applySinkId(sinkVal) {
+      let success = true;
+      if (audioPlayer && typeof audioPlayer.setSinkId === 'function') {
+        try {
+          await audioPlayer.setSinkId(sinkVal);
+        } catch (e) {
+          console.warn('[AudioOutput] audioPlayer.setSinkId error:', e);
+          success = false;
+        }
+      }
+
+      if (typeof EqualizerManager !== 'undefined' && EqualizerManager.audioCtx && typeof EqualizerManager.audioCtx.setSinkId === 'function') {
+        try {
+          await EqualizerManager.audioCtx.setSinkId(sinkVal);
+        } catch (e) {
+          console.warn('[AudioOutput] audioCtx.setSinkId error:', e);
+        }
+      }
+
+      return success;
+    },
+
+    async requestDeviceLabels() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+      try {
+        toast('🎙️ Unlocking device model names...', 2500);
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(t => t.stop());
+        await this.refreshDevices(true);
+        toast('✨ Headphone & speaker names unlocked!');
+      } catch (err) {
+        console.warn('[AudioOutput] Permission request cancelled:', err);
+        toast('Permission needed to show full device model names.');
+      }
+    },
+
+    _getChimeUrl() {
+      if (this._chimeUrl) return this._chimeUrl;
+      try {
+        const sampleRate = 22050;
+        const duration = 0.45;
+        const numSamples = Math.floor(sampleRate * duration);
+        const buffer = new ArrayBuffer(44 + numSamples * 2);
+        const view = new DataView(buffer);
+
+        view.setUint32(0, 0x52494646, false); // "RIFF"
+        view.setUint32(4, 36 + numSamples * 2, true);
+        view.setUint32(8, 0x57415645, false); // "WAVE"
+        view.setUint32(12, 0x666d7420, false); // "fmt "
+        view.setUint32(16, 16, true);
+        view.setUint16(20, 1, true); // PCM
+        view.setUint16(22, 1, true); // Mono
+        view.setUint32(24, sampleRate, true);
+        view.setUint32(28, sampleRate * 2, true);
+        view.setUint16(32, 2, true);
+        view.setUint16(34, 16, true);
+        view.setUint32(36, 0x64617461, false); // "data"
+        view.setUint32(40, numSamples * 2, true);
+
+        for (let i = 0; i < numSamples; i++) {
+          const t = i / sampleRate;
+          const env1 = Math.exp(-t * 9) * Math.min(1, t * 200);
+          const env2 = t > 0.09 ? Math.exp(-(t - 0.09) * 8) * Math.min(1, (t - 0.09) * 200) : 0;
+          const s1 = Math.sin(2 * Math.PI * 523.25 * t) * env1 * 0.35; // C5
+          const s2 = Math.sin(2 * Math.PI * 783.99 * t) * env2 * 0.35; // G5
+          const s = Math.max(-1, Math.min(1, s1 + s2));
+          view.setInt16(44 + i * 2, s * 32767, true);
+        }
+
+        const blob = new Blob([buffer], { type: 'audio/wav' });
+        this._chimeUrl = URL.createObjectURL(blob);
+        return this._chimeUrl;
+      } catch (e) {
+        console.warn('[AudioOutput] Error generating chime WAV:', e);
+        return null;
+      }
+    },
+
+    async playTestSound() {
+      const testBtn = $('#audioDeviceTestBtn');
+      if (testBtn) testBtn.classList.add('audio-test-playing');
+
+      const sinkVal = this.currentDeviceId === 'default' ? '' : this.currentDeviceId;
+      const chimeUrl = this._getChimeUrl();
+
+      try {
+        if (chimeUrl) {
+          const testAudio = new Audio(chimeUrl);
+          testAudio.volume = Math.max(0.4, (typeof volume !== 'undefined' ? volume : 0.7));
+          if (typeof testAudio.setSinkId === 'function' && sinkVal) {
+            await testAudio.setSinkId(sinkVal);
+          }
+          await testAudio.play();
+        } else {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) {
+            const ctx = new AudioCtx();
+            if (typeof ctx.setSinkId === 'function' && sinkVal) {
+              await ctx.setSinkId(sinkVal);
+            }
+            const osc = ctx.createOscillator();
+            const g = ctx.createGain();
+            osc.frequency.setValueAtTime(659.25, ctx.currentTime);
+            g.gain.setValueAtTime(0.2, ctx.currentTime);
+            g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+            osc.connect(g);
+            g.connect(ctx.destination);
+            osc.start();
+            osc.stop(ctx.currentTime + 0.45);
+            setTimeout(() => ctx.close().catch(() => {}), 500);
+          }
+        }
+      } catch (err) {
+        console.warn('[AudioOutput] playTestSound error:', err);
+      } finally {
+        setTimeout(() => {
+          if (testBtn) testBtn.classList.remove('audio-test-playing');
+        }, 600);
+      }
+    }
+  };
 
   const LocalFileManager = {
     localSongs: [],
