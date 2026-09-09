@@ -1,0 +1,9 @@
+{
+  "hotkey": "ctrl+shift+s",
+  "overlay_opacity": 0.4,
+  "toolbar_fade_ms": 80,
+  "ocr_language": "en",
+  "temp_cleanup_delay_s": 30,
+  "start_minimized": true,
+  "google_lens_fallback": "clipboard"
+}

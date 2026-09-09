@@ -34,6 +34,8 @@ class CircleToSearchApp:
         self._running = False
         self._hotkey_registered = False
         self._hotkey_hook = None
+        # Thread-safe flag: set from hotkey thread, consumed on main thread
+        self._activate_requested = threading.Event()
 
     def run(self):
         """Start the application."""
@@ -78,6 +80,15 @@ class CircleToSearchApp:
         """Main event loop — processes tkinter events and stays responsive."""
         while self._running:
             try:
+                # Check if hotkey was pressed (thread-safe)
+                if self._activate_requested.is_set():
+                    self._activate_requested.clear()
+                    if self._overlay and not self._overlay.is_active:
+                        try:
+                            self._overlay.activate(on_complete=self._on_overlay_complete)
+                        except Exception as e:
+                            print(f"[CircleToSearch] Activation error: {e}")
+
                 self._overlay.process_events()
                 time.sleep(0.01)  # ~100 FPS event processing
             except KeyboardInterrupt:
@@ -112,12 +123,8 @@ class CircleToSearchApp:
                 print(f"[CircleToSearch] Fallback also failed: {e2}")
 
     def _on_hotkey(self):
-        """Hotkey pressed → activate overlay."""
-        if self._overlay and not self._overlay.is_active:
-            try:
-                self._overlay.activate(on_complete=self._on_overlay_complete)
-            except Exception as e:
-                print(f"[CircleToSearch] Activation error: {e}")
+        """Hotkey pressed → signal main thread to activate overlay."""
+        self._activate_requested.set()
 
     def _on_overlay_complete(self):
         """Overlay dismissed."""
@@ -140,11 +147,11 @@ class CircleToSearchApp:
                 ),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("⚙ Change Hotkey", pystray.Menu(
-                    pystray.MenuItem("Win+Shift+Q", lambda: self._change_hotkey("win+shift+q")),
-                    pystray.MenuItem("Ctrl+Shift+Q", lambda: self._change_hotkey("ctrl+shift+q")),
-                    pystray.MenuItem("Win+Shift+S", lambda: self._change_hotkey("win+shift+s")),
-                    pystray.MenuItem("Ctrl+Shift+S", lambda: self._change_hotkey("ctrl+shift+s")),
-                    pystray.MenuItem("F9", lambda: self._change_hotkey("f9")),
+                    pystray.MenuItem("Win+Shift+Q", lambda *a: self._change_hotkey("win+shift+q")),
+                    pystray.MenuItem("Ctrl+Shift+Q", lambda *a: self._change_hotkey("ctrl+shift+q")),
+                    pystray.MenuItem("Win+Shift+S", lambda *a: self._change_hotkey("win+shift+s")),
+                    pystray.MenuItem("Ctrl+Shift+S", lambda *a: self._change_hotkey("ctrl+shift+s")),
+                    pystray.MenuItem("F9", lambda *a: self._change_hotkey("f9")),
                 )),
                 pystray.Menu.SEPARATOR,
                 pystray.MenuItem("❌ Exit", self._on_tray_exit),

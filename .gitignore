@@ -32,3 +32,10 @@ Thumbs.db
 .idea/
 *.suo
 *.user
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+.pytest_cache/

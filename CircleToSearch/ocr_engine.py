@@ -85,7 +85,7 @@ class OcrEngine:
         if self._available is None:
             try:
                 result = subprocess.run(
-                    ["powershell", "-Command",
+                    ["powershell", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command",
                      "[Windows.Media.Ocr.OcrEngine, Windows.Foundation, ContentType = WindowsRuntime] | Out-Null; "
                      "$e = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages(); "
                      "if ($e) { Write-Output 'YES' } else { Write-Output 'NO' }"],

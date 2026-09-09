@@ -202,15 +202,21 @@ def search_google_lens(image: Image.Image):
     """
     Open Google Lens with the selected image.
     Primary: auto-submit via HTML form with DataTransfer API.
-    Fallback: copy to clipboard + open Google Lens.
+    Fallback: image already in clipboard + direct Lens upload link.
     """
     try:
+        # Always copy the image to clipboard first for instantaneous paste fallback
+        copy_image_to_clipboard(image)
+
         # Generate and save the HTML launcher
         html_content = _generate_lens_html(image)
         html_path = create_temp_file(suffix=".html", content=html_content)
 
-        # Open in default browser
-        webbrowser.open(f"file:///{html_path.replace(os.sep, '/')}")
+        # Open in default browser via native Windows shell or webbrowser
+        try:
+            os.startfile(html_path)
+        except Exception:
+            webbrowser.open(f"file:///{html_path.replace(os.sep, '/')}")
 
         # Clean up after delay
         cleanup_temp_file(html_path, delay=config.temp_cleanup_delay)
@@ -218,7 +224,7 @@ def search_google_lens(image: Image.Image):
 
     except Exception as e:
         print(f"[Actions] Google Lens error: {e}")
-        # Fallback: copy image + open lens
+        # Fallback: copy image + open lens directly
         try:
             copy_image_to_clipboard(image)
             webbrowser.open("https://lens.google.com/")

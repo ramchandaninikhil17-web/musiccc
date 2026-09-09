@@ -7,6 +7,7 @@ import tkinter as tk
 from PIL import Image, ImageTk, ImageDraw
 import ctypes
 import threading
+import queue
 
 from capture import screen_capture
 from toolbar import ActionToolbar, OcrResultPanel
@@ -32,6 +33,9 @@ class SelectionOverlay:
         self._canvas = None
         self._screenshot = None
         self._monitor_info = None
+
+        # Thread-safe task queue for UI operations from background threads
+        self._task_queue = queue.Queue()
 
         # Image references (prevent GC)
         self._bg_photo = None
@@ -59,6 +63,10 @@ class SelectionOverlay:
         self._initialized = False
         self._vw = 0
         self._vh = 0
+
+    def post_task(self, fn):
+        """Thread-safe method to schedule work on the Tkinter main thread."""
+        self._task_queue.put(fn)
 
     def initialize(self):
         """Pre-create the tkinter root (call from main thread)."""
@@ -162,7 +170,7 @@ class SelectionOverlay:
         try:
             bg = self._screenshot.copy()
             if bg.size != (width, height):
-                bg = bg.resize((width, height), Image.LANCZOS)
+                bg = bg.resize((width, height), Image.BILINEAR)
 
             # Keep original for selection reveal
             self._original_image = bg
@@ -207,8 +215,9 @@ class SelectionOverlay:
         if not self._is_selecting:
             return
 
-        self._end_x = event.x
-        self._end_y = event.y
+        # Clamp drag coordinates to screen boundaries
+        self._end_x = max(0, min(event.x, self._vw))
+        self._end_y = max(0, min(event.y, self._vh))
 
         x1 = min(self._start_x, self._end_x)
         y1 = min(self._start_y, self._end_y)
@@ -218,21 +227,28 @@ class SelectionOverlay:
         # Remove old visuals
         self._canvas.delete("selection_clear")
         self._canvas.delete("selection_border")
+        self._canvas.delete("selection_dim_badge")
 
         # Show bright (non-dimmed) region inside selection
-        if x2 - x1 > 3 and y2 - y1 > 3:
+        if x2 - x1 > 4 and y2 - y1 > 4:
             try:
-                crop = self._original_image.crop((x1, y1, x2, y2))
+                # Clamp crop to original image bounds
+                crop_x1 = max(0, min(x1, self._vw))
+                crop_y1 = max(0, min(y1, self._vh))
+                crop_x2 = max(0, min(x2, self._vw))
+                crop_y2 = max(0, min(y2, self._vh))
+
+                crop = self._original_image.crop((crop_x1, crop_y1, crop_x2, crop_y2))
                 self._selection_photo = ImageTk.PhotoImage(crop)
                 self._canvas.create_image(
-                    x1, y1, anchor=tk.NW,
+                    crop_x1, crop_y1, anchor=tk.NW,
                     image=self._selection_photo,
                     tags="selection_clear"
                 )
             except Exception:
                 pass
 
-        # Selection border
+        # Selection border (modern accent with glow effect)
         self._canvas.create_rectangle(
             x1, y1, x2, y2,
             outline=self.SELECTION_BORDER_COLOR,
@@ -246,8 +262,8 @@ class SelectionOverlay:
             return
 
         self._is_selecting = False
-        self._end_x = event.x
-        self._end_y = event.y
+        self._end_x = max(0, min(event.x, self._vw))
+        self._end_y = max(0, min(event.y, self._vh))
 
         x1 = min(self._start_x, self._end_x)
         y1 = min(self._start_y, self._end_y)
@@ -280,11 +296,19 @@ class SelectionOverlay:
             self._dismiss()
             return
 
-        # Position toolbar beside selection
-        toolbar_x = x2 + 10
-        toolbar_y = y1
-        if toolbar_x + 330 > self._vw:
-            toolbar_x = max(10, x1 - 330)
+        # Smart toolbar positioning (prefer below selection, centered)
+        toolbar_w = 320
+        toolbar_h = 48
+        toolbar_x = (x1 + x2) // 2 - (toolbar_w // 2)
+        toolbar_x = max(12, min(toolbar_x, self._vw - toolbar_w - 12))
+
+        toolbar_y = y2 + 12
+        if toolbar_y + toolbar_h > self._vh - 12:
+            # Place above selection if room
+            toolbar_y = y1 - toolbar_h - 12
+            if toolbar_y < 12:
+                # Inside selection near bottom
+                toolbar_y = max(12, y2 - toolbar_h - 12)
 
         self._toolbar.show(
             toolbar_x, toolbar_y,
@@ -306,33 +330,35 @@ class SelectionOverlay:
         if action == "search":
             img = self._cropped_image.copy()
             self._dismiss()
-            # Run after dismiss so overlay is hidden before browser opens
-            self._root.after(50, lambda: actions.search_google_lens(img))
+            # Post search task so browser opens cleanly after overlay hides
+            self.post_task(lambda: actions.search_google_lens(img))
 
         elif action == "text":
             self._toolbar.hide()
             x1 = min(self._start_x, self._end_x)
             y1 = min(self._start_y, self._end_y)
             x2 = max(self._start_x, self._end_x)
+            y2 = max(self._start_y, self._end_y)
 
-            panel_x = x2 + 10
-            panel_y = y1
-            if panel_x + 360 > self._vw:
-                panel_x = max(10, x1 - 360)
+            panel_w = 350
+            panel_h = 220
+            panel_x = (x1 + x2) // 2 - (panel_w // 2)
+            panel_x = max(12, min(panel_x, self._vw - panel_w - 12))
+            panel_y = y2 + 12
+            if panel_y + panel_h > self._vh - 12:
+                panel_y = max(12, y1 - panel_h - 12)
 
-            # Show loading
+            # Show loading indicator
             self._ocr_panel.show_loading(panel_x, panel_y, parent_root=self._canvas)
             self._root.update_idletasks()
 
-            # Run OCR async
+            # Run OCR asynchronously on worker thread
             img_copy = self._cropped_image.copy()
             px, py = panel_x, panel_y
 
             def on_ocr_done(text, error):
-                try:
-                    self._root.after(0, lambda: self._show_ocr_result(px, py, text, error))
-                except Exception:
-                    pass
+                # Thread-safe: marshal back to main thread via task queue
+                self.post_task(lambda: self._show_ocr_result(px, py, text, error))
 
             ocr_engine.recognize(img_copy, callback=on_ocr_done)
 
@@ -370,7 +396,7 @@ class SelectionOverlay:
             self._dismiss()
         elif action == "search_text":
             self._dismiss()
-            self._root.after(50, lambda: actions.search_google_text(text))
+            self.post_task(lambda: actions.search_google_text(text))
         elif action == "close":
             self._dismiss()
 
@@ -402,13 +428,13 @@ class SelectionOverlay:
         # Hide window
         try:
             self._root.withdraw()
-        except tk.TclError:
+        except (tk.TclError, AttributeError):
             pass
 
         # Clear canvas
         try:
             self._canvas.delete("all")
-        except tk.TclError:
+        except (tk.TclError, AttributeError):
             pass
 
         # Release heavy image references
@@ -428,7 +454,17 @@ class SelectionOverlay:
                 pass
 
     def process_events(self):
-        """Process pending tkinter events (call from main loop)."""
+        """Process pending queue tasks and tkinter events (call from main loop)."""
+        # Drain task queue on the main thread
+        while not self._task_queue.empty():
+            try:
+                task = self._task_queue.get_nowait()
+                task()
+            except queue.Empty:
+                break
+            except Exception as e:
+                print(f"[Overlay] Task error: {e}")
+
         if self._root:
             try:
                 self._root.update()

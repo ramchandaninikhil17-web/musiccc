@@ -75,22 +75,25 @@ class ActionToolbar:
         # Create buttons
         self._buttons = []
         for icon, label, action in buttons:
-            btn_text = f"{icon} {label}" if label else icon
+            btn_text = f"{icon}  {label}" if label else icon
             btn = tk.Label(
                 self._frame,
                 text=btn_text,
                 bg=self.BG_COLOR,
                 fg=self.FG_COLOR,
-                font=("Segoe UI", 10),
-                padx=8,
-                pady=4,
+                font=("Segoe UI Semibold" if label else "Segoe UI", 10),
+                padx=12 if label else 8,
+                pady=5,
                 cursor="hand2",
-                width=7 if label else 2,
             )
-            btn.pack(side=tk.LEFT, padx=2)
+            btn.pack(side=tk.LEFT, padx=3)
             btn.bind("<Button-1>", lambda e, a=action: self._handle_click(a))
-            btn.bind("<Enter>", lambda e, b=btn: b.configure(bg=self.BG_HOVER))
-            btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=self.BG_COLOR))
+            if action == "close":
+                btn.bind("<Enter>", lambda e, b=btn: b.configure(bg="#ef4444", fg="white"))
+                btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=self.BG_COLOR, fg="#9ca3af"))
+            else:
+                btn.bind("<Enter>", lambda e, b=btn: b.configure(bg=self.BG_HOVER, fg="#ffffff"))
+                btn.bind("<Leave>", lambda e, b=btn: b.configure(bg=self.BG_COLOR, fg=self.FG_COLOR))
             self._buttons.append(btn)
 
         self._frame.place(x=x, y=y)
