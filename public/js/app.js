@@ -215,6 +215,9 @@
   let activeSearchController = null;
   let searchRequestId = 0;
   let isSeeking = false;
+  let seekFraction = 0;
+  let pendingSeekTarget = null;
+  let pendingSeekExpiry = 0;
   let currentSong = null;
   let likedSongs = Storage.get('likes', []); // array of song objects
   let dislikedSongs = Storage.get('dislikes', []); // array of song objects
@@ -701,11 +704,14 @@
     // same time as scrubbing.
     npProgressBar?.addEventListener('mousedown', startSeek);
     npProgressBar?.addEventListener('touchstart', startSeek, { passive: false });
+    npProgressThumb?.addEventListener('mousedown', startSeek);
+    npProgressThumb?.addEventListener('touchstart', startSeek, { passive: false });
     npVolumeBar?.addEventListener('mousedown', startVolChange);
     npVolumeBar?.addEventListener('touchstart', startVolChange, { passive: false });
 
     // Audio events
     audioPlayer?.addEventListener('timeupdate', onTimeUpdate);
+    audioPlayer?.addEventListener('seeked', onSeeked);
     audioPlayer?.addEventListener('loadedmetadata', onMeta);
     audioPlayer?.addEventListener('ended', onEnd);
     audioPlayer?.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); CrossfadeManager.onPlay(); });
@@ -803,8 +809,42 @@
     $('#hideLikedListBtn')?.addEventListener('click', () => { if ($('#likedSongsListSection')) $('#likedSongsListSection').style.display = 'none'; });
     $('#hidePlaylistBtn')?.addEventListener('click', () => { if ($('#activePlaylistSection')) $('#activePlaylistSection').style.display = 'none'; });
     $('#createPlaylistBtn')?.addEventListener('click', openCreatePlaylist);
+    $('#libraryAiSmartBtn')?.addEventListener('click', () => {
+      navigateTo('mood');
+      $('#aiCustomPrompt')?.focus();
+    });
     $('#playlistModalClose')?.addEventListener('click', () => { if ($('#playlistModal')) $('#playlistModal').style.display = 'none'; });
     $('#playlistModal')?.addEventListener('click', (e) => { if (e.target === $('#playlistModal')) $('#playlistModal').style.display = 'none'; });
+    $('#modalTabAiBtn')?.addEventListener('click', () => {
+      $('#modalTabAiBtn')?.classList.add('active');
+      $('#modalTabManualBtn')?.classList.remove('active');
+      if ($('#modalAiTab')) $('#modalAiTab').style.display = '';
+      if ($('#modalManualTab')) $('#modalManualTab').style.display = 'none';
+      $('#modalAiPromptInput')?.focus();
+    });
+    $('#modalTabManualBtn')?.addEventListener('click', () => {
+      $('#modalTabManualBtn')?.classList.add('active');
+      $('#modalTabAiBtn')?.classList.remove('active');
+      if ($('#modalManualTab')) $('#modalManualTab').style.display = '';
+      if ($('#modalAiTab')) $('#modalAiTab').style.display = 'none';
+      $('#playlistNameInput')?.focus();
+    });
+    $('#modalAiPromptInput')?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') $('#modalAiGenerateBtn')?.click();
+    });
+    $('#modalAiGenerateBtn')?.addEventListener('click', async () => {
+      const prompt = $('#modalAiPromptInput')?.value.trim();
+      if (!prompt) {
+        toast('Please enter a description or artist for your playlist');
+        return;
+      }
+      const count = parseInt($('#modalAiCountSelect')?.value || '15');
+      const language = $('#modalAiLanguageSelect')?.value || 'all';
+      if ($('#playlistModal')) $('#playlistModal').style.display = 'none';
+      navigateTo('mood');
+      if ($('#aiCustomPrompt')) $('#aiCustomPrompt').value = prompt;
+      MoodFlowManager.generateCustomPlaylist({ prompt, count, language, energy: 2, saveToLibrary: true });
+    });
     $('#playlistSaveBtn')?.addEventListener('click', savePlaylist);
     $('#playlistNameInput')?.addEventListener('keydown', (e) => { if (e.key === 'Enter') savePlaylist(); });
     $('#playPlaylistBtn')?.addEventListener('click', playCurrentPlaylist);
@@ -1561,6 +1601,15 @@
     npChannel.textContent = song.channel;
     updateLikeBtn();
 
+    // Reset seeking state & immediately populate duration so seek bar works instantly
+    isSeeking = false;
+    pendingSeekTarget = null;
+    const initDur = (song && Number(song.duration) > 0) ? Number(song.duration) : 0;
+    npDuration.textContent = initDur > 0 ? fmtTime(initDur) : '0:00';
+    npCurrentTime.textContent = '0:00';
+    npProgressFill.style.width = '0%';
+    npProgressThumb.style.left = '0%';
+
     if (song.isLocal) {
       // The object URL has to be re-created from IndexedDB after a reload, so
       // this is asynchronous. Guard against the user skipping on in the meantime.
@@ -1841,11 +1890,36 @@
     setTimeout(() => { if (currentSong === song) playNext(); }, 1000);
   }
 
+  function getEffectiveDuration() {
+    const ad = Number(audioPlayer.duration);
+    if (Number.isFinite(ad) && ad > 0) return ad;
+    if (currentSong && Number.isFinite(Number(currentSong.duration)) && Number(currentSong.duration) > 0) {
+      return Number(currentSong.duration);
+    }
+    return 0;
+  }
+
   function onTimeUpdate() {
     if (isSeeking) return;
-    const c = audioPlayer.currentTime, d = audioPlayer.duration || 0;
+
+    if (pendingSeekTarget !== null) {
+      if (Date.now() < pendingSeekExpiry) {
+        const cur = audioPlayer.currentTime || 0;
+        if (audioPlayer.seeking || Math.abs(cur - pendingSeekTarget) > 1.5) {
+          return;
+        }
+      }
+      pendingSeekTarget = null;
+    }
+
+    const c = audioPlayer.currentTime || 0;
+    const d = getEffectiveDuration();
     npCurrentTime.textContent = fmtTime(c);
-    if (d > 0) { const p = (c / d) * 100; npProgressFill.style.width = p + '%'; npProgressThumb.style.left = p + '%'; }
+    if (d > 0) {
+      const p = Math.max(0, Math.min(100, (c / d) * 100));
+      npProgressFill.style.width = p + '%';
+      npProgressThumb.style.left = p + '%';
+    }
     
     // Sync with Apple Orb & Lyrics
     AppleOrbController.updateProgress(c, d);
@@ -1854,8 +1928,16 @@
     CrossfadeManager.tick();
   }
 
+  function onSeeked() {
+    pendingSeekTarget = null;
+    onTimeUpdate();
+  }
+
   function onMeta() {
-    npDuration.textContent = fmtTime(audioPlayer.duration);
+    const dur = getEffectiveDuration();
+    if (dur > 0) {
+      npDuration.textContent = fmtTime(dur);
+    }
     // Duration is only known now, so a pending resume seek can finally be
     // validated and applied.
     ResumeManager.applyPendingSeek();
@@ -2304,21 +2386,76 @@
   }
 
   // Seeking
-  function startSeek(e) {
-    e.preventDefault(); isSeeking = true; seekEvt(e);
-    const mv = (ev) => { if (ev.cancelable) ev.preventDefault(); seekEvt(ev); };
-    const up = () => { isSeeking = false; document.removeEventListener('mousemove', mv); document.removeEventListener('mouseup', up); document.removeEventListener('touchmove', mv); document.removeEventListener('touchend', up); };
-    document.addEventListener('mousemove', mv); document.addEventListener('mouseup', up);
-    document.addEventListener('touchmove', mv, { passive: false }); document.addEventListener('touchend', up);
+  function updateSeekUI(fraction) {
+    seekFraction = Math.max(0, Math.min(1, fraction));
+    const pct = seekFraction * 100;
+    npProgressFill.style.width = pct + '%';
+    npProgressThumb.style.left = pct + '%';
+    const d = getEffectiveDuration();
+    if (d > 0) {
+      npCurrentTime.textContent = fmtTime(seekFraction * d);
+    }
   }
 
-  function seekEvt(e) {
+  function getFractionFromEvent(e) {
     const r = npProgressBar.getBoundingClientRect();
-    const x = e.touches ? e.touches[0].clientX : e.clientX;
-    const p = Math.max(0, Math.min(1, (x - r.left) / r.width));
-    npProgressFill.style.width = (p * 100) + '%'; npProgressThumb.style.left = (p * 100) + '%';
-    const d = audioPlayer.duration || 0;
-    if (d > 0) { audioPlayer.currentTime = p * d; npCurrentTime.textContent = fmtTime(audioPlayer.currentTime); }
+    if (!r.width) return 0;
+    const clientX = e.touches && e.touches.length > 0
+      ? e.touches[0].clientX
+      : (e.changedTouches && e.changedTouches.length > 0 ? e.changedTouches[0].clientX : e.clientX);
+    return Math.max(0, Math.min(1, (clientX - r.left) / r.width));
+  }
+
+  function startSeek(e) {
+    if (!audioPlayer.src && (!currentSong || !currentSong.id)) return;
+    if (e.cancelable) e.preventDefault();
+    isSeeking = true;
+    npProgressBar?.classList.add('seeking');
+    document.body.classList.add('is-scrubbing-progress');
+
+    const frac = getFractionFromEvent(e);
+    updateSeekUI(frac);
+
+    const onMove = (ev) => {
+      if (ev.cancelable) ev.preventDefault();
+      const f = getFractionFromEvent(ev);
+      updateSeekUI(f);
+    };
+
+    const onEnd = (ev) => {
+      if (ev.cancelable) ev.preventDefault();
+      document.removeEventListener('mousemove', onMove);
+      document.removeEventListener('mouseup', onEnd);
+      document.removeEventListener('touchmove', onMove);
+      document.removeEventListener('touchend', onEnd);
+      document.removeEventListener('touchcancel', onEnd);
+
+      const finalFrac = getFractionFromEvent(ev);
+      updateSeekUI(finalFrac);
+
+      const d = getEffectiveDuration();
+      if (d > 0 && Number.isFinite(finalFrac)) {
+        const targetTime = Math.max(0, Math.min(d - 0.2, finalFrac * d));
+        pendingSeekTarget = targetTime;
+        pendingSeekExpiry = Date.now() + 2500;
+        npCurrentTime.textContent = fmtTime(targetTime);
+        try {
+          audioPlayer.currentTime = targetTime;
+        } catch (err) {
+          console.warn('Seek error:', err);
+        }
+      }
+
+      isSeeking = false;
+      npProgressBar?.classList.remove('seeking');
+      document.body.classList.remove('is-scrubbing-progress');
+    };
+
+    document.addEventListener('mousemove', onMove, { passive: false });
+    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('touchmove', onMove, { passive: false });
+    document.addEventListener('touchend', onEnd);
+    document.addEventListener('touchcancel', onEnd);
   }
 
   function updateQualityLabel() { $('#qualityLabel').textContent = audioQuality === 'high' ? 'HQ' : 'LQ'; }
@@ -2437,10 +2574,14 @@
 
   function openCreatePlaylist() {
     $('#playlistModalTitle').textContent = 'Create Playlist';
-    $('#playlistNameInput').value = '';
-    $('#playlistSaveBtn').textContent = 'Create';
+    if ($('#modalAiPromptInput')) $('#modalAiPromptInput').value = '';
+    if ($('#playlistNameInput')) $('#playlistNameInput').value = '';
+    $('#modalTabAiBtn')?.classList.add('active');
+    $('#modalTabManualBtn')?.classList.remove('active');
+    if ($('#modalAiTab')) $('#modalAiTab').style.display = '';
+    if ($('#modalManualTab')) $('#modalManualTab').style.display = 'none';
     $('#playlistModal').style.display = '';
-    $('#playlistNameInput').focus();
+    $('#modalAiPromptInput')?.focus();
   }
 
   function savePlaylist() {
@@ -3991,7 +4132,49 @@
     activeDownloads.add(song.id);
     const isVideo = format === 'video';
     const ext = isVideo ? 'mp4' : 'mp3';
-    toast(`⏳ Preparing ${isVideo ? 'video' : 'MP3'} download for "${(song.title || 'track').slice(0, 25)}..."`);
+
+    // --- Download bar references ---
+    const dlBar       = document.getElementById('downloadBar');
+    const dlBarTitle   = document.getElementById('dlBarTitle');
+    const dlBarMeta    = document.getElementById('dlBarMeta');
+    const dlBarPct     = document.getElementById('dlBarPct');
+    const dlBarFill    = document.getElementById('dlBarFill');
+    const dlBarGlow    = document.getElementById('dlBarGlow');
+    const dlBarClose   = document.getElementById('dlBarClose');
+
+    const trackLabel = (song.title || 'track').slice(0, 40);
+
+    // Show the bar
+    if (dlBar) {
+      dlBar.style.display = '';
+      dlBar.className = 'download-bar dl-bar-active';
+      dlBar.style.animation = '';
+      void dlBar.offsetWidth; // trigger reflow for animation restart
+      dlBar.style.animation = '';
+    }
+    if (dlBarTitle) dlBarTitle.textContent = `⬇️ ${trackLabel}`;
+    if (dlBarMeta) dlBarMeta.textContent = `Preparing ${isVideo ? 'video' : 'MP3'} download…`;
+    if (dlBarPct) dlBarPct.textContent = '0%';
+    if (dlBarFill) { dlBarFill.style.width = '0%'; dlBarFill.classList.remove('dl-bar-indeterminate'); }
+    if (dlBarGlow) dlBarGlow.style.left = '0px';
+
+    // Close button handler
+    let dlBarCloseHandler = null;
+    if (dlBarClose) {
+      dlBarCloseHandler = () => {
+        if (dlBar) { dlBar.classList.add('dl-bar-hiding'); setTimeout(() => { dlBar.style.display = 'none'; }, 400); }
+      };
+      dlBarClose.onclick = dlBarCloseHandler;
+    }
+
+    const hideBarAfterDelay = (ms = 3000) => {
+      setTimeout(() => {
+        if (dlBar && dlBar.style.display !== 'none') {
+          dlBar.classList.add('dl-bar-hiding');
+          setTimeout(() => { dlBar.style.display = 'none'; }, 400);
+        }
+      }, ms);
+    };
 
     let objectUrl = null;
     let progressToast = null;
@@ -4022,9 +4205,8 @@
 
       // --- Download with progress bar ---
       const contentLength = parseInt(response.headers.get('Content-Length') || '0', 10);
-      const trackLabel = (song.title || 'track').slice(0, 30);
 
-      // Build a persistent progress toast
+      // Build a persistent progress toast (keep legacy toast too)
       progressToast = document.createElement('div');
       progressToast.className = 'toast dl-progress-toast';
       progressToast.innerHTML =
@@ -4051,35 +4233,74 @@
         const reader = response.body.getReader();
         const chunks = [];
         let received = 0;
+        let lastTime = Date.now();
+        let lastBytes = 0;
+        let speed = 0;
         while (true) {
           const { done, value } = await reader.read();
           if (done) break;
           chunks.push(value);
           received += value.length;
           const pct = Math.min(100, Math.round((received / contentLength) * 100));
+
+          // Calculate speed
+          const now = Date.now();
+          const dt = (now - lastTime) / 1000;
+          if (dt >= 0.5) {
+            speed = (received - lastBytes) / dt;
+            lastBytes = received;
+            lastTime = now;
+          }
+          const speedStr = speed > 0 ? ` • ${fmtBytes(Math.round(speed))}/s` : '';
+
+          // Update toast
           if (pctEl) pctEl.textContent = pct + '%';
           if (fillEl) fillEl.style.width = pct + '%';
           if (sizeEl) sizeEl.textContent = fmtBytes(received) + ' / ' + fmtBytes(contentLength);
+
+          // Update fixed download bar
+          if (dlBarPct) dlBarPct.textContent = pct + '%';
+          if (dlBarFill) dlBarFill.style.width = pct + '%';
+          if (dlBarMeta) dlBarMeta.textContent = `${fmtBytes(received)} / ${fmtBytes(contentLength)}${speedStr}`;
+          if (dlBarGlow) dlBarGlow.style.left = `calc(${pct}% - 30px)`;
         }
         // Mark 100% before assembling blob
         if (pctEl) pctEl.textContent = '100%';
         if (fillEl) fillEl.style.width = '100%';
         if (sizeEl) sizeEl.textContent = fmtBytes(received) + ' / ' + fmtBytes(contentLength);
+        // Fixed bar 100%
+        if (dlBarPct) dlBarPct.textContent = '✅ Done';
+        if (dlBarFill) dlBarFill.style.width = '100%';
+        if (dlBarGlow) dlBarGlow.style.left = 'calc(100% - 30px)';
+        if (dlBar) dlBar.className = 'download-bar dl-bar-done dl-bar-active';
+        if (dlBarMeta) dlBarMeta.textContent = `${fmtBytes(received)} — Complete!`;
         blob = new Blob(chunks, { type: response.headers.get('Content-Type') || '' });
       } else {
         // Fallback: no Content-Length or no ReadableStream — indeterminate progress
         if (fillEl) { fillEl.style.width = '100%'; fillEl.style.opacity = '0.4'; }
         if (pctEl) pctEl.textContent = '⏳';
         if (sizeEl) sizeEl.textContent = 'downloading…';
+        // Fixed bar indeterminate
+        if (dlBarFill) dlBarFill.classList.add('dl-bar-indeterminate');
+        if (dlBarPct) dlBarPct.textContent = '⏳';
+        if (dlBarMeta) dlBarMeta.textContent = 'Downloading…';
         blob = await response.blob();
         if (pctEl) pctEl.textContent = '100%';
         if (fillEl) { fillEl.style.width = '100%'; fillEl.style.opacity = '1'; }
         if (sizeEl) sizeEl.textContent = fmtBytes(blob.size);
+        // Fixed bar done
+        if (dlBarFill) { dlBarFill.classList.remove('dl-bar-indeterminate'); dlBarFill.style.width = '100%'; }
+        if (dlBarPct) dlBarPct.textContent = '✅ Done';
+        if (dlBar) dlBar.className = 'download-bar dl-bar-done dl-bar-active';
+        if (dlBarMeta) dlBarMeta.textContent = `${fmtBytes(blob.size)} — Complete!`;
       }
 
       // Dismiss progress toast with a brief success flash
       if (pctEl) pctEl.textContent = '✅';
       setTimeout(() => { progressToast.classList.add('removing'); setTimeout(() => progressToast.remove(), 300); }, 1500);
+
+      // Auto-hide fixed download bar after 3 seconds
+      hideBarAfterDelay(3000);
 
       if (!blob || blob.size === 0) throw new Error('The server returned an empty file');
 
@@ -4129,6 +4350,13 @@
       clearTimeout(downloadTimeout);
       // Dismiss progress bar on error
       if (progressToast) { try { progressToast.remove(); } catch(e) {} progressToast = null; }
+      // Update fixed download bar with error state
+      if (dlBarTitle) dlBarTitle.textContent = '❌ Download failed';
+      if (dlBarPct) dlBarPct.textContent = '';
+      if (dlBarFill) { dlBarFill.style.width = '0%'; dlBarFill.classList.remove('dl-bar-indeterminate'); }
+      if (dlBar) dlBar.className = 'download-bar';
+      hideBarAfterDelay(5000);
+
       console.warn('[download]', err);
       const isTimeout = err.name === 'AbortError';
       const msg = isTimeout ? `Download timed out (${isVideo ? '10' : '3'} min)` : (err.message || 'unknown error');
@@ -4949,8 +5177,36 @@
 
     switch (e.key) {
       case ' ': e.preventDefault(); togglePlayPause(); break;
-      case 'ArrowRight': e.preventDefault(); if (audioPlayer.duration) audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 5); break;
-      case 'ArrowLeft': e.preventDefault(); audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 5); break;
+      case 'ArrowRight': {
+        e.preventDefault();
+        const d = getEffectiveDuration();
+        if (d > 0) {
+          const target = Math.min(d - 0.2, (audioPlayer.currentTime || 0) + 5);
+          pendingSeekTarget = target;
+          pendingSeekExpiry = Date.now() + 2500;
+          try { audioPlayer.currentTime = target; } catch (err) {}
+          npCurrentTime.textContent = fmtTime(target);
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
+        }
+        break;
+      }
+      case 'ArrowLeft': {
+        e.preventDefault();
+        const d = getEffectiveDuration();
+        const target = Math.max(0, (audioPlayer.currentTime || 0) - 5);
+        pendingSeekTarget = target;
+        pendingSeekExpiry = Date.now() + 2500;
+        try { audioPlayer.currentTime = target; } catch (err) {}
+        npCurrentTime.textContent = fmtTime(target);
+        if (d > 0) {
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
+        }
+        break;
+      }
       case 'ArrowUp': e.preventDefault(); setVolume(volume + 0.05); break;
       case 'ArrowDown': e.preventDefault(); setVolume(volume - 0.05); break;
       case 'm': case 'M': toggleMute(); break;
@@ -5068,8 +5324,19 @@
       $('#capsuleProgressBar')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
-        const pct = (e.clientX - rect.left) / rect.width;
-        if (audioPlayer.duration) audioPlayer.currentTime = pct * audioPlayer.duration;
+        if (!rect.width) return;
+        const pct = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+        const d = getEffectiveDuration();
+        if (d > 0) {
+          const target = Math.max(0, Math.min(d - 0.2, pct * d));
+          pendingSeekTarget = target;
+          pendingSeekExpiry = Date.now() + 2500;
+          try { audioPlayer.currentTime = target; } catch (err) {}
+          npCurrentTime.textContent = fmtTime(target);
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
+        }
       });
 
       // Restore saved orb position
@@ -5633,15 +5900,43 @@
     
     try {
       navigator.mediaSession.setActionHandler('seekto', (details) => {
-        if (details.seekTime && audioPlayer.duration) {
-          audioPlayer.currentTime = details.seekTime;
+        const d = getEffectiveDuration();
+        if (details.seekTime != null && d > 0) {
+          const target = Math.max(0, Math.min(d - 0.2, details.seekTime));
+          pendingSeekTarget = target;
+          pendingSeekExpiry = Date.now() + 2500;
+          try { audioPlayer.currentTime = target; } catch (err) {}
+          npCurrentTime.textContent = fmtTime(target);
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
         }
       });
       navigator.mediaSession.setActionHandler('seekforward', () => {
-        if (audioPlayer.duration) audioPlayer.currentTime = Math.min(audioPlayer.duration, audioPlayer.currentTime + 10);
+        const d = getEffectiveDuration();
+        if (d > 0) {
+          const target = Math.min(d - 0.2, (audioPlayer.currentTime || 0) + 10);
+          pendingSeekTarget = target;
+          pendingSeekExpiry = Date.now() + 2500;
+          try { audioPlayer.currentTime = target; } catch (err) {}
+          npCurrentTime.textContent = fmtTime(target);
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
+        }
       });
       navigator.mediaSession.setActionHandler('seekbackward', () => {
-        audioPlayer.currentTime = Math.max(0, audioPlayer.currentTime - 10);
+        const d = getEffectiveDuration();
+        const target = Math.max(0, (audioPlayer.currentTime || 0) - 10);
+        pendingSeekTarget = target;
+        pendingSeekExpiry = Date.now() + 2500;
+        try { audioPlayer.currentTime = target; } catch (err) {}
+        npCurrentTime.textContent = fmtTime(target);
+        if (d > 0) {
+          const p = Math.max(0, Math.min(100, (target / d) * 100));
+          npProgressFill.style.width = p + '%';
+          npProgressThumb.style.left = p + '%';
+        }
       });
       navigator.mediaSession.setActionHandler('stop', () => {
         audioPlayer.pause();
@@ -6992,15 +7287,35 @@
   };
 
   /* ================================================================
-     AI MOOD & VIBE QUESTIONNAIRE ENGINE
+     AI SMART PLAYLIST & MOOD FLOW ENGINE
      ================================================================ */
   const MoodFlowManager = {
     currentStep: 1,
     answers: { emotion: null, activity: null, style: null, energy: 2 },
+    customPrompt: '',
+    customCount: 15,
+    customLanguage: 'all',
+    customEnergy: 2,
+    currentTitle: '',
+    currentEmoji: '✨',
+    currentDescription: '',
     moodSongs: [],
     savedPresets: Storage.get('mood_presets', []),
+    isGenerating: false,
 
-    // Search query mapping for mood combinations
+    surprisePrompts: [
+      'Late night Hindi romantic acoustic songs',
+      '90s rock ballads for long road trips',
+      'High energy gym phonk and beast mode beats',
+      'Calm acoustic guitar indie coffee shop morning',
+      'Top trending Punjabi party dance hits',
+      'Deep focus instrumental study and coding beats',
+      'Taylor Swift and Sabrina Carpenter emotional pop',
+      'Chill lofi hip hop beats with gentle rainfall',
+      '2000s Bollywood nostalgic love anthems',
+      'Club dance electronic synthwave and EDM festival'
+    ],
+
     moodQueries: {
       happy: ['happy upbeat songs', 'feel good music playlist', 'uplifting songs 2024'],
       sad: ['sad emotional songs', 'heartbreak songs playlist', 'emotional ballads'],
@@ -7032,10 +7347,108 @@
       rnb: ['r&b soul music playlist', 'smooth rnb vibes'],
       kpop: ['kpop hits 2024', 'best kpop songs playlist']
     },
-    energyLabels: { 1: '\ud83c\udf19 Mellow', 2: '\u2600\ufe0f Balanced', 3: '\u26a1 Upbeat', 4: '\ud83d\udd25 Ultra Hype' },
+    energyLabels: { 1: '🌙 Mellow', 2: '☀️ Balanced', 3: '⚡ Upbeat', 4: '🔥 Ultra Hype' },
 
     init() {
-      // Quick mood cards on page
+      const promptInput = $('#aiCustomPrompt');
+      const clearBtn = $('#aiClearPromptBtn');
+
+      promptInput?.addEventListener('input', () => {
+        if (clearBtn) clearBtn.style.display = promptInput.value.trim() ? '' : 'none';
+      });
+
+      promptInput?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          $('#aiGenerateBtn')?.click();
+        }
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        if (promptInput) {
+          promptInput.value = '';
+          promptInput.focus();
+        }
+        clearBtn.style.display = 'none';
+      });
+
+      $$('#aiInspireChips .ai-chip').forEach(chip => {
+        chip.addEventListener('click', () => {
+          const prompt = chip.dataset.prompt;
+          if (promptInput) {
+            promptInput.value = prompt;
+            if (clearBtn) clearBtn.style.display = '';
+          }
+          this.generateCustomPlaylist({
+            prompt,
+            count: this.customCount,
+            language: this.customLanguage,
+            energy: this.customEnergy
+          });
+        });
+      });
+
+      $$('#aiCountSelector .ai-pill-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+          $$('#aiCountSelector .ai-pill-opt').forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          this.customCount = parseInt(opt.dataset.count) || 15;
+        });
+      });
+
+      $('#aiLanguageSelect')?.addEventListener('change', (e) => {
+        this.customLanguage = e.target.value;
+      });
+
+      $$('#aiEnergySelector .ai-pill-opt').forEach(opt => {
+        opt.addEventListener('click', () => {
+          $$('#aiEnergySelector .ai-pill-opt').forEach(o => o.classList.remove('active'));
+          opt.classList.add('active');
+          this.customEnergy = parseInt(opt.dataset.energy) || 2;
+        });
+      });
+
+      $('#aiGenerateBtn')?.addEventListener('click', () => {
+        const prompt = promptInput?.value.trim() || '';
+        if (!prompt) {
+          toast('Please enter a description or pick an idea for your playlist');
+          promptInput?.focus();
+          return;
+        }
+        this.generateCustomPlaylist({
+          prompt,
+          count: this.customCount,
+          language: this.customLanguage,
+          energy: this.customEnergy
+        });
+      });
+
+      $('#aiSurpriseBtn')?.addEventListener('click', () => {
+        const rand = this.surprisePrompts[Math.floor(Math.random() * this.surprisePrompts.length)];
+        if (promptInput) {
+          promptInput.value = rand;
+          if (clearBtn) clearBtn.style.display = '';
+        }
+        toast(`🎲 Vibe selected: "${rand}"`);
+        this.generateCustomPlaylist({
+          prompt: rand,
+          count: this.customCount,
+          language: this.customLanguage,
+          energy: this.customEnergy
+        });
+      });
+
+      $('#regenMoodBtn')?.addEventListener('click', () => {
+        const prompt = this.customPrompt || promptInput?.value.trim() || 'trending hits';
+        this.generateCustomPlaylist({
+          prompt,
+          count: this.customCount,
+          language: this.customLanguage,
+          energy: this.customEnergy,
+          autoPlay: false
+        });
+      });
+
       $$('.mood-quick-card').forEach(card => {
         card.addEventListener('click', () => {
           const mood = card.dataset.mood;
@@ -7043,7 +7456,6 @@
         });
       });
 
-      // Advanced questionnaire
       $('#openMoodQuestionnaireBtn')?.addEventListener('click', () => this.openModal());
       $('#moodModalCloseBtn')?.addEventListener('click', () => this.closeModal());
       $('#moodQuestionnaireModal')?.addEventListener('click', (e) => {
@@ -7053,14 +7465,12 @@
       $('#moodBackBtn')?.addEventListener('click', () => this.prevStep());
       $('#moodRandomBtn')?.addEventListener('click', () => this.randomize());
 
-      // Energy slider
       $('#moodEnergySlider')?.addEventListener('input', (e) => {
         const val = parseInt(e.target.value);
         this.answers.energy = val;
         $('#moodEnergyValue').textContent = this.energyLabels[val] || '';
       });
 
-      // Option chip selection
       document.addEventListener('click', (e) => {
         const chip = e.target.closest('.mood-option-chip');
         if (!chip) return;
@@ -7069,21 +7479,16 @@
         panel.querySelectorAll('.mood-option-chip').forEach(c => c.classList.remove('selected'));
         chip.classList.add('selected');
       });
-
-      // Result action buttons
-      $('#playAllMoodBtn')?.addEventListener('click', () => this.playMoodMix());
-      $('#saveMoodPlaylistBtn')?.addEventListener('click', () => this.saveAsPlaylist());
     },
 
     renderPage() {
-      // Render saved presets
       const sec = $('#savedMoodPresetsSection');
       const list = $('#savedMoodPresetsList');
       if (sec && list && this.savedPresets.length > 0) {
         sec.style.display = '';
         list.innerHTML = this.savedPresets.map((p, i) => `
           <button class="mood-preset-pill" data-idx="${i}">
-            <span>${p.emoji || '\ud83c\udfad'}</span>
+            <span>${p.emoji || '🎭'}</span>
             <span>${esc(p.label)}</span>
           </button>
         `).join('');
@@ -7098,12 +7503,256 @@
         sec.style.display = 'none';
       }
 
-      // Show last mood results if any
       if (this.moodSongs.length > 0) {
         const resSec = $('#moodResultsSection');
         if (resSec) resSec.style.display = '';
-        renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
+        $('#aiResEmoji').textContent = this.currentEmoji || '✨';
+        $('#moodResultsTitle').textContent = this.currentTitle || 'Your Custom Mix';
+        $('#aiResDesc').textContent = this.currentDescription || `${this.moodSongs.length} tracks`;
+        renderRecommendationCards($('#moodResultsGrid'), this.moodSongs, { removable: true });
       }
+    },
+
+    async generateCustomPlaylist(opts = {}) {
+      const {
+        prompt = '',
+        count = 15,
+        language = 'all',
+        energy = 2,
+        saveToLibrary = false,
+        autoPlay = false
+      } = opts;
+
+      this.customPrompt = prompt;
+      this.customCount = count;
+      this.customLanguage = language;
+      this.customEnergy = energy;
+      this.isGenerating = true;
+
+      const loader = $('#aiGeneratingLoader');
+      const genBtn = $('#aiGenerateBtn');
+      const resSec = $('#moodResultsSection');
+
+      if (loader) loader.style.display = 'flex';
+      if (genBtn) genBtn.disabled = true;
+      if (resSec) resSec.style.display = 'none';
+      $('#aiLoaderStatus').textContent = 'Crafting your playlist...';
+      $('#aiLoaderSubtext').textContent = 'Analyzing custom choice and vibe...';
+
+      let fetchedSongs = [];
+      let smartTitle = '';
+      let smartEmoji = '✨';
+      let smartDesc = '';
+
+      try {
+        try {
+          const controller = new AbortController();
+          const tid = setTimeout(() => controller.abort(), 18000);
+          const res = await fetch('/api/smart-playlist', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ prompt, count, language, energy }),
+            signal: controller.signal
+          });
+          clearTimeout(tid);
+          if (res.ok) {
+            const data = await res.json();
+            if (data.songs && data.songs.length > 0) {
+              fetchedSongs = data.songs;
+              smartTitle = data.title;
+              smartEmoji = data.emoji || '✨';
+              smartDesc = data.description;
+            }
+          }
+        } catch (err) {
+          console.warn('[SmartPlaylist API fallback]', err);
+        }
+
+        if (fetchedSongs.length === 0) {
+          $('#aiLoaderSubtext').textContent = 'Gathering top tracks from audio engines...';
+          const candidateSongs = [];
+          const queryVariants = [
+            prompt,
+            `${prompt} songs playlist`,
+            language && language !== 'all' ? `${prompt} ${language} hits` : `${prompt} best hits`
+          ].filter(Boolean);
+
+          for (const q of queryVariants.slice(0, 3)) {
+            try {
+              const c = new AbortController();
+              const t = setTimeout(() => c.abort(), 12000);
+              const r = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: c.signal });
+              clearTimeout(t);
+              if (r.ok) {
+                const data = await r.json();
+                if (Array.isArray(data)) candidateSongs.push(...data);
+              }
+            } catch {}
+          }
+
+          if (candidateSongs.length < count) {
+            try {
+              const cloud = await CloudMusicEngine.search(prompt);
+              if (Array.isArray(cloud) && cloud.length > 0) candidateSongs.push(...cloud);
+            } catch {}
+          }
+
+          const seen = new Set();
+          const unique = [];
+          candidateSongs.forEach(s => {
+            if (s && s.id && !seen.has(s.id)) {
+              seen.add(s.id);
+              const dur = Number(s.duration) || 0;
+              if (!dur || (dur >= 30 && dur <= 1800)) {
+                unique.push(s);
+              }
+            }
+          });
+
+          for (let i = unique.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [unique[i], unique[j]] = [unique[j], unique[i]];
+          }
+
+          fetchedSongs = unique.slice(0, count);
+
+          const pLow = prompt.toLowerCase();
+          if (/romantic|love|pyar|heart|ishq/.test(pLow)) { smartEmoji = '❤️'; smartTitle = 'Romantic Melodies'; }
+          else if (/gym|workout|phonk|beast|hype/.test(pLow)) { smartEmoji = '🔥'; smartTitle = 'Gym Beast Mode'; }
+          else if (/lofi|chill|relax|sleep|study|rain/.test(pLow)) { smartEmoji = '☕'; smartTitle = 'Late Night Chill'; }
+          else if (/party|dance|edm|club/.test(pLow)) { smartEmoji = '🎉'; smartTitle = 'Ultimate Party Mix'; }
+          else if (/sad|breakup|cry|pain|alone/.test(pLow)) { smartEmoji = '💔'; smartTitle = 'Sad & Emotional Mix'; }
+          else if (/retro|90s|80s|2000s|nostalgia|old/.test(pLow)) { smartEmoji = '🕰️'; smartTitle = 'Golden Era Classics'; }
+          else if (/punjabi|bhangra/.test(pLow)) { smartEmoji = '⚡'; smartTitle = 'Punjabi Fire Mix'; }
+          else if (/bollywood|hindi/.test(pLow)) { smartEmoji = '🎶'; smartTitle = 'Bollywood Hits'; }
+          else {
+            const words = prompt.split(/\s+/).slice(0, 4).map(w => w.charAt(0).toUpperCase() + w.slice(1));
+            smartEmoji = '✨';
+            smartTitle = (words.join(' ') || 'Custom') + ' Mix';
+          }
+          smartDesc = `${fetchedSongs.length} tracks curated for "${prompt}"`;
+        }
+
+        if (fetchedSongs.length === 0) {
+          try {
+            const trending = await CloudMusicEngine.getTrending();
+            fetchedSongs = (trending || []).slice(0, count);
+            smartEmoji = '🔥';
+            smartTitle = 'Trending Hits Mix';
+            smartDesc = `${fetchedSongs.length} top trending tracks`;
+          } catch {}
+        }
+
+        this.moodSongs = fetchedSongs;
+        this.currentTitle = smartTitle;
+        this.currentEmoji = smartEmoji;
+        this.currentDescription = smartDesc;
+
+        if (loader) loader.style.display = 'none';
+        if (genBtn) genBtn.disabled = false;
+        this.isGenerating = false;
+
+        if (resSec) {
+          resSec.style.display = '';
+          $('#aiResEmoji').textContent = smartEmoji;
+          $('#moodResultsTitle').textContent = smartTitle;
+          $('#aiResDesc').textContent = smartDesc;
+          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs, { removable: true });
+          resSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+
+        if (saveToLibrary) {
+          this.saveAsPlaylist(false);
+        }
+
+        if (autoPlay && this.moodSongs.length > 0) {
+          this.playMoodMix();
+          toast(`${smartEmoji} Playing "${smartTitle}" (${this.moodSongs.length} tracks)`);
+        } else {
+          toast(`${smartEmoji} Generated "${smartTitle}" with ${this.moodSongs.length} tracks!`);
+        }
+
+      } catch (err) {
+        console.error('[GenerateCustomPlaylist Error]', err);
+        if (loader) loader.style.display = 'none';
+        if (genBtn) genBtn.disabled = false;
+        this.isGenerating = false;
+        toast('⚠️ Had an issue generating mix. Please try again.');
+      }
+    },
+
+    async quickMoodPlay(mood) {
+      const moodConfig = {
+        happy: { prompt: 'Happy upbeat feel good songs', emoji: '😊', title: 'Happy & Upbeat Mix', energy: 3 },
+        sad: { prompt: 'Sad emotional heartbreak ballads', emoji: '😢', title: 'Sad & Emotional Mix', energy: 1 },
+        romantic: { prompt: 'Romantic love melodies acoustic', emoji: '❤️', title: 'Romantic Mix', energy: 2 },
+        chill: { prompt: 'Chill relaxing lofi calm beats', emoji: '😌', title: 'Chill & Relaxed Mix', energy: 1 },
+        energetic: { prompt: 'High energy workout motivation music', emoji: '💪', title: 'Energetic & Hyped Mix', energy: 4 },
+        focus: { prompt: 'Deep focus concentration study beats', emoji: '🧠', title: 'Deep Focus Mix', energy: 2 },
+        party: { prompt: 'Party dance hits club bangers', emoji: '🎉', title: 'Party & Dance Mix', energy: 4 },
+        sleep: { prompt: 'Sleep calm ambient peaceful night music', emoji: '🌙', title: 'Zen & Sleep Mix', energy: 1 },
+        nostalgia: { prompt: '90s 2000s classic retro hits', emoji: '🕰️', title: 'Nostalgic Retro Mix', energy: 2 }
+      };
+
+      const cfg = moodConfig[mood] || { prompt: `${mood} music playlist`, emoji: '🎭', title: `${mood.charAt(0).toUpperCase() + mood.slice(1)} Mix`, energy: 2 };
+      
+      const promptInput = $('#aiCustomPrompt');
+      if (promptInput) {
+        promptInput.value = cfg.prompt;
+        const clearBtn = $('#aiClearPromptBtn');
+        if (clearBtn) clearBtn.style.display = '';
+      }
+
+      await this.generateCustomPlaylist({
+        prompt: cfg.prompt,
+        count: this.customCount,
+        language: this.customLanguage,
+        energy: cfg.energy,
+        autoPlay: true
+      });
+    },
+
+    playMoodMix() {
+      if (!this.moodSongs.length) { toast('No mood songs to play'); return; }
+      queue = [...this.moodSongs];
+      currentIndex = -1;
+      updateQueueUI();
+      playSong(queue[0]);
+    },
+
+    saveAsPlaylist(notify = true) {
+      if (!this.moodSongs.length) { toast('No songs to save'); return; }
+      const emoji = this.currentEmoji || '✨';
+      const title = this.currentTitle || 'My Smart Playlist';
+      const plName = `${emoji} ${title}`;
+      const pl = { id: 'pl_' + Date.now(), name: plName, songs: [...this.moodSongs] };
+      playlists.push(pl);
+      Storage.set('playlists', playlists);
+      renderLibrary();
+
+      this.savedPresets.unshift({
+        label: plName,
+        emoji,
+        prompt: this.customPrompt || title,
+        timestamp: Date.now()
+      });
+      if (this.savedPresets.length > 10) this.savedPresets = this.savedPresets.slice(0, 10);
+      Storage.set('mood_presets', this.savedPresets);
+
+      if (notify) {
+        toast(`💾 Saved "${plName}" (${this.moodSongs.length} tracks) to your Library!`);
+      }
+    },
+
+    async executePreset(preset) {
+      if (!preset) return;
+      toast(`⚡ Replaying ${preset.label}...`);
+      await this.generateCustomPlaylist({
+        prompt: preset.prompt || preset.label,
+        count: 15,
+        energy: 2,
+        autoPlay: true
+      });
     },
 
     openModal() {
@@ -7113,7 +7762,6 @@
       $('#moodQuestionnaireModal').style.display = 'flex';
       $('#moodGenerating').style.display = 'none';
       $('#moodNavActions').style.display = '';
-      // Reset selections
       $$('.mood-option-chip').forEach(c => c.classList.remove('selected'));
       $('#moodEnergySlider').value = 2;
       $('#moodEnergyValue').textContent = this.energyLabels[2];
@@ -7128,18 +7776,15 @@
         const panel = $(`#moodStep${i}`);
         if (panel) panel.style.display = i === this.currentStep ? '' : 'none';
       }
-      // Update step dots
       $$('.mood-step-dot').forEach(dot => {
         const s = parseInt(dot.dataset.step);
         dot.classList.toggle('active', s === this.currentStep);
         dot.classList.toggle('completed', s < this.currentStep);
       });
-      // Back button
       const backBtn = $('#moodBackBtn');
       if (backBtn) backBtn.style.display = this.currentStep > 1 ? '' : 'none';
-      // Next button text
       const nextBtn = $('#moodNextBtn');
-      if (nextBtn) nextBtn.textContent = this.currentStep === 4 ? '\u26a1 Generate Mood Mix' : 'Next \u2192';
+      if (nextBtn) nextBtn.textContent = this.currentStep === 4 ? '⚡ Generate Mood Mix' : 'Next →';
     },
 
     getSelectedValue(stepNum) {
@@ -7150,7 +7795,6 @@
     },
 
     nextStep() {
-      // Collect answer from current step
       if (this.currentStep === 1) {
         this.answers.emotion = this.getSelectedValue(1);
         if (!this.answers.emotion) { toast('Please select your mood'); return; }
@@ -7166,9 +7810,18 @@
         this.currentStep++;
         this.updateStepUI();
       } else {
-        // Step 4 done — generate!
         this.answers.energy = parseInt($('#moodEnergySlider')?.value || 2);
-        this.generateMoodMix();
+        this.closeModal();
+        const emotion = this.answers.emotion || '';
+        const activity = this.answers.activity || '';
+        const style = this.answers.style || '';
+        const combinedPrompt = `${emotion} ${activity} ${style} music playlist`.trim();
+        this.generateCustomPlaylist({
+          prompt: combinedPrompt,
+          count: this.customCount,
+          energy: this.answers.energy,
+          autoPlay: true
+        });
       }
     },
 
@@ -7180,7 +7833,6 @@
     },
 
     randomize() {
-      // Randomly select options for all steps
       const steps = [1, 2, 3];
       steps.forEach(s => {
         const panel = $(`#moodStep${s}`);
@@ -7191,255 +7843,18 @@
         const rand = chips[Math.floor(Math.random() * chips.length)];
         rand.classList.add('selected');
       });
-      // Random energy
       const randEnergy = Math.floor(Math.random() * 4) + 1;
       $('#moodEnergySlider').value = randEnergy;
       $('#moodEnergyValue').textContent = this.energyLabels[randEnergy];
       this.answers.energy = randEnergy;
-      toast('\ud83c\udfb2 Randomized! Click Generate when ready.');
+      toast('🎲 Randomized! Click Next to generate.');
 
-      // Collect all answers
       this.answers.emotion = this.getSelectedValue(1);
       this.answers.activity = this.getSelectedValue(2);
       this.answers.style = this.getSelectedValue(3);
 
-      // Jump to last step
       this.currentStep = 4;
       this.updateStepUI();
-    },
-
-    buildSearchQueries() {
-      const queries = [];
-      const e = this.answers.emotion;
-      const a = this.answers.activity;
-      const s = this.answers.style;
-      const nrg = this.answers.energy;
-
-      // Primary mood queries
-      if (e && this.moodQueries[e]) {
-        queries.push(...this.moodQueries[e]);
-      }
-      // Activity blend
-      if (a && this.activityQueries[a]) {
-        queries.push(this.activityQueries[a][0]);
-      }
-      // Style blend
-      if (s && this.styleQueries[s]) {
-        queries.push(this.styleQueries[s][0]);
-      }
-      // Energy modifier
-      const energySuffix = nrg <= 1 ? 'slow calm' : nrg === 2 ? '' : nrg === 3 ? 'upbeat' : 'high energy bass';
-      if (energySuffix && queries.length > 0) {
-        queries.push(`${queries[0]} ${energySuffix}`);
-      }
-      return queries.slice(0, 5);
-    },
-
-    async generateMoodMix() {
-      // Show loading
-      $('#moodNavActions').style.display = 'none';
-      for (let i = 1; i <= 4; i++) {
-        $(`#moodStep${i}`).style.display = 'none';
-      }
-      $('#moodGenerating').style.display = 'flex';
-
-      const queries = this.buildSearchQueries();
-
-      try {
-        // Try server-side mood endpoint first
-        let songs = [];
-        try {
-          const res = await fetch('/api/mood-mix', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ queries, energy: this.answers.energy })
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.results && data.results.length > 0) {
-              songs = data.results;
-            }
-          }
-        } catch (e) {}
-
-        // Fallback: client-side search
-        if (songs.length === 0) {
-          for (const q of queries.slice(0, 3)) {
-            try {
-              const controller = new AbortController();
-              const timeoutId = setTimeout(() => controller.abort(), 12000);
-              const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-              clearTimeout(timeoutId);
-              if (res.ok) {
-                const data = await res.json();
-                if (Array.isArray(data)) songs.push(...data);
-              }
-            } catch {}
-          }
-        }
-
-        // Deduplicate
-        const seen = new Set();
-        const unique = [];
-        songs.forEach(s => {
-          if (s && s.id && !seen.has(s.id)) {
-            seen.add(s.id);
-            const dur = Number(s.duration) || 0;
-            if (dur >= 60 && dur <= 600) unique.push(s);
-          }
-        });
-
-        // Shuffle
-        for (let i = unique.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [unique[i], unique[j]] = [unique[j], unique[i]];
-        }
-
-        this.moodSongs = unique.slice(0, 20);
-        this.closeModal();
-
-        if (this.moodSongs.length > 0) {
-          // Navigate to mood page and show results
-          navigateTo('mood');
-          const resSec = $('#moodResultsSection');
-          if (resSec) resSec.style.display = '';
-          const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
-          const emoji = emojiMap[this.answers.emotion] || '\ud83c\udfad';
-          $('#moodResultsTitle').textContent = `${emoji} Your ${(this.answers.emotion || 'Mood').charAt(0).toUpperCase() + (this.answers.emotion || 'Mood').slice(1)} Mix`;
-          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
-
-          // Auto play
-          this.playMoodMix();
-          toast(`${emoji} Playing your mood mix (${this.moodSongs.length} tracks)`);
-        } else {
-          toast('Could not find songs for your mood. Try different options.');
-        }
-      } catch (err) {
-        console.error('[MoodFlow Error]', err);
-        this.closeModal();
-        toast('\u26a0\ufe0f Error generating mood mix. Please try again.');
-      }
-    },
-
-    async quickMoodPlay(mood) {
-      const queries = this.moodQueries[mood] || [`${mood} music playlist`];
-      toast(`\ud83c\udfad Generating ${mood} mix...`);
-
-      try {
-        let songs = [];
-        for (const q of queries.slice(0, 2)) {
-          try {
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 12000);
-            const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-            clearTimeout(tid);
-            if (res.ok) {
-              const data = await res.json();
-              if (Array.isArray(data)) songs.push(...data);
-            }
-          } catch {}
-        }
-
-        const seen = new Set();
-        const unique = [];
-        songs.forEach(s => {
-          if (s && s.id && !seen.has(s.id)) {
-            seen.add(s.id);
-            const dur = Number(s.duration) || 0;
-            if (dur >= 60 && dur <= 600) unique.push(s);
-          }
-        });
-
-        for (let i = unique.length - 1; i > 0; i--) {
-          const j = Math.floor(Math.random() * (i + 1));
-          [unique[i], unique[j]] = [unique[j], unique[i]];
-        }
-
-        this.moodSongs = unique.slice(0, 15);
-
-        if (this.moodSongs.length > 0) {
-          const resSec = $('#moodResultsSection');
-          if (resSec) resSec.style.display = '';
-          const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
-          const emoji = emojiMap[mood] || '\ud83c\udfad';
-          $('#moodResultsTitle').textContent = `${emoji} ${mood.charAt(0).toUpperCase() + mood.slice(1)} Mix`;
-          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
-          this.playMoodMix();
-          toast(`${emoji} Playing ${mood} mix (${this.moodSongs.length} tracks)`);
-        } else {
-          toast('No songs found. Try again.');
-        }
-      } catch {
-        toast('\u26a0\ufe0f Error loading mood mix');
-      }
-    },
-
-    playMoodMix() {
-      if (!this.moodSongs.length) { toast('No mood songs to play'); return; }
-      queue = [...this.moodSongs];
-      currentIndex = -1;
-      updateQueueUI();
-      playSong(queue[0]);
-    },
-
-    saveAsPlaylist() {
-      if (!this.moodSongs.length) { toast('No songs to save'); return; }
-      const name = `Mood: ${(this.answers.emotion || 'Mix').charAt(0).toUpperCase() + (this.answers.emotion || 'Mix').slice(1)} ${new Date().toLocaleDateString()}`;
-      const pl = { id: 'pl_' + Date.now(), name, songs: [...this.moodSongs] };
-      playlists.push(pl);
-      Storage.set('playlists', playlists);
-
-      // Save as preset
-      const emojiMap = { happy:'\ud83d\ude0a', sad:'\ud83d\ude22', chill:'\ud83d\ude0c', energetic:'\u26a1', focus:'\ud83e\udde0', romantic:'\u2764\ufe0f', party:'\ud83c\udf89', nostalgia:'\ud83d\udd70\ufe0f', sleep:'\ud83c\udf19' };
-      this.savedPresets.unshift({
-        label: name,
-        emoji: emojiMap[this.answers.emotion] || '\ud83c\udfad',
-        answers: { ...this.answers },
-        timestamp: Date.now()
-      });
-      if (this.savedPresets.length > 10) this.savedPresets = this.savedPresets.slice(0, 10);
-      Storage.set('mood_presets', this.savedPresets);
-
-      toast(`\ud83d\udcbe Saved "${name}" to playlists!`);
-    },
-
-    async executePreset(preset) {
-      if (preset.answers) {
-        this.answers = { ...preset.answers };
-        toast(`\u26a1 Replaying ${preset.label}...`);
-        const queries = this.buildSearchQueries();
-        // Quick search
-        let songs = [];
-        for (const q of queries.slice(0, 3)) {
-          try {
-            const controller = new AbortController();
-            const tid = setTimeout(() => controller.abort(), 12000);
-            const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`, { signal: controller.signal });
-            clearTimeout(tid);
-            if (res.ok) {
-              const data = await res.json();
-              if (Array.isArray(data)) songs.push(...data);
-            }
-          } catch {}
-        }
-        const seen = new Set();
-        this.moodSongs = songs.filter(s => {
-          if (!s || !s.id || seen.has(s.id)) return false;
-          seen.add(s.id);
-          const dur = Number(s.duration) || 0;
-          return dur >= 60 && dur <= 600;
-        }).slice(0, 15);
-
-        if (this.moodSongs.length > 0) {
-          const resSec = $('#moodResultsSection');
-          if (resSec) resSec.style.display = '';
-          $('#moodResultsTitle').textContent = `${preset.emoji} ${preset.label}`;
-          renderRecommendationCards($('#moodResultsGrid'), this.moodSongs);
-          this.playMoodMix();
-        } else {
-          toast('No songs found for this preset');
-        }
-      }
     }
   };
 

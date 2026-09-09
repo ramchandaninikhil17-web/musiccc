@@ -82,6 +82,8 @@ const VIDEO_YTDLP_ARGS = [
   '--no-playlist',
 ];
 
+const YOUTUBE_ANDROID_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
 /* ------------------------------------------------------------------ */
 /*  Healthcheck Endpoints for Cloud Load Balancers (Render, Railway)  */
 /* ------------------------------------------------------------------ */
@@ -664,7 +666,7 @@ app.get('/api/recommendations', async (req, res) => {
       if (s && s.id && !seen.has(s.id)) {
         seen.add(s.id);
         const dur = Number(s.duration) || 0;
-        if (dur >= 60 && dur <= 600) {
+        if (!dur || (dur >= 30 && dur <= 1800)) {
           allSongs.push(s);
         }
       }
@@ -1028,7 +1030,12 @@ function fetchAndProxyAudio(targetUrl, req, res, videoId, redirectCount = 0, isF
       'Referer': 'https://www.youtube.com/',
       'Origin': 'https://www.youtube.com',
     };
-    if (req.headers.range) headers['Range'] = req.headers.range;
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+      if (parsedUrl.searchParams.has('range')) {
+        parsedUrl.searchParams.delete('range');
+      }
+    }
 
     const options = {
       hostname: parsedUrl.hostname,
@@ -2318,7 +2325,7 @@ app.post('/api/mood-mix', async (req, res) => {
       if (s && s.id && !seen.has(s.id)) {
         seen.add(s.id);
         const dur = Number(s.duration) || 0;
-        if (dur >= 60 && dur <= 600) {
+        if (!dur || (dur >= 30 && dur <= 1800)) {
           allSongs.push(s);
         }
       }
@@ -2333,9 +2340,9 @@ app.post('/api/mood-mix', async (req, res) => {
     // Energy filter: for low energy, prefer longer/calmer; for high, prefer shorter/energetic
     let filtered = scored.map(s => s.item);
     if (energy <= 1) {
-      filtered = filtered.filter(s => (s.duration || 0) >= 120);
+      filtered = filtered.filter(s => !s.duration || s.duration >= 90);
     } else if (energy >= 4) {
-      filtered = filtered.filter(s => (s.duration || 0) <= 360);
+      filtered = filtered.filter(s => !s.duration || s.duration <= 420);
     }
 
     // Shuffle top results
@@ -2349,6 +2356,135 @@ app.post('/api/mood-mix', async (req, res) => {
   } catch (err) {
     console.error('[MoodMix]', err.message);
     res.status(500).json({ error: 'Mood mix generation failed' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  POST /api/smart-playlist — AI & Custom Choice Song Generator     */
+/* ------------------------------------------------------------------ */
+app.post('/api/smart-playlist', async (req, res) => {
+  const prompt = (req.body.prompt || '').trim();
+  const tags = Array.isArray(req.body.tags) ? req.body.tags : [];
+  const language = (req.body.language || '').trim().toLowerCase();
+  const mood = (req.body.mood || '').trim().toLowerCase();
+  const energy = parseInt(req.body.energy) || 2;
+  const count = Math.min(Math.max(parseInt(req.body.count) || 15, 5), 40);
+
+  if (!prompt && tags.length === 0 && !mood) {
+    return res.status(400).json({ error: 'A custom choice prompt or vibe tags are required' });
+  }
+
+  // Generate smart query variants
+  const basePrompt = prompt || [mood, ...tags].filter(Boolean).join(' ');
+  const queries = [];
+
+  queries.push(basePrompt);
+  queries.push(`${basePrompt} playlist hits`);
+
+  if (language && language !== 'all' && !basePrompt.toLowerCase().includes(language)) {
+    queries.push(`${basePrompt} ${language} songs`);
+  }
+
+  queries.push(`${basePrompt} best official songs`);
+
+  if (energy <= 1) {
+    queries.push(`${basePrompt} calm slow relaxing acoustic`);
+  } else if (energy >= 3) {
+    queries.push(`${basePrompt} high energy upbeat bass`);
+  }
+
+  const cleanQueries = queries.slice(0, 5);
+
+  try {
+    const rawResults = await mapConcurrent(cleanQueries, 4, async (query) => {
+      try {
+        const stdout = await runYtDlp([
+          `ytsearch10:${query}`,
+          '--dump-json', '--flat-playlist', '--no-warnings',
+          '--default-search', 'ytsearch', '--skip-download',
+        ], 18000);
+        if (!stdout) return [];
+        return stdout.split('\n').filter(Boolean).map(line => {
+          try {
+            const d = JSON.parse(line);
+            return {
+              id: d.id || d.url,
+              title: d.title || 'Unknown',
+              channel: d.channel || d.uploader || 'Unknown',
+              duration: d.duration || 0,
+              thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url
+                : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+              views: d.view_count || 0,
+            };
+          } catch { return null; }
+        }).filter(Boolean).filter(item => isYouTubeId(item.id));
+      } catch {
+        return [];
+      }
+    });
+
+    const seen = new Set();
+    const allSongs = [];
+    rawResults.flat().forEach(s => {
+      if (s && s.id && !seen.has(s.id)) {
+        seen.add(s.id);
+        const dur = Number(s.duration) || 0;
+        if (!dur || (dur >= 30 && dur <= 1800)) {
+          allSongs.push(s);
+        }
+      }
+    });
+
+    const scored = allSongs.map(item => ({
+      item,
+      score: scoreSong(item, basePrompt, true),
+    })).sort((a, b) => b.score - a.score);
+
+    let filtered = scored.map(s => s.item);
+
+    if (energy <= 1) {
+      filtered = filtered.filter(s => !s.duration || s.duration >= 90);
+    } else if (energy >= 4) {
+      filtered = filtered.filter(s => !s.duration || s.duration <= 420);
+    }
+
+    const pLower = basePrompt.toLowerCase();
+    let emoji = '✨';
+    let title = '';
+
+    if (/romantic|love|heart|pyar|ishq|mohabbat/.test(pLower)) { emoji = '❤️'; title = 'Romantic Melodies'; }
+    else if (/gym|workout|beast|fitness|lift|training/.test(pLower)) { emoji = '🔥'; title = 'Gym Beast Mode'; }
+    else if (/phonk|bass|drift|drive|night drive/.test(pLower)) { emoji = '⚡'; title = 'Midnight Drive Phonk'; }
+    else if (/sad|breakup|cry|heartbreak|melancholy|pain|alone/.test(pLower)) { emoji = '💔'; title = 'Sad & Emotional Hours'; }
+    else if (/happy|upbeat|joy|feel good|celebrate|vibes/.test(pLower)) { emoji = '☀️'; title = 'Feel Good & Upbeat'; }
+    else if (/lofi|lo-fi|chill|relax|peace|calm|study|sleep/.test(pLower)) { emoji = '☕'; title = 'Late Night Chill & Lofi'; }
+    else if (/party|dance|club|banger|dj|edm/.test(pLower)) { emoji = '🎉'; title = 'Ultimate Party Hits'; }
+    else if (/retro|90s|80s|2000s|nostalgia|old is gold|vintage/.test(pLower)) { emoji = '🕰️'; title = 'Golden Era Classics'; }
+    else if (/punjabi|bhangra|sidhu|karan/.test(pLower)) { emoji = '🔥'; title = 'Punjabi Fire Bangers'; }
+    else if (/bollywood|hindi|arijit/.test(pLower)) { emoji = '🎶'; title = 'Bollywood Soul & Hits'; }
+    else if (/rock|metal|guitar/.test(pLower)) { emoji = '🎸'; title = 'Rock & Anthems'; }
+    else {
+      const words = basePrompt.split(/\s+/).slice(0, 5).map(w => w.charAt(0).toUpperCase() + w.slice(1));
+      title = words.join(' ') + ' Mix';
+    }
+
+    if (req.body.title && req.body.title.trim()) {
+      title = req.body.title.trim();
+    }
+
+    const selectedSongs = filtered.slice(0, count);
+
+    res.json({
+      success: true,
+      title,
+      emoji,
+      description: `Generated for "${basePrompt}" • ${selectedSongs.length} tracks`,
+      total: selectedSongs.length,
+      songs: selectedSongs,
+    });
+  } catch (err) {
+    console.error('[SmartPlaylist]', err.message);
+    res.status(500).json({ error: 'Smart playlist generation failed' });
   }
 });
 

@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/style.css?v=3.1" />
 </head>
 <body>
   <!-- Animated Background -->
@@ -371,7 +371,10 @@
           <div class="home-section">
             <div class="section-header">
               <h2>📁 Playlists</h2>
-              <button class="text-btn" id="createPlaylistBtn">+ New Playlist</button>
+              <div class="section-header-actions">
+                <button class="text-btn ai-smart-nav-btn" id="libraryAiSmartBtn">✨ AI Smart Playlist</button>
+                <button class="text-btn" id="createPlaylistBtn">+ New Playlist</button>
+              </div>
             </div>
             <div class="playlists-grid" id="playlistGrid"></div>
           </div>
@@ -472,47 +475,151 @@
           </div>
         </section>
 
-        <!-- ===== MOOD FLOW PAGE ===== -->
+        <!-- ===== AI PLAYLIST STUDIO & MOOD FLOW PAGE ===== -->
         <section class="page" id="pageMood" style="display:none;">
           <div class="home-greeting">
-            <h1>🎭 Mood Flow DJ</h1>
-            <p>Tell me how you feel, and I'll create the perfect playlist for you.</p>
+            <h1>✨ AI Playlist Studio & Custom DJ</h1>
+            <p>Tell me what you want to hear — custom choice, vibe, scene, or artists — and get a full playable playlist in seconds.</p>
+          </div>
+
+          <!-- Custom Choice Hero Card -->
+          <div class="ai-custom-playlist-card" id="aiCustomPlaylistCard">
+            <div class="ai-card-glow"></div>
+            
+            <div class="ai-prompt-wrap">
+              <label for="aiCustomPrompt" class="ai-prompt-label">
+                <span class="ai-sparkle-icon">✨</span>
+                <span>Describe your dream playlist (Custom Choice)</span>
+              </label>
+              <div class="ai-input-box">
+                <textarea id="aiCustomPrompt" class="ai-prompt-input" rows="2" placeholder="e.g. Late night romantic Hindi acoustic songs, 90s rock ballads for road trip, High energy gym phonk workout..."></textarea>
+                <button type="button" class="ai-clear-prompt-btn" id="aiClearPromptBtn" title="Clear input" style="display:none;">&times;</button>
+              </div>
+            </div>
+
+            <!-- Quick Inspiration Pills -->
+            <div class="ai-inspiration-row">
+              <span class="ai-inspire-label">Quick Ideas:</span>
+              <div class="ai-inspire-chips" id="aiInspireChips">
+                <button type="button" class="ai-chip" data-prompt="Late night relaxing lo-fi beats with rain">🌙 Late Night Lo-Fi</button>
+                <button type="button" class="ai-chip" data-prompt="Heart-touching romantic Bollywood acoustic hits">❤️ Bollywood Romance</button>
+                <button type="button" class="ai-chip" data-prompt="Gym workout high energy phonk and beast mode beats">🔥 Beast Mode Phonk</button>
+                <button type="button" class="ai-chip" data-prompt="90s and 2000s nostalgic retro rock ballads">🚗 90s Retro Roadtrip</button>
+                <button type="button" class="ai-chip" data-prompt="High tempo Punjabi party dance hits">⚡ Punjabi Fire</button>
+                <button type="button" class="ai-chip" data-prompt="Calm acoustic guitar indie coffee shop morning">☕ Acoustic Coffee</button>
+                <button type="button" class="ai-chip" data-prompt="Deep focus instrumental study and coding beats">🧠 Deep Focus</button>
+                <button type="button" class="ai-chip" data-prompt="Club dance EDM festival bangers 2024">🎉 Festival EDM</button>
+              </div>
+            </div>
+
+            <!-- Custom Controls Row: Track Count, Language, Energy -->
+            <div class="ai-controls-grid">
+              <div class="ai-control-group">
+                <label class="ai-control-label">Track Count</label>
+                <div class="ai-pill-selector" id="aiCountSelector">
+                  <button type="button" class="ai-pill-opt active" data-count="15">15 Songs</button>
+                  <button type="button" class="ai-pill-opt" data-count="25">25 Songs</button>
+                  <button type="button" class="ai-pill-opt" data-count="40">40 Songs</button>
+                </div>
+              </div>
+
+              <div class="ai-control-group">
+                <label class="ai-control-label" for="aiLanguageSelect">Language / Region</label>
+                <select class="ai-select" id="aiLanguageSelect">
+                  <option value="all">🌍 All / Multi-Language</option>
+                  <option value="hindi">🇮🇳 Hindi / Bollywood</option>
+                  <option value="punjabi">🔥 Punjabi</option>
+                  <option value="english">🇺🇸 English / Global Pop</option>
+                  <option value="kpop">🇰🇷 K-Pop</option>
+                  <option value="spanish">🇪🇸 Spanish / Latin</option>
+                  <option value="instrumental">🎹 Lo-Fi / Instrumental</option>
+                </select>
+              </div>
+
+              <div class="ai-control-group">
+                <label class="ai-control-label">Energy Vibe</label>
+                <div class="ai-pill-selector" id="aiEnergySelector">
+                  <button type="button" class="ai-pill-opt" data-energy="1">🌙 Mellow</button>
+                  <button type="button" class="ai-pill-opt active" data-energy="2">☀️ Balanced</button>
+                  <button type="button" class="ai-pill-opt" data-energy="3">⚡ Upbeat</button>
+                  <button type="button" class="ai-pill-opt" data-energy="4">🔥 Hype</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Generate Action Row -->
+            <div class="ai-action-row">
+              <button type="button" class="ai-generate-main-btn" id="aiGenerateBtn">
+                <span class="ai-btn-icon">⚡</span>
+                <span class="ai-btn-text">Generate Full Playlist</span>
+              </button>
+              <button type="button" class="ai-surprise-btn" id="aiSurpriseBtn" title="Fill with random creative choice">
+                🎲 Surprise Me
+              </button>
+            </div>
+
+            <!-- Generating Loader -->
+            <div class="ai-generating-loader" id="aiGeneratingLoader" style="display:none;">
+              <div class="ai-loader-spinner"></div>
+              <div class="ai-loader-text">
+                <h4 id="aiLoaderStatus">Crafting your playlist...</h4>
+                <p id="aiLoaderSubtext">Searching top tracks and curating the vibe sequence</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Playlist Results Section -->
+          <div class="home-section ai-results-section" id="moodResultsSection" style="display:none;">
+            <div class="ai-results-header-card">
+              <div class="ai-res-meta">
+                <span class="ai-res-badge" id="aiResBadge">✨ AI Curated Mix</span>
+                <div class="ai-title-row">
+                  <span class="ai-res-emoji" id="aiResEmoji">✨</span>
+                  <h2 id="moodResultsTitle">Your Custom Mix</h2>
+                </div>
+                <p class="ai-res-desc" id="aiResDesc">15 tracks generated from your custom choice</p>
+              </div>
+              <div class="ai-res-actions">
+                <button class="ai-res-play-btn" id="playAllMoodBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="ai-res-save-btn" id="saveMoodPlaylistBtn">
+                  💾 Save to Library
+                </button>
+                <button class="ai-res-regen-btn" id="regenMoodBtn" title="Regenerate with fresh tracks">
+                  🎲 Regenerate
+                </button>
+              </div>
+            </div>
+            <div class="results-grid" id="moodResultsGrid"></div>
           </div>
 
           <!-- Quick Mood Launch Cards -->
-          <div class="mood-quick-grid" id="moodQuickGrid">
-            <button class="mood-quick-card" data-mood="happy" style="--mq1:#f97316;--mq2:#eab308;"><span class="mqc-emoji">😊</span><span class="mqc-label">Happy & Upbeat</span></button>
-            <button class="mood-quick-card" data-mood="sad" style="--mq1:#6366f1;--mq2:#8b5cf6;"><span class="mqc-emoji">😢</span><span class="mqc-label">Sad & Emotional</span></button>
-            <button class="mood-quick-card" data-mood="romantic" style="--mq1:#ec4899;--mq2:#f43f5e;"><span class="mqc-emoji">❤️</span><span class="mqc-label">Romantic</span></button>
-            <button class="mood-quick-card" data-mood="chill" style="--mq1:#06b6d4;--mq2:#3b82f6;"><span class="mqc-emoji">😌</span><span class="mqc-label">Chill & Relaxed</span></button>
-            <button class="mood-quick-card" data-mood="energetic" style="--mq1:#ef4444;--mq2:#f97316;"><span class="mqc-emoji">💪</span><span class="mqc-label">Energetic & Hyped</span></button>
-            <button class="mood-quick-card" data-mood="focus" style="--mq1:#10b981;--mq2:#14b8a6;"><span class="mqc-emoji">🧠</span><span class="mqc-label">Deep Focus</span></button>
-            <button class="mood-quick-card" data-mood="party" style="--mq1:#d946ef;--mq2:#a855f7;"><span class="mqc-emoji">🎉</span><span class="mqc-label">Party & Dance</span></button>
-            <button class="mood-quick-card" data-mood="sleep" style="--mq1:#1e3a5f;--mq2:#312e81;"><span class="mqc-emoji">🌙</span><span class="mqc-label">Zen & Sleep</span></button>
-            <button class="mood-quick-card" data-mood="nostalgia" style="--mq1:#92400e;--mq2:#78350f;"><span class="mqc-emoji">🕰️</span><span class="mqc-label">Nostalgic</span></button>
+          <div class="home-section" style="margin-top:35px;">
+            <div class="section-header">
+              <h2>🎭 Quick Vibe Categories</h2>
+              <small style="color:var(--text-secondary);font-size:13px;">Instant one-click smart generation</small>
+            </div>
+            <div class="mood-quick-grid" id="moodQuickGrid">
+              <button class="mood-quick-card" data-mood="happy" style="--mq1:#f97316;--mq2:#eab308;"><span class="mqc-emoji">😊</span><span class="mqc-label">Happy & Upbeat</span></button>
+              <button class="mood-quick-card" data-mood="sad" style="--mq1:#6366f1;--mq2:#8b5cf6;"><span class="mqc-emoji">😢</span><span class="mqc-label">Sad & Emotional</span></button>
+              <button class="mood-quick-card" data-mood="romantic" style="--mq1:#ec4899;--mq2:#f43f5e;"><span class="mqc-emoji">❤️</span><span class="mqc-label">Romantic</span></button>
+              <button class="mood-quick-card" data-mood="chill" style="--mq1:#06b6d4;--mq2:#3b82f6;"><span class="mqc-emoji">😌</span><span class="mqc-label">Chill & Relaxed</span></button>
+              <button class="mood-quick-card" data-mood="energetic" style="--mq1:#ef4444;--mq2:#f97316;"><span class="mqc-emoji">💪</span><span class="mqc-label">Energetic & Hyped</span></button>
+              <button class="mood-quick-card" data-mood="focus" style="--mq1:#10b981;--mq2:#14b8a6;"><span class="mqc-emoji">🧠</span><span class="mqc-label">Deep Focus</span></button>
+              <button class="mood-quick-card" data-mood="party" style="--mq1:#d946ef;--mq2:#a855f7;"><span class="mqc-emoji">🎉</span><span class="mqc-label">Party & Dance</span></button>
+              <button class="mood-quick-card" data-mood="sleep" style="--mq1:#1e3a5f;--mq2:#312e81;"><span class="mqc-emoji">🌙</span><span class="mqc-label">Zen & Sleep</span></button>
+              <button class="mood-quick-card" data-mood="nostalgia" style="--mq1:#92400e;--mq2:#78350f;"><span class="mqc-emoji">🕰️</span><span class="mqc-label">Nostalgic</span></button>
+            </div>
           </div>
 
           <!-- Advanced Mood Questionnaire Button -->
           <div class="mood-advanced-launch">
             <button class="mood-advanced-btn" id="openMoodQuestionnaireBtn">
-              <span>✨ Advanced AI Mood Questionnaire</span>
-              <small>Answer 4 quick questions for a perfectly tailored playlist</small>
+              <span>📋 Step-by-Step Vibe Questionnaire</span>
+              <small>Guided 4-step wizard for mood, activity, and genre combinations</small>
             </button>
-          </div>
-
-          <!-- Mood Results Section -->
-          <div class="home-section" id="moodResultsSection" style="display:none;">
-            <div class="section-header">
-              <h2 id="moodResultsTitle">🎭 Your Mood Mix</h2>
-              <div class="section-header-actions">
-                <button class="text-btn" id="playAllMoodBtn">
-                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                  Play All
-                </button>
-                <button class="text-btn" id="saveMoodPlaylistBtn">💾 Save as Playlist</button>
-              </div>
-            </div>
-            <div class="results-grid" id="moodResultsGrid"></div>
           </div>
 
           <!-- Saved Mood Presets -->
@@ -543,6 +650,26 @@
       </div>
     </aside>
 
+  </div>
+
+  <!-- ============ DOWNLOAD PROGRESS BAR ============ -->
+  <div class="download-bar" id="downloadBar" style="display:none;">
+    <div class="download-bar-inner">
+      <div class="download-bar-icon">
+        <svg class="dl-bar-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div class="dl-bar-spinner"></div>
+      </div>
+      <div class="dl-bar-info">
+        <span class="dl-bar-title" id="dlBarTitle">Downloading...</span>
+        <span class="dl-bar-meta" id="dlBarMeta"></span>
+      </div>
+      <span class="dl-bar-pct" id="dlBarPct">0%</span>
+      <button class="dl-bar-close" id="dlBarClose" title="Dismiss">&times;</button>
+    </div>
+    <div class="dl-bar-track">
+      <div class="dl-bar-fill" id="dlBarFill"></div>
+      <div class="dl-bar-glow" id="dlBarGlow"></div>
+    </div>
   </div>
 
   <!-- ============ NOW PLAYING BAR ============ -->
@@ -969,8 +1096,38 @@
         </button>
       </div>
       <div class="modal-body">
-        <input type="text" class="modal-input" id="playlistNameInput" placeholder="Playlist name..." />
-        <button class="modal-submit-btn" id="playlistSaveBtn">Create</button>
+        <div class="modal-tabs-row" style="display:flex;gap:8px;margin-bottom:16px;">
+          <button type="button" class="modal-tab-btn active" id="modalTabAiBtn" style="flex:1;">✨ AI Custom Choice</button>
+          <button type="button" class="modal-tab-btn" id="modalTabManualBtn" style="flex:1;">📝 Blank Playlist</button>
+        </div>
+
+        <!-- AI Tab -->
+        <div id="modalAiTab">
+          <p class="modal-subtitle" style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">Generate a full song playlist instantly from any custom prompt, artists, or vibe.</p>
+          <input type="text" class="modal-input" id="modalAiPromptInput" placeholder="e.g. Arijit Singh romantic slow hits, 90s rock drive..." style="margin-bottom:12px;" />
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <select class="ai-select" id="modalAiCountSelect" style="flex:1;">
+              <option value="15">15 Songs</option>
+              <option value="25">25 Songs</option>
+              <option value="40">40 Songs</option>
+            </select>
+            <select class="ai-select" id="modalAiLanguageSelect" style="flex:1;">
+              <option value="all">Any Language</option>
+              <option value="hindi">Hindi / Bollywood</option>
+              <option value="punjabi">Punjabi</option>
+              <option value="english">English</option>
+              <option value="kpop">K-Pop</option>
+            </select>
+          </div>
+          <button type="button" class="modal-submit-btn" id="modalAiGenerateBtn">✨ Generate & Create Playlist</button>
+        </div>
+
+        <!-- Manual Tab -->
+        <div id="modalManualTab" style="display:none;">
+          <p class="modal-subtitle" style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">Create an empty playlist and manually add songs from search.</p>
+          <input type="text" class="modal-input" id="playlistNameInput" placeholder="Playlist name..." style="margin-bottom:14px;" />
+          <button type="button" class="modal-submit-btn" id="playlistSaveBtn">Create Blank Playlist</button>
+        </div>
       </div>
     </div>
   </div>
@@ -1436,7 +1593,7 @@
   <!-- Hidden IFrame for isolated file downloads -->
   <iframe id="downloadFrame" name="downloadFrame" style="display:none; width:0; height:0; border:none; visibility:hidden;" aria-hidden="true"></iframe>
 
-  <script src="/js/app.js?v=3.0"></script>
+  <script src="/js/app.js?v=3.1"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
