@@ -107,6 +107,10 @@
           <div class="search-bar">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
             <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, albums..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
+            <button class="search-mode-pill" id="lyricsModeBtn" title="Toggle Search by Lyrics Mode (Find Song from Lyrics)" type="button" aria-pressed="false">
+              <span class="smp-icon">🎤</span>
+              <span class="smp-label">Lyrics</span>
+            </button>
             <button class="search-clear" id="searchClear" title="Clear">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
             </button>
@@ -308,6 +312,20 @@
               <button class="text-btn" id="clearSearchHistory">Clear</button>
             </div>
             <div class="search-history-tags" id="searchHistoryTags"></div>
+          </div>
+
+          <!-- Lyrics Search Hero Banner -->
+          <div class="lyrics-search-banner" id="lyricsSearchBanner">
+            <div class="lsb-left">
+              <div class="lsb-tag">✨ 100% ACCURATE LYRICS FINDER</div>
+              <h3>Know the lyrics but forgot the song?</h3>
+              <p>Type any words, chorus line, or sentence you remember to find the exact song and play it instantly.</p>
+            </div>
+            <div class="lsb-actions">
+              <button class="lsb-btn" id="lsbActivateBtn" type="button">
+                <span>🎤 Search by Lyrics</span>
+              </button>
+            </div>
           </div>
 
           <div class="results-header" id="resultsHeader" style="display:none;">

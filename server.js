@@ -328,6 +328,82 @@ function setCache(key, data) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Lyrics Search Cache (LRU, 1-hour TTL, max 150 items)              */
+/* ------------------------------------------------------------------ */
+const lyricsSearchCache = new Map();
+const LYRICS_CACHE_TTL = 1000 * 60 * 60; // 1 hour
+
+function getCachedLyricsSearch(key) {
+  const item = lyricsSearchCache.get(key);
+  if (!item) return null;
+  if (Date.now() - item.ts > LYRICS_CACHE_TTL) {
+    lyricsSearchCache.delete(key);
+    return null;
+  }
+  return item.data;
+}
+
+function setCachedLyricsSearch(key, data) {
+  if (lyricsSearchCache.size >= 150) {
+    const oldestKey = lyricsSearchCache.keys().next().value;
+    lyricsSearchCache.delete(oldestKey);
+  }
+  lyricsSearchCache.set(key, { data, ts: Date.now() });
+}
+
+/* ------------------------------------------------------------------ */
+/*  Lightweight HTTPS JSON fetcher with timeout & redirect support    */
+/* ------------------------------------------------------------------ */
+function fetchJson(urlStr, timeoutMs = 8000) {
+  return new Promise((resolve) => {
+    try {
+      const parsed = new URL(urlStr);
+      const isHttps = parsed.protocol === 'https:';
+      const client = isHttps ? https : http;
+      const req = client.get(urlStr, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+          'Accept': 'application/json, text/plain, */*'
+        },
+        timeout: timeoutMs
+      }, (res) => {
+        if (res.statusCode >= 300 && res.statusCode < 400 && res.headers.location) {
+          let nextUrl = res.headers.location;
+          if (!nextUrl.startsWith('http')) {
+            nextUrl = new URL(nextUrl, urlStr).toString();
+          }
+          return fetchJson(nextUrl, timeoutMs).then(resolve);
+        }
+        if (res.statusCode !== 200) {
+          res.resume();
+          return resolve(null);
+        }
+        let data = '';
+        res.setEncoding('utf8');
+        res.on('data', chunk => {
+          data += chunk;
+          if (data.length > 5 * 1024 * 1024) { // 5MB RAM guard
+            res.destroy();
+            resolve(null);
+          }
+        });
+        res.on('end', () => {
+          try {
+            resolve(JSON.parse(data));
+          } catch {
+            resolve(null);
+          }
+        });
+      });
+      req.on('timeout', () => { req.destroy(); resolve(null); });
+      req.on('error', () => resolve(null));
+    } catch {
+      resolve(null);
+    }
+  });
+}
+
+/* ------------------------------------------------------------------ */
 /*  Audio URL Cache — YouTube CDN URLs expire after ~6h                */
 /* ------------------------------------------------------------------ */
 const audioUrlCache = new Map();
@@ -539,8 +615,21 @@ app.get('/api/search', async (req, res) => {
       } catch { return null; }
     }).filter(Boolean).filter(item => isYouTubeId(item.id));
 
-    setCache(cacheKey, results);
-    res.json(results);
+    // Smart ranking: prioritize official music videos, topic channels, and penalize spam/reactions
+    results.sort((a, b) => scoreSong(b, query, true) - scoreSong(a, query, true));
+
+    // Deduplicate by ID
+    const seen = new Set();
+    const uniqueResults = [];
+    for (const r of results) {
+      if (!seen.has(r.id)) {
+        seen.add(r.id);
+        uniqueResults.push(r);
+      }
+    }
+
+    setCache(cacheKey, uniqueResults);
+    res.json(uniqueResults);
   } catch (err) {
     console.error('[Search]', err.message);
     res.status(500).json({ error: 'Search failed' });
@@ -1307,10 +1396,235 @@ async function streamViaServerlessApi(videoId, req, res) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  Lyrics Search Algorithm & Match Scorer                            */
+/* ------------------------------------------------------------------ */
+function cleanLyricsText(str) {
+  return String(str || '')
+    .replace(/[^\w\s\u0900-\u097F\u0A00-\u0A7F\u0B00-\u0B7F\u0C00-\u0C7F\u0D00-\u0D7F']/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+}
+
+function parseLrcLines(lrcText) {
+  if (!lrcText || typeof lrcText !== 'string') return [];
+  const lines = [];
+  const rawLines = lrcText.split('\n');
+  const tagRe = /^\[(\d{2}):(\d{2})(?:\.(\d{2,3}))?\](.*)$/;
+  for (const line of rawLines) {
+    const trimmed = line.trim();
+    if (!trimmed) continue;
+    const match = tagRe.exec(trimmed);
+    if (match) {
+      const min = parseInt(match[1], 10);
+      const sec = parseInt(match[2], 10);
+      const msStr = match[3] || '0';
+      const ms = msStr.length === 2 ? parseInt(msStr, 10) * 10 : parseInt(msStr, 10);
+      const time = min * 60 + sec + ms / 1000;
+      const text = match[4].trim();
+      if (text) lines.push({ time, text });
+    } else if (!trimmed.startsWith('[') && !trimmed.includes('-->')) {
+      lines.push({ time: 0, text: trimmed });
+    }
+  }
+  return lines;
+}
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/lyrics-search?q=...                                      */
+/*  Finds songs accurately from typed/pasted lyrics                   */
+/* ------------------------------------------------------------------ */
+app.get('/api/lyrics-search', async (req, res) => {
+  const rawQ = req.query.q;
+  if (!rawQ || typeof rawQ !== 'string' || !rawQ.trim()) {
+    return res.status(400).json({ error: 'Missing lyrics query (q)' });
+  }
+
+  const query = rawQ.trim().slice(0, 300);
+  const cacheKey = query.toLowerCase();
+  const cached = getCachedLyricsSearch(cacheKey);
+  if (cached) return res.json(cached);
+
+  const cleanQuery = cleanLyricsText(query);
+  const queryTokens = cleanQuery.split(' ').filter(w => w.length > 1);
+
+  try {
+    // 1. Query LRCLIB Lyrics Database + iTunes Search in parallel
+    const [lrclibHits, itunesHits] = await Promise.all([
+      fetchJson(`https://lrclib.net/api/search?q=${encodeURIComponent(query)}`, 7000).catch(() => null),
+      fetchJson(`https://itunes.apple.com/search?term=${encodeURIComponent(query)}&entity=song&limit=6`, 6000).catch(() => null)
+    ]);
+
+    const candidates = [];
+    const seenSongs = new Set();
+
+    // Process LRCLIB lyrics matches
+    if (Array.isArray(lrclibHits)) {
+      for (const hit of lrclibHits) {
+        if (!hit || (!hit.trackName && !hit.name)) continue;
+        const trackTitle = hit.trackName || hit.name;
+        const artist = hit.artistName || '';
+        const songKey = `${trackTitle.toLowerCase()}___${artist.toLowerCase()}`;
+        if (seenSongs.has(songKey)) continue;
+
+        const lyrics = hit.plainLyrics || (hit.syncedLyrics ? hit.syncedLyrics.replace(/\[\d{2}:\d{2}(?:\.\d{2,3})?\]/g, '') : '');
+        const cleanLyr = cleanLyricsText(lyrics);
+
+        let confidence = 0;
+        let matchedSnippet = '';
+
+        if (cleanLyr && cleanQuery) {
+          if (cleanLyr.includes(cleanQuery)) {
+            confidence = 100;
+            const lines = (lyrics || '').split('\n').map(l => l.trim()).filter(Boolean);
+            const matchingLine = lines.find(l => cleanLyricsText(l).includes(cleanQuery)) || lines[0];
+            matchedSnippet = matchingLine || query;
+          } else {
+            let matchedCount = 0;
+            for (const token of queryTokens) {
+              if (cleanLyr.includes(token)) matchedCount++;
+            }
+            if (queryTokens.length > 0) {
+              const ratio = matchedCount / queryTokens.length;
+              confidence = Math.round(ratio * 96);
+            }
+            const lines = (lyrics || '').split('\n').map(l => l.trim()).filter(Boolean);
+            let bestLine = '';
+            let bestLineScore = 0;
+            for (const line of lines) {
+              const cl = cleanLyricsText(line);
+              let lineScore = 0;
+              for (const token of queryTokens) {
+                if (cl.includes(token)) lineScore++;
+              }
+              if (lineScore > bestLineScore) {
+                bestLineScore = lineScore;
+                bestLine = line;
+              }
+            }
+            matchedSnippet = bestLine || (lines[0] || query);
+          }
+        } else {
+          confidence = 75;
+          matchedSnippet = query;
+        }
+
+        if (confidence >= 45) {
+          seenSongs.add(songKey);
+          candidates.push({
+            title: trackTitle,
+            artist: artist,
+            album: hit.albumName || '',
+            duration: hit.duration || 0,
+            confidence: Math.min(100, Math.max(50, confidence)),
+            matchedSnippet: matchedSnippet.slice(0, 150),
+            rawLyrics: hit.plainLyrics || '',
+            syncedLyrics: hit.syncedLyrics || ''
+          });
+        }
+      }
+    }
+
+    // Process iTunes matches
+    if (itunesHits && Array.isArray(itunesHits.results)) {
+      for (const item of itunesHits.results) {
+        if (!item || !item.trackName) continue;
+        const songKey = `${item.trackName.toLowerCase()}___${(item.artistName || '').toLowerCase()}`;
+        if (seenSongs.has(songKey)) continue;
+        seenSongs.add(songKey);
+        candidates.push({
+          title: item.trackName,
+          artist: item.artistName || '',
+          album: item.collectionName || '',
+          duration: Math.round((item.trackTimeMillis || 0) / 1000),
+          confidence: candidates.length === 0 ? 92 : 80,
+          matchedSnippet: query,
+          artworkUrl: item.artworkUrl100 ? item.artworkUrl100.replace('100x100', '600x600') : null
+        });
+      }
+    }
+
+    candidates.sort((a, b) => b.confidence - a.confidence);
+
+    // Resolve top candidate(s) to playable YouTube tracks
+    const resolvedSongs = [];
+    const topCandidates = candidates.slice(0, 5);
+
+    for (const cand of topCandidates) {
+      try {
+        const smartRes = await performSingleSmartSearch(`${cand.title} ${cand.artist}`, true);
+        if (smartRes && smartRes.bestMatch) {
+          const s = smartRes.bestMatch;
+          resolvedSongs.push({
+            id: s.id,
+            title: cand.title || s.title,
+            channel: cand.artist || s.channel,
+            duration: s.duration || cand.duration,
+            thumbnail: s.thumbnail || cand.artworkUrl,
+            views: s.views || 0,
+            isLyricsMatch: true,
+            confidence: cand.confidence,
+            matchedSnippet: cand.matchedSnippet,
+            hasSyncedLyrics: !!cand.syncedLyrics
+          });
+        }
+      } catch (e) {
+        console.warn('[LyricsSearch] Resolution error:', e.message);
+      }
+    }
+
+    // Fallback if zero songs resolved
+    if (resolvedSongs.length === 0) {
+      const ytQuery = `"${cleanQuery}" lyrics`;
+      const stdout = await runYtDlp([
+        `ytsearch8:${ytQuery}`,
+        '--dump-json', '--flat-playlist', '--no-warnings',
+        '--default-search', 'ytsearch', '--skip-download',
+      ], 18000).catch(() => null);
+
+      if (stdout) {
+        const fallbackItems = stdout.split('\n').filter(Boolean).map(line => {
+          try {
+            const d = JSON.parse(line);
+            return {
+              id: d.id || d.url,
+              title: d.title || 'Unknown',
+              channel: d.channel || d.uploader || 'Unknown',
+              duration: d.duration || 0,
+              thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+              views: d.view_count || 0,
+              isLyricsMatch: true,
+              confidence: 85,
+              matchedSnippet: query
+            };
+          } catch { return null; }
+        }).filter(Boolean).filter(item => isYouTubeId(item.id));
+
+        resolvedSongs.push(...fallbackItems.slice(0, 6));
+      }
+    }
+
+    const payload = {
+      query,
+      count: resolvedSongs.length,
+      results: resolvedSongs
+    };
+
+    setCachedLyricsSearch(cacheKey, payload);
+    res.json(payload);
+  } catch (err) {
+    console.error('[LyricsSearch Error]', err.message);
+    res.status(500).json({ error: 'Lyrics search failed', details: err.message });
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /*  GET /api/lyrics/:videoId                                          */
 /* ------------------------------------------------------------------ */
 app.get('/api/lyrics/:videoId', async (req, res) => {
   const { videoId } = req.params;
+  const titleHint = req.query.title || '';
+  const artistHint = req.query.artist || '';
 
   if (!isYouTubeId(videoId)) {
     return res.json({ title: '', artist: '', synced: false, lines: [] });
@@ -1323,8 +1637,8 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
     ], 15000);
 
     const data = JSON.parse(stdout);
-    const title = data.title || '';
-    const artist = data.channel || data.uploader || '';
+    const title = data.title || titleHint || '';
+    const artist = data.channel || data.uploader || artistHint || '';
 
     let subtitles = null;
     if (data.subtitles && Object.keys(data.subtitles).length > 0) {
@@ -1359,16 +1673,43 @@ app.get('/api/lyrics/:videoId', async (req, res) => {
                 }))
                 .filter(l => l.text && l.text !== '\n');
 
-              return res.json({ title, artist, synced: true, lines });
+              if (lines.length > 0) {
+                return res.json({ title, artist, synced: true, lines });
+              }
             }
           } catch {
-            return res.json({
-              title, artist, synced: false,
-              lines: subRes.split('\n').filter(l => l.trim() && !l.includes('-->') && !l.match(/^\d+$/)).map(l => ({ time: 0, text: l.trim() })),
-            });
+            const lines = subRes.split('\n').filter(l => l.trim() && !l.includes('-->') && !l.match(/^\d+$/)).map(l => ({ time: 0, text: l.trim() }));
+            if (lines.length > 0) {
+              return res.json({ title, artist, synced: false, lines });
+            }
           }
         }
       }
+    }
+
+    // High accuracy fallback: LRCLIB synced lyrics lookup
+    try {
+      const cleanTitle = (title || '').replace(/\(.*?\)|\[.*?\]/g, '').replace(/official|video|audio|lyrics?|full song/gi, '').trim();
+      const cleanArt = (artist || '').replace(/\(.*?\)|- topic/gi, '').trim();
+      if (cleanTitle) {
+        const lrcData = await fetchJson(`https://lrclib.net/api/get?track_name=${encodeURIComponent(cleanTitle)}&artist_name=${encodeURIComponent(cleanArt)}`, 4500);
+        if (lrcData) {
+          if (lrcData.syncedLyrics) {
+            const lines = parseLrcLines(lrcData.syncedLyrics);
+            if (lines.length > 0) {
+              return res.json({ title: lrcData.trackName || title, artist: lrcData.artistName || artist, synced: true, lines });
+            }
+          }
+          if (lrcData.plainLyrics) {
+            const lines = lrcData.plainLyrics.split('\n').map(l => l.trim()).filter(Boolean).map(text => ({ time: 0, text }));
+            if (lines.length > 0) {
+              return res.json({ title: lrcData.trackName || title, artist: lrcData.artistName || artist, synced: false, lines });
+            }
+          }
+        }
+      }
+    } catch (e) {
+      // Continue to empty response
     }
 
     res.json({ title, artist, synced: false, lines: [] });

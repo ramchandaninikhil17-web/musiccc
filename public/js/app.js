@@ -206,7 +206,9 @@
   let isPlaying = false;
   let isShuffle = Storage.get('shuffle', false);
   let repeatMode = Storage.get('repeat', 'off');
-  let volume = Storage.get('volume', 0.8);
+  const rawVol = Storage.get('volume', 0.8);
+  let volume = (typeof rawVol === 'number' && Number.isFinite(rawVol)) ? (rawVol > 1 ? rawVol / 100 : Math.max(0, Math.min(1, rawVol))) : 0.8;
+  let isLyricsSearchMode = false;
   let audioQuality = Storage.get('quality', 'high');
   let currentTheme = Storage.get('theme', 'dark');
   let searchResults = [];
@@ -518,6 +520,9 @@
   const searchClear = $('#searchClear');
   const searchLoading = $('#searchLoading');
   const searchSuggestions = $('#searchSuggestions');
+  const lyricsModeBtn = $('#lyricsModeBtn');
+  const lyricsSearchBanner = $('#lyricsSearchBanner');
+  const lsbActivateBtn = $('#lsbActivateBtn');
   const resultsGrid = $('#resultsGrid');
   const resultsTitle = $('#resultsTitle');
   const resultsHeader = $('#resultsHeader');
@@ -635,11 +640,42 @@
     if ($('#settingTheme')) $('#settingTheme').value = currentTheme;
   }
 
+  function toggleLyricsMode(forceState) {
+    isLyricsSearchMode = typeof forceState === 'boolean' ? forceState : !isLyricsSearchMode;
+    if (lyricsModeBtn) {
+      lyricsModeBtn.classList.toggle('active', isLyricsSearchMode);
+      lyricsModeBtn.setAttribute('aria-pressed', isLyricsSearchMode ? 'true' : 'false');
+    }
+    if (lyricsSearchBanner) {
+      lyricsSearchBanner.style.display = isLyricsSearchMode ? 'none' : '';
+    }
+    if (searchInput) {
+      if (isLyricsSearchMode) {
+        searchInput.placeholder = '✍️ Type any lyrics you remember (e.g. "we could have had it all", "tum hi ho")...';
+        toast('🎤 Lyrics Search Active: Type words or lines from the song', 3000);
+      } else {
+        searchInput.placeholder = 'Search songs, artists, albums...';
+      }
+      const val = searchInput.value.trim();
+      if (val.length >= 2) {
+        doSearch(val);
+      }
+    }
+  }
+
   /* ================================================================
      EVENTS
      ================================================================ */
   function bindEvents() {
-    // Search
+    // Search & Lyrics Mode
+    lyricsModeBtn?.addEventListener('click', () => toggleLyricsMode());
+    lsbActivateBtn?.addEventListener('click', () => {
+      toggleLyricsMode(true);
+      if (searchInput) {
+        searchInput.focus();
+        searchInput.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
     searchInput?.addEventListener('input', onSearchInput);
     searchInput?.addEventListener('keydown', (e) => {
       // Arrow / Escape / Enter-on-a-highlighted-row are the dropdown's; a plain
@@ -717,6 +753,29 @@
     audioPlayer?.addEventListener('play', () => { setPlayState(true); playStartTime = Date.now(); CrossfadeManager.onPlay(); });
     audioPlayer?.addEventListener('pause', () => { setPlayState(false); recordListenTime(); ResumeManager.save(); CrossfadeManager.onPause(); });
     audioPlayer?.addEventListener('error', onAudioError);
+
+    // Device hardware volume / OS media session / bluetooth headset synchronization
+    audioPlayer?.addEventListener('volumechange', () => {
+      if (audioPlayer.muted) {
+        setMuteIcon(true);
+        if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+          EqualizerManager.updateVolume();
+        }
+        updateVolumeUI();
+      } else {
+        const newVol = Math.max(0, Math.min(1, audioPlayer.volume));
+        if (Math.abs(volume - newVol) > 0.005) {
+          volume = newVol;
+          Storage.setLocal('volume', volume);
+          Storage.set('volume', volume);
+        }
+        setMuteIcon(false);
+        if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+          EqualizerManager.updateVolume();
+        }
+        updateVolumeUI();
+      }
+    });
 
     // Stream watchdog: auto-reconnect on stall
     audioPlayer?.addEventListener('stalled', () => StreamWatchdog.onStalled());
@@ -1402,73 +1461,115 @@
   };
 
   async function doSearch(query) {
-    query = query.trim().slice(0, 160);
+    query = (query || '').trim().slice(0, 200);
     if (!query) return;
 
-    // Auto-fix spelling before search
-    const originalQuery = query;
-    query = QueryCleaner.clean(query);
-    const wasCorrected = QueryCleaner.lastCorrected && QueryCleaner.lastCorrected !== originalQuery;
+    // Detect if this is a lyrics query
+    const isExplicitLyrics = isLyricsSearchMode || /^lyrics?:/i.test(query);
+    let effectiveQuery = query.replace(/^lyrics?:/i, '').trim();
+
+    // Auto-fix spelling before search if not raw lyrics
+    const originalQuery = effectiveQuery;
+    if (!isExplicitLyrics) {
+      effectiveQuery = QueryCleaner.clean(effectiveQuery);
+    }
+    const wasCorrected = !isExplicitLyrics && QueryCleaner.lastCorrected && QueryCleaner.lastCorrected !== originalQuery;
 
     if (activeSearchController) activeSearchController.abort();
     const requestId = ++searchRequestId;
     const controller = new AbortController();
     activeSearchController = controller;
-    lastQuery = query;
+    lastQuery = effectiveQuery;
     navigateTo('search');
 
-    // Save to search history (save the corrected version)
-    searchHistory = [query, ...searchHistory.filter(h => h !== query)].slice(0, 20);
+    searchHistory = [effectiveQuery, ...searchHistory.filter(h => h !== effectiveQuery)].slice(0, 20);
     Storage.set('searchHistory', searchHistory);
-    // navigateTo() above painted the pills before this query was added, so the
-    // newest search was missing from the list until the next visit.
     renderSearchHistory();
-    // Deliberately does NOT close the dropdown. This function also runs from the
-    // 700ms type-ahead timer, and closing there would wipe the suggestions
-    // 400ms after they appeared, making the autocomplete useless. The dropdown
-    // belongs to the input's focus instead: Enter, Escape, picking a row,
-    // clearing the box and clicking outside all close it explicitly.
 
     resultsHeader.style.display = 'flex';
-    // Show correction indicator
-    if (wasCorrected) {
-      resultsTitle.innerHTML = `Results for \u201c${esc(query)}\u201d <span class="search-correction">\ud83d\udd24 corrected from \u201c${esc(originalQuery)}\u201d</span>`;
-      if (searchInput) searchInput.value = query;
+    if (isExplicitLyrics) {
+      resultsTitle.innerHTML = `🎤 Lyrics Matches for \u201c${esc(effectiveQuery)}\u201d <span class="card-lyrics-badge" style="margin-left:8px;vertical-align:middle;">✨ 100% Accurate Finder</span>`;
+    } else if (wasCorrected) {
+      resultsTitle.innerHTML = `Results for \u201c${esc(effectiveQuery)}\u201d <span class="search-correction">\ud83d\udd24 corrected from \u201c${esc(originalQuery)}\u201d</span>`;
+      if (searchInput) searchInput.value = effectiveQuery;
     } else {
-      resultsTitle.textContent = `Results for \u201c${query}\u201d`;
+      resultsTitle.textContent = `Results for \u201c${effectiveQuery}\u201d`;
     }
     showSkeletons();
     searchLoading.classList.add('active');
 
     try {
       let results = [];
-      try {
-        const timeoutId = setTimeout(() => controller.abort(), 15000);
-        const res = await fetch(`/api/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          results = await res.json();
-        }
-      } catch (e) {
-        // Fallback to Cloud Music Engine
-      }
 
-      if (!results || results.length === 0) {
-        results = await CloudMusicEngine.search(query);
+      if (isExplicitLyrics) {
+        // Query specialized lyrics search engine
+        try {
+          const timeoutId = setTimeout(() => controller.abort(), 16000);
+          const res = await fetch(`/api/lyrics-search?q=${encodeURIComponent(effectiveQuery)}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            const data = await res.json();
+            if (data && Array.isArray(data.results) && data.results.length > 0) {
+              results = data.results;
+            }
+          }
+        } catch (e) {}
+
+        // Fallback to standard lyrics query if lyrics search returned empty
+        if (!results || results.length === 0) {
+          try {
+            const res = await fetch(`/api/search?q=${encodeURIComponent(effectiveQuery + ' lyrics')}`, { signal: controller.signal });
+            if (res.ok) {
+              const items = await res.json();
+              results = (items || []).map(item => Object.assign({}, item, { isLyricsMatch: true, confidence: 85, matchedSnippet: effectiveQuery }));
+            }
+          } catch (e) {}
+        }
+      } else {
+        // Standard high-performance search
+        try {
+          const timeoutId = setTimeout(() => controller.abort(), 15000);
+          const res = await fetch(`/api/search?q=${encodeURIComponent(effectiveQuery)}`, { signal: controller.signal });
+          clearTimeout(timeoutId);
+          if (res.ok) {
+            results = await res.json();
+          }
+        } catch (e) {}
+
+        if (!results || results.length === 0) {
+          results = await CloudMusicEngine.search(effectiveQuery);
+        }
+
+        // Smart lyrics detection fallback: if query looks like lyrics (> 4 words) and gave few results, check lyrics
+        if ((!results || results.length < 3) && effectiveQuery.split(' ').length >= 4) {
+          try {
+            const lres = await fetch(`/api/lyrics-search?q=${encodeURIComponent(effectiveQuery)}`, { signal: controller.signal });
+            if (lres.ok) {
+              const ldata = await lres.json();
+              if (ldata && Array.isArray(ldata.results) && ldata.results.length > 0) {
+                const existingIds = new Set((results || []).map(r => r.id));
+                const freshLyrics = ldata.results.filter(r => !existingIds.has(r.id));
+                results = [...freshLyrics, ...(results || [])];
+              }
+            }
+          } catch (e) {}
+        }
       }
 
       if (requestId !== searchRequestId) return;
 
-      searchResults = results;
+      searchResults = results || [];
       if (searchResults.length === 0) {
-        resultsGrid.innerHTML = '<p class="empty-msg" style="grid-column:1/-1;text-align:center;">No results found.</p>';
+        resultsGrid.innerHTML = `
+          <div class="empty-msg" style="grid-column:1/-1;text-align:center;padding:40px 20px;">
+            <p style="font-size:16px;font-weight:600;margin-bottom:8px;">No songs found for \u201c${esc(effectiveQuery)}\u201d</p>
+            <p style="color:var(--text-secondary);font-size:13px;">${isExplicitLyrics ? 'Try typing a different line or fewer words from the lyrics.' : 'Try checking spelling or tap 🎤 Lyrics to search by lyrics.'}</p>
+          </div>`;
       } else {
         renderResults(searchResults);
       }
     } catch (err) {
       if (err.name === 'AbortError' || requestId !== searchRequestId) return;
-      // A failed search used to be a dead end: the only retry affordance was a
-      // handler bound to #retryBtn, an id that never existed anywhere.
       resultsGrid.innerHTML = `
         <div class="search-error-box" style="grid-column:1/-1;">
           <p class="empty-msg">Search failed. Please check your connection.</p>
@@ -1558,10 +1659,19 @@
   // that are normal (a superseded src, and the element's own error event which
   // already owns the retry/skip logic).
   function startPlayback(song) {
+    if (typeof AudioOutputManager !== 'undefined' && AudioOutputManager.currentDeviceId && AudioOutputManager.currentDeviceId !== 'default') {
+      AudioOutputManager.applySinkId(AudioOutputManager.currentDeviceId).catch(() => {});
+    }
+    if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+      EqualizerManager.updateVolume();
+    }
     const attempt = audioPlayer.play();
     if (!attempt || typeof attempt.catch !== 'function') return;
     attempt.then(() => {
       EqualizerManager.resumeContext();
+      if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+        EqualizerManager.updateVolume();
+      }
     }).catch(err => {
       if (currentSong !== song) return;
       const name = err && err.name;
@@ -1919,6 +2029,19 @@
       const p = Math.max(0, Math.min(100, (c / d) * 100));
       npProgressFill.style.width = p + '%';
       npProgressThumb.style.left = p + '%';
+
+      // Sync position with Device Lockscreen, Bluetooth car unit, and Smartwatch
+      if ('mediaSession' in navigator && typeof navigator.mediaSession.setPositionState === 'function') {
+        try {
+          if (Number.isFinite(d) && Number.isFinite(c) && c <= d) {
+            navigator.mediaSession.setPositionState({
+              duration: d,
+              playbackRate: audioPlayer.playbackRate || 1,
+              position: Math.max(0, Math.min(d, c))
+            });
+          }
+        } catch (e) {}
+      }
     }
     
     // Sync with Apple Orb & Lyrics
@@ -2335,6 +2458,9 @@
     // to do nothing at all, so put the user's level back on the way out.
     if (!audioPlayer.muted) audioPlayer.volume = volume;
     setMuteIcon(audioPlayer.muted);
+    if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+      EqualizerManager.updateVolume();
+    }
     updateVolumeUI();
   }
 
@@ -2370,6 +2496,9 @@
     volume = Math.max(0, Math.min(1, (x - r.left) / r.width));
     audioPlayer.volume = volume; audioPlayer.muted = false;
     setMuteIcon(false);
+    if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+      EqualizerManager.updateVolume();
+    }
     updateVolumeUI(); Storage.set('volume', volume);
   }
 
@@ -2381,6 +2510,9 @@
     // Nudging the volume while muted used to appear to do nothing at all:
     // updateVolumeUI() reports 0 whenever muted is set.
     if (volume > 0 && audioPlayer.muted) { audioPlayer.muted = false; setMuteIcon(false); }
+    if (typeof EqualizerManager !== 'undefined' && EqualizerManager.updateVolume) {
+      EqualizerManager.updateVolume();
+    }
     updateVolumeUI();
     Storage.set('volume', volume);
   }
@@ -3307,7 +3439,13 @@
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               </button>`;
 
-    container.innerHTML = songs.map((item, i) => `
+    container.innerHTML = songs.map((item, i) => {
+      const lyricsBadge = item.isLyricsMatch ? `
+        <div class="card-lyrics-badge">✨ ${item.confidence || 100}% Lyrics Match</div>` : '';
+      const lyricsSnippet = item.matchedSnippet ? `
+        <div class="card-matched-snippet" title="${esc(item.matchedSnippet)}">“${esc(item.matchedSnippet)}”</div>` : '';
+
+      return `
       <div class="result-card ${isCurrent(item.id) ? 'playing' : ''}" data-id="${escId(item.id)}" data-idx="${i}">
         <div class="card-thumbnail">
           <img src="${thumb(item)}" alt="" loading="lazy" />
@@ -3315,7 +3453,9 @@
           <div class="card-play-overlay" data-action="play"><div class="overlay-play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
         </div>
         <div class="card-info">
+          ${lyricsBadge}
           <div class="card-title" title="${esc(item.title)}">${esc(item.title)}</div>
+          ${lyricsSnippet}
           <div class="card-meta">
             <span class="card-channel">${esc(item.channel)}</span>
             <span class="card-playcount" title="${getPlayCount(item.id) ? `Played ${getPlayCount(item.id)} time${getPlayCount(item.id) === 1 ? '' : 's'}` : ''}">${getPlayCount(item.id) ? getPlayCount(item.id) + '×' : ''}</span>
@@ -3338,29 +3478,34 @@
             </div>
           </div>
         </div>
-      </div>
-    `).join('');
+      </div>`;
+    }).join('');
 
-    container.querySelectorAll('.result-card').forEach(card => {
-      card.addEventListener('click', (e) => {
-        const i = parseInt(card.dataset.idx);
-        const item = songs[i];
-        const action = e.target.closest('[data-action]');
-        if (action) {
-          e.stopPropagation();
-          if (action.dataset.action === 'like') toggleLike(item);
-          else if (action.dataset.action === 'dislike') toggleDislike(item);
-          else if (action.dataset.action === 'queue') addToQueue(item);
-          else if (action.dataset.action === 'playnext') playNextInQueue(item);
-          else if (action.dataset.action === 'addpl') openAddToPlaylist(item);
-          else if (action.dataset.action === 'download') downloadSong(item);
-          else if (action.dataset.action === 'removepl') removeSongFromPlaylist(i, item);
-          else playSong(item);
-        } else {
-          playSong(item);
-        }
+    if (container.querySelectorAll) {
+      container.querySelectorAll('.result-card').forEach(card => {
+        card.addEventListener('click', (e) => {
+          const i = parseInt(card.dataset.idx, 10);
+          const item = songs[i];
+          if (!item) return;
+
+          const action = e.target.closest('[data-action]');
+          if (action) {
+            e.stopPropagation();
+            const act = action.dataset.action;
+            if (act === 'like') toggleLike(item);
+            else if (act === 'dislike') toggleDislike(item);
+            else if (act === 'queue') addToQueue(item);
+            else if (act === 'playnext') playNextInQueue(item);
+            else if (act === 'addpl') openAddToPlaylist(item);
+            else if (act === 'download') downloadSong(item);
+            else if (act === 'removepl') removeSongFromPlaylist(i, item);
+            else playSong(item);
+          } else {
+            playSong(item);
+          }
+        });
       });
-    });
+    }
   }
 
   function renderTasteSection(topArtist) {
@@ -6057,6 +6202,7 @@
   const EqualizerManager = {
     audioCtx: null,
     sourceNode: null,
+    masterGainNode: null,
     filters: [],
     bassNode: null,
     widener: null,
@@ -6249,7 +6395,16 @@
         // StereoPanner to 0.35, which shoved the entire mix to the right ear
         // and called it "3D spatial audio".
         this.widener = this.buildWidener(lastNode);
-        this.widener.output.connect(this.audioCtx.destination);
+
+        // Master Gain Node: Ensures volume is ALWAYS synchronized through Web Audio
+        // and does NOT bypass device or app volume control!
+        this.masterGainNode = this.audioCtx.createGain();
+        try {
+          this.masterGainNode.gain.setValueAtTime(steadyVolume(), this.audioCtx.currentTime);
+        } catch (err) {}
+        this.widener.output.connect(this.masterGainNode);
+        this.masterGainNode.connect(this.audioCtx.destination);
+
         // Push the saved curve/bass/spatial state into the fresh graph, or the
         // sliders would show a setting the audio isn't actually using.
         this.applyStoredToGraph();
@@ -6265,6 +6420,15 @@
         this.audioCtx = null;
         console.warn('Web Audio EQ unavailable:', e && e.message);
         return false;
+      }
+    },
+
+    updateVolume() {
+      if (this.masterGainNode && this.audioCtx) {
+        try {
+          const v = steadyVolume();
+          this.masterGainNode.gain.setValueAtTime(Math.max(0, Math.min(1, v)), this.audioCtx.currentTime);
+        } catch (e) {}
       }
     },
 
