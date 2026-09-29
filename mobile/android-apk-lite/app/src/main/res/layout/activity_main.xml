@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mf_bg">
+
+    <!-- WebView fills the entire screen -->
+    <android.webkit.WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Offline / Error overlay (hidden by default) -->
+    <LinearLayout
+        android:id="@+id/offlineView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="32dp"
+        android:background="@color/mf_bg"
+        android:visibility="gone">
+
+        <!-- Cloud/Wi-Fi off icon -->
+        <ImageView
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:src="@drawable/ic_offline"
+            android:contentDescription="No connection"
+            android:layout_marginBottom="24dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/offline_title"
+            android:textColor="@color/mf_text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="12dp"
+            android:gravity="center" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/offline_message"
+            android:textColor="@color/mf_text_secondary"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="28dp" />
+
+        <Button
+            android:id="@+id/retryButton"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/retry"
+            android:textColor="@color/mf_text_primary"
+            android:backgroundTint="@color/mf_accent"
+            android:paddingStart="36dp"
+            android:paddingEnd="36dp"
+            android:textAllCaps="false"
+            android:textSize="15sp"
+            android:layout_marginBottom="12dp" />
+
+        <Button
+            android:id="@+id/changeServerButton"
+            android:layout_width="wrap_content"
+            android:layout_height="44dp"
+            style="@style/Widget.AppCompat.Button.Borderless"
+            android:text="@string/change_server_url"
+            android:textColor="@color/mf_accent"
+            android:textAllCaps="false"
+            android:textSize="14sp" />
+    </LinearLayout>
+</FrameLayout>

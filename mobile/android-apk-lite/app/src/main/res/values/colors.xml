@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="mf_bg">#0B0E14</color>
+    <color name="mf_bg_surface">#111827</color>
+    <color name="mf_accent">#6366F1</color>
+    <color name="mf_accent_light">#818CF8</color>
+    <color name="mf_text_primary">#FFFFFF</color>
+    <color name="mf_text_secondary">#9CA3AF</color>
+    <color name="mf_error">#EF4444</color>
+    <color name="mf_splash_bg">#0B0E14</color>
+</resources>

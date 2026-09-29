@@ -1,0 +1,20 @@
+# Built outputs
+build/
+app/build/
+
+# Gradle
+.gradle/
+local.properties
+
+# IDE
+.idea/
+*.iml
+.DS_Store
+
+# APK signing
+*.jks
+*.keystore
+
+# OS
+Thumbs.db
+.DS_Store

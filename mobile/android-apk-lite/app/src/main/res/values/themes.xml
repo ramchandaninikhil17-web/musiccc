@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base dark theme matching MusicFlow web app -->
+    <style name="Theme.MusicFlow" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">@color/mf_bg</item>
+        <item name="android:statusBarColor">@color/mf_bg</item>
+        <item name="android:navigationBarColor">@color/mf_bg</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar" tools:targetApi="27">false</item>
+        <item name="colorPrimary">@color/mf_accent</item>
+        <item name="colorPrimaryDark">@color/mf_bg</item>
+        <item name="colorAccent">@color/mf_accent</item>
+    </style>
+
+    <!-- Splash theme: shows background color immediately, no white flash -->
+    <style name="Theme.MusicFlow.Splash" parent="Theme.MusicFlow">
+        <item name="android:windowBackground">@drawable/splash_background</item>
+    </style>
+</resources>

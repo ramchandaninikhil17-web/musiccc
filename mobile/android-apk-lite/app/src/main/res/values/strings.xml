@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MusicFlow</string>
+    <string name="notif_channel_playback">Playback</string>
+    <string name="notif_playing">MusicFlow is playing</string>
+    <string name="offline_title">Cannot Connect to Server</string>
+    <string name="offline_message">The server could not be reached. Check your internet connection or update your server URL.</string>
+    <string name="retry">Retry</string>
+    <string name="loading">Loading MusicFlow…</string>
+    <string name="change_server_url">Change Server URL</string>
+    <string name="server_url_dialog_title">MusicFlow Cloud Server</string>
+    <string name="server_url_dialog_message">Enter your 24/7 cloud server URL (e.g. from Render or Railway):</string>
+    <string name="save_and_connect">Save &amp; Connect</string>
+    <string name="cancel">Cancel</string>
+</resources>
