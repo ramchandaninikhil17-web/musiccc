@@ -304,6 +304,84 @@ function getSearchQuery(value) {
 }
 
 /* ------------------------------------------------------------------ */
+/*  YouTube Link & Video ID Extractor & Fast Resolver                 */
+/* ------------------------------------------------------------------ */
+function extractYouTubeId(urlOrId) {
+  if (!urlOrId || typeof urlOrId !== 'string') return null;
+  const s = urlOrId.trim();
+  // Direct 11-char ID
+  if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+
+  // Various YouTube URL formats (watch, youtu.be, shorts, embed, live, music)
+  const m = s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|v\/|embed\/|shorts\/|live\/|e\/|user\/[^\/]+\/u\/\d+\/))([a-zA-Z0-9_-]{11})/i);
+  if (m && m[1]) return m[1];
+
+  // Parameter ?v= or &v= anywhere in query string
+  const m2 = s.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+  if (m2 && m2[1]) return m2[1];
+
+  return null;
+}
+
+async function resolveYouTubeVideo(videoId) {
+  if (!isYouTubeId(videoId)) return null;
+
+  const cacheKey = `yt_vid_${videoId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return cached;
+
+  let title = 'YouTube Video';
+  let channel = 'YouTube';
+  let duration = 0;
+  let thumbnail = `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`;
+  let views = 0;
+
+  // 1. Ultra-fast oEmbed metadata (< 250ms)
+  try {
+    const oembedData = await fetchJson(`https://www.youtube.com/oembed?url=https://www.youtube.com/watch?v=${videoId}&format=json`, 4500);
+    if (oembedData && oembedData.title) {
+      title = oembedData.title;
+      channel = oembedData.author_name || channel;
+      if (oembedData.thumbnail_url) thumbnail = oembedData.thumbnail_url;
+    }
+  } catch (e) {}
+
+  // 2. Fetch full duration and view details via yt-dlp dump-json
+  try {
+    const stdout = await runYtDlp([
+      '--dump-json',
+      '--skip-download',
+      '--no-warnings',
+      `https://www.youtube.com/watch?v=${videoId}`
+    ], 14000).catch(() => null);
+
+    if (stdout) {
+      const d = JSON.parse(stdout);
+      title = d.title || title;
+      channel = d.channel || d.uploader || channel;
+      duration = d.duration || duration;
+      views = d.view_count || views;
+      if (d.thumbnails && d.thumbnails.length) {
+        thumbnail = d.thumbnails[d.thumbnails.length - 1].url || thumbnail;
+      }
+    }
+  } catch (e) {}
+
+  const song = {
+    id: videoId,
+    title,
+    channel,
+    duration,
+    thumbnail,
+    views,
+    isDirectLink: true
+  };
+
+  setCache(cacheKey, song);
+  return song;
+}
+
+/* ------------------------------------------------------------------ */
 /*  In-Memory LRU/TTL Cache & Concurrency Helper                      */
 /* ------------------------------------------------------------------ */
 const searchCache = new Map();
@@ -591,6 +669,47 @@ app.get('/api/search', async (req, res) => {
   const cached = getCached(cacheKey);
   if (cached) return res.json(cached);
 
+  // Direct YouTube link detection
+  const directVideoId = extractYouTubeId(query);
+  if (directVideoId) {
+    try {
+      const song = await resolveYouTubeVideo(directVideoId);
+      if (song) {
+        let related = [];
+        try {
+          const stdout = await runYtDlp([
+            `ytsearch6:${song.title} similar`,
+            '--dump-json', '--flat-playlist', '--no-warnings',
+            '--default-search', 'ytsearch', '--skip-download',
+          ], 12000).catch(() => null);
+          if (stdout) {
+            related = stdout.split('\n').filter(Boolean).map(line => {
+              try {
+                const d = JSON.parse(line);
+                if (d.id === directVideoId) return null;
+                return {
+                  id: d.id || d.url,
+                  title: d.title || 'Unknown',
+                  channel: d.channel || d.uploader || 'Unknown',
+                  duration: d.duration || 0,
+                  thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url
+                    : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+                  views: d.view_count || 0,
+                };
+              } catch { return null; }
+            }).filter(Boolean).filter(item => isYouTubeId(item.id) && item.id !== directVideoId);
+          }
+        } catch (e) {}
+
+        const finalResults = [song, ...related];
+        setCache(cacheKey, finalResults);
+        return res.json(finalResults);
+      }
+    } catch (e) {
+      console.warn('[Search] Direct YouTube Link resolution failed:', e.message);
+    }
+  }
+
   try {
     const stdout = await runYtDlp([
       `ytsearch15:${query}`,
@@ -633,6 +752,33 @@ app.get('/api/search', async (req, res) => {
   } catch (err) {
     console.error('[Search]', err.message);
     res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/resolve-link?url=...                                     */
+/*  Resolves any YouTube URL (watch, youtu.be, shorts, embed, music)  */
+/* ------------------------------------------------------------------ */
+app.get('/api/resolve-link', async (req, res) => {
+  const rawUrl = req.query.url;
+  if (!rawUrl || typeof rawUrl !== 'string' || !rawUrl.trim()) {
+    return res.status(400).json({ error: 'Missing url parameter' });
+  }
+
+  const videoId = extractYouTubeId(rawUrl);
+  if (!videoId) {
+    return res.status(400).json({ error: 'Could not extract valid YouTube video ID from URL' });
+  }
+
+  try {
+    const song = await resolveYouTubeVideo(videoId);
+    if (!song) {
+      return res.status(404).json({ error: 'YouTube video not found or unavailable' });
+    }
+    res.json({ success: true, song });
+  } catch (err) {
+    console.error('[ResolveLink]', err.message);
+    res.status(500).json({ error: 'Failed to resolve YouTube link' });
   }
 });
 
@@ -1933,7 +2079,8 @@ function probeVideoStream(filePath) {
 }
 
 app.get('/api/download/:videoId', async (req, res) => {
-  const { videoId } = req.params;
+  const rawId = req.params.videoId;
+  const videoId = extractYouTubeId(rawId) || rawId;
 
   if (!isYouTubeId(videoId)) {
     return res.status(400).json({ error: 'Invalid YouTube ID' });

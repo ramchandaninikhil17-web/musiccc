@@ -1,7 +1,111 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-09-29T16:08:00.430Z",
+  "lastSaved": "2026-09-29T16:35:11.931Z",
   "history": [
+    {
+      "song": {
+        "id": "VcFEtvtCAc4",
+        "title": "Silence your phones. Avengers: Doomsday arrives in cinemas everywhere December 18.",
+        "channel": "IndiaMarvel",
+        "duration": 31,
+        "thumbnail": "https://i.ytimg.com/vi_webp/VcFEtvtCAc4/maxresdefault.webp",
+        "views": 175406,
+        "isDirectLink": true
+      },
+      "playedAt": "2026-09-29T16:34:49.032Z",
+      "listenedSec": 22,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "NQ6gWHMvna8",
+        "title": "INDIA’S GOT LATENT S2 Bonus EP 4 ft. Ayushmann Khurrana, Suhani Shah, Kullu, Rajat Sood",
+        "channel": "Samay Raina",
+        "duration": 0,
+        "thumbnail": "https://i.ytimg.com/vi/NQ6gWHMvna8/hqdefault.jpg",
+        "views": 0,
+        "isDirectLink": true
+      },
+      "playedAt": "2026-09-29T16:33:55.106Z",
+      "listenedSec": 5
+    },
+    {
+      "song": {
+        "id": "mLMmlWC6AUg",
+        "title": "India's Got Latent S2 Bonus EP 4 ft. Ayushmann Khurrana | INDIA'S GOT LATENT S2 Bonus Episode Story ",
+        "channel": "Cine Critique",
+        "duration": 3235,
+        "thumbnail": "https://i.ytimg.com/vi/mLMmlWC6AUg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgiW1ejVBhjg6gQg4KgB&rs=AOn4CLAdkI8SmwZN2x19WpmW67F7zU_fpA&usqp=CBU",
+        "views": 35502
+      },
+      "playedAt": "2026-09-29T16:33:35.523Z",
+      "listenedSec": 5
+    },
+    {
+      "song": {
+        "id": "mLMmlWC6AUg",
+        "title": "India's Got Latent S2 Bonus EP 4 ft. Ayushmann Khurrana | INDIA'S GOT LATENT S2 Bonus Episode Story ",
+        "channel": "Cine Critique",
+        "duration": 3235,
+        "thumbnail": "https://i.ytimg.com/vi/mLMmlWC6AUg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgiW1ejVBhjg6gQg4KgB&rs=AOn4CLAdkI8SmwZN2x19WpmW67F7zU_fpA&usqp=CBU",
+        "views": 35502
+      },
+      "playedAt": "2026-09-29T16:32:47.138Z",
+      "listenedSec": 47,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "M2uVhFaCAJU",
+        "title": "“India got talent se India got latent.... What a Downfall” 🤣",
+        "channel": "Jeff",
+        "duration": 58,
+        "thumbnail": "https://i.ytimg.com/vi/M2uVhFaCAJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBc-B5cfcL34xk9Z1B4cF3B3Bh9VQ",
+        "views": 0
+      },
+      "playedAt": "2026-09-29T16:31:56.648Z",
+      "listenedSec": 10
+    },
+    {
+      "song": {
+        "id": "h5U7FQhhwKM",
+        "title": "Pyar Ki Pungi Baja Kar 8K Full Video Song | Agent Vinod | Saif Ali Khan | Pritam | T-Series",
+        "channel": "T-Series",
+        "duration": 239,
+        "thumbnail": "https://i.ytimg.com/vi/h5U7FQhhwKM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD7fmmvFZ9JlOf5GQP6a07J0j34Pg",
+        "views": 940547
+      },
+      "playedAt": "2026-09-29T16:29:11.569Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "h5U7FQhhwKM",
+        "title": "Pyar Ki Pungi Baja Kar 8K Full Video Song | Agent Vinod | Saif Ali Khan | Pritam | T-Series",
+        "channel": "T-Series",
+        "duration": 239,
+        "thumbnail": "https://i.ytimg.com/vi/h5U7FQhhwKM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD7fmmvFZ9JlOf5GQP6a07J0j34Pg",
+        "views": 940547
+      },
+      "playedAt": "2026-09-29T16:18:47.707Z",
+      "listenedSec": 173,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "5tpBbrtu7yU",
+        "title": "Suno Na Suno Na Lyrical Video | Chalte Chalte | Shahrukh Khan, Rani Mukherjee",
+        "channel": "T-Series Bollywood Classics",
+        "duration": 317,
+        "thumbnail": "https://i.ytimg.com/vi/5tpBbrtu7yU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAY_syncmSBi6BmodXhWjaGeuyQHg&usqp=CBQ",
+        "views": 44039440,
+        "isLyricsMatch": true,
+        "confidence": 85,
+        "matchedSnippet": "kaheta ye dil rasta mushkil"
+      },
+      "playedAt": "2026-09-29T16:18:03.649Z",
+      "listenedSec": 6
+    },
     {
       "song": {
         "id": "5tpBbrtu7yU",
@@ -3087,109 +3191,12 @@
       },
       "playedAt": "2026-08-31T08:49:06.747Z",
       "listenedSec": 15
-    },
-    {
-      "song": {
-        "id": "DxsDekHDKXo",
-        "title": "Aditya Rikhari - Paaro (Official Video)",
-        "channel": "Aditya Rikhari",
-        "duration": 218,
-        "thumbnail": "https://i.ytimg.com/vi/DxsDekHDKXo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEXCatVPeEvNRcgVa5t8Equ4fWWQ",
-        "views": 97745042
-      },
-      "playedAt": "2026-08-31T08:45:14.280Z",
-      "listenedSec": 224,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "J1L7D15DQoY",
-        "title": "For A Reason x Boyfriend - Mashup (Full Version) | Karan Aujla | Ikky | Shubhadip Dey | Vibevik",
-        "channel": "Shubhadip Dey",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/J1L7D15DQoY/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBt7RFi-n-8jSVvi2ANkaG1tyI4VA",
-        "views": 2448549
-      },
-      "playedAt": "2026-08-31T08:44:59.633Z",
-      "listenedSec": 14
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 389845792
-      },
-      "playedAt": "2026-08-31T08:44:55.157Z",
-      "listenedSec": 4
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 389845792
-      },
-      "playedAt": "2026-08-30T07:48:39.704Z",
-      "listenedSec": 77,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 389845792
-      },
-      "playedAt": "2026-08-29T18:12:10.178Z",
-      "listenedSec": 29,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "y4YT6vyMOzA",
-        "title": "Baby",
-        "channel": "Quality Control - Topic",
-        "duration": 143,
-        "thumbnail": "https://i.ytimg.com/vi/y4YT6vyMOzA/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC_n8CEV2FnomdmZy8FpfZ_eZcj2A",
-        "views": 97996552
-      },
-      "playedAt": "2026-08-29T18:11:43.194Z",
-      "listenedSec": 6
-    },
-    {
-      "song": {
-        "id": "cl0a3i2wFcc",
-        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
-        "channel": "Diljit Dosanjh",
-        "duration": 224,
-        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBrlgMD1SJPZgy8Y0GohBMwg4sf-g",
-        "views": 372896543
-      },
-      "playedAt": "2026-08-29T18:08:41.125Z",
-      "listenedSec": 50,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "k0Ka-deab1s",
-        "title": "Ed Sheeran & Diljit Dosanjh - Shape of You x Naina (Live in Birmingham 2024)",
-        "channel": "Ed Sheeran",
-        "duration": 302,
-        "thumbnail": "https://i.ytimg.com/vi/k0Ka-deab1s/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDRvWLoXAP1KkvTX_tD_kKuwRO9zw",
-        "views": 70807146
-      },
-      "playedAt": "2026-08-29T13:11:11.176Z",
-      "listenedSec": 16
     }
   ],
-  "searchHistory": [],
+  "searchHistory": [
+    "https://youtu.be/VcFEtvtCAc4",
+    "https://youtu.be/NQ6gWHMvna8"
+  ],
   "playlists": [
     {
       "id": "pl_1786029815971",
@@ -3740,58 +3747,18 @@
       ]
     }
   ],
-  "volume": 0.8,
+  "volume": 1,
   "quality": "high",
   "repeat": "all",
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "-YlmnPh-6rE",
-      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-      "channel": "Rehaan Records",
-      "duration": 189,
-      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-      "views": 375801801
-    },
-    {
-      "id": "zbj5-l8h72M",
-      "title": "Trending karan aujla songs | non stop karan aujla songs | RockMusicnb🤟 |",
-      "channel": "RockMusicnb🤟",
-      "duration": 1150,
-      "thumbnail": "https://i.ytimg.com/vi/zbj5-l8h72M/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhyIEwoMDAP&rs=AOn4CLBRbMf38Q7cP8PGe_X5cdN_qq5G-A",
-      "views": 1167372
-    },
-    {
-      "id": "PaRtmWgVUys",
-      "title": "T-Series Station🎧: Arijit Singh Hits | Non-Stop All-Time Superhit Collection | Best of Arijit Singh",
+      "id": "bJcTM4ns9KM",
+      "title": "BEQADRA (Official Video): FAHEEM ABDULLAH | SHANYA KASHYAP | HYDER DAR | NAJIULLAH",
       "channel": "T-Series",
-      "duration": 0,
-      "thumbnail": "https://i.ytimg.com/vi/PaRtmWgVUys/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgr4bv4T7mN_nxLAKlUtCdTVZUog",
-      "views": 23497369
-    },
-    {
-      "id": "J9FfYvKTOn0",
-      "title": "Songs 🩷🎵  to vibe at ✨️🙌#karanaujla#drivesongs # nightsongs ",
-      "channel": "𝑻𝒉𝒆 𝑬𝒅𝒊𝒕 𝑯𝒖𝒃\n",
-      "duration": 918,
-      "thumbnail": "https://i.ytimg.com/vi/J9FfYvKTOn0/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgjE9ujGBhjg6gQg4KgB&rs=AOn4CLDh3PxDKfZQFV3oOZctRzRb3-sKFw&usqp=CBU",
-      "views": 3739545
-    },
-    {
-      "id": "K9R7KcaettM",
-      "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 194,
-      "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-      "views": 101887749
-    },
-    {
-      "id": "qe4agjXLbtM",
-      "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
-      "channel": "Rytham Riyasat",
-      "duration": 1275,
-      "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAPovOX_wMOCLjwl7UGGODqBCDgqAE=&rs=AOn4CLB-r_5dWO_dWd9D2BCnwKPdCH4HBw&usqp=CBU",
-      "views": 4423302
+      "duration": 191,
+      "thumbnail": "https://i.ytimg.com/vi/bJcTM4ns9KM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDQkUNrRpazsXzUIx8TRqE0f1XZTA",
+      "views": 44309
     },
     {
       "id": "vJQMhj6WYZA",
@@ -3799,71 +3766,15 @@
       "channel": "T-Series",
       "duration": 242,
       "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
-      "views": 209152405
+      "views": 209154883
     },
     {
-      "id": "H4IRWXePhnU",
-      "title": "Karan aujla new song ||Karan  aujla  all song ||karan aujla punjabi song #karanaujla ",
-      "channel": "punjabi boys",
-      "duration": 1580,
-      "thumbnail": "https://i.ytimg.com/vi/H4IRWXePhnU/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgin_I3HBhjg6gQg4KgB&rs=AOn4CLBY0E36KZHm1JvIcKXo63VmhwAgaA&usqp=CBU",
-      "views": 2146641
-    },
-    {
-      "id": "oMesPehN_Do",
-      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+      "id": "_nKa-4xg07o",
+      "title": "Udd Chale (Music Video): Last Minute India | Shubham Dipta | Divija Gambhir | T-Series",
       "channel": "T-Series",
-      "duration": 268,
-      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP2fr86VttexE6AnKdeYVbit0-3w",
-      "views": 88797629
-    },
-    {
-      "id": "J4_XiSN3AM8",
-      "title": "I Feel Good | Anjaana Anjaani Song | Priyanka Chopra, Ranbir Kapoor",
-      "channel": "T-Series",
-      "duration": 200,
-      "thumbnail": "https://i.ytimg.com/vi/J4_XiSN3AM8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDwVKudUZq64hSCpUoaZy6OsZuMAg",
-      "views": 16838897
-    },
-    {
-      "id": "cWMxCE2HTag",
-      "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-      "channel": "Karan Aujla",
-      "duration": 171,
-      "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-      "views": 501454715
-    },
-    {
-      "id": "MKRaMcToV5U",
-      "title": "Karan Aujla 2025 Top All Songs New Punjabi Songs Karan Aujla Jukebox",
-      "channel": "Satte wala",
-      "duration": 1778,
-      "thumbnail": "https://i.ytimg.com/vi/MKRaMcToV5U/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhmIGYoZjAP&rs=AOn4CLCtsJt_AqvRHL67yK98Sr9RQUVyQA",
-      "views": 659950
-    },
-    {
-      "id": "nJZcbidTutE",
-      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
-      "channel": "T-Series",
-      "duration": 248,
-      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
-      "views": 387728763
-    },
-    {
-      "id": "bJcTM4ns9KM",
-      "title": "BEQADRA (Official Video): FAHEEM ABDULLAH | SHANYA KASHYAP | HYDER DAR | NAJIULLAH",
-      "channel": "T-Series",
-      "duration": 191,
-      "thumbnail": "https://i.ytimg.com/vi/bJcTM4ns9KM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDQkUNrRpazsXzUIx8TRqE0f1XZTA",
-      "views": 32999
-    },
-    {
-      "id": "k85UB5b6pJU",
-      "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-      "channel": "Karan Aujla",
-      "duration": 211,
-      "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
-      "views": 192030775
+      "duration": 272,
+      "thumbnail": "https://i.ytimg.com/vi/_nKa-4xg07o/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAA803ykZLZg7o-dV1kn28srx24qQ",
+      "views": 65147
     },
     {
       "id": "W0--lTnDEgQ",
@@ -3871,23 +3782,103 @@
       "channel": "The Singh Vlog (Balli Singh)",
       "duration": 1741,
       "thumbnail": "https://i.ytimg.com/vi/W0--lTnDEgQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhGIFIoZTAP&rs=AOn4CLBhe7EPQXOq6R4LtJxILCjhtIHrMQ",
-      "views": 3313235
+      "views": 3313506
     },
     {
-      "id": "3j7bhOvW6jw",
-      "title": "LOW FADE (Music Video) KARAN AUJLA",
+      "id": "-YlmnPh-6rE",
+      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
+      "channel": "Rehaan Records",
+      "duration": 189,
+      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
+      "views": 375820970
+    },
+    {
+      "id": "qe4agjXLbtM",
+      "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
+      "channel": "Rytham Riyasat",
+      "duration": 1275,
+      "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLAsKPFoa1l30Uj7VZwTs3hqmQyAxQ",
+      "views": 4423385
+    },
+    {
+      "id": "H4IRWXePhnU",
+      "title": "Karan aujla new song ||Karan  aujla  all song ||karan aujla punjabi song #karanaujla ",
+      "channel": "punjabi boys",
+      "duration": 1580,
+      "thumbnail": "https://i.ytimg.com/vi/H4IRWXePhnU/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCo5g9KwNc-bIokZWVuOlnCYAzZPw",
+      "views": 2146843
+    },
+    {
+      "id": "K9R7KcaettM",
+      "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
       "channel": "Karan Aujla",
-      "duration": 179,
-      "thumbnail": "https://i.ytimg.com/vi/3j7bhOvW6jw/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhXIGUoZTAP&rs=AOn4CLDuYbNaDIL2aL1Mn_bItLvHKzQuBw",
-      "views": 62770995
+      "duration": 194,
+      "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
+      "views": 101894661
     },
     {
       "id": "5GCfYLguTIs",
       "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
       "channel": "Karan Aujla",
       "duration": 162,
-      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgj7_t3HBhjg6gQg4KgB&rs=AOn4CLABccurtHoZsUzpYl0gj2BQfR115Q&usqp=CBU",
-      "views": 307081937
+      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+      "views": 307112054
+    },
+    {
+      "id": "nJZcbidTutE",
+      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
+      "channel": "T-Series",
+      "duration": 248,
+      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
+      "views": 387735098
+    },
+    {
+      "id": "k85UB5b6pJU",
+      "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
+      "channel": "Karan Aujla",
+      "duration": 211,
+      "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
+      "views": 192034772
+    },
+    {
+      "id": "zbj5-l8h72M",
+      "title": "Trending karan aujla songs | non stop karan aujla songs | RockMusicnb🤟 |",
+      "channel": "RockMusicnb🤟",
+      "duration": 1150,
+      "thumbnail": "https://i.ytimg.com/vi/zbj5-l8h72M/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhyIEwoMDAP&rs=AOn4CLBRbMf38Q7cP8PGe_X5cdN_qq5G-A",
+      "views": 1167495
+    },
+    {
+      "id": "J9FfYvKTOn0",
+      "title": "Songs 🩷🎵  to vibe at ✨️🙌#karanaujla#drivesongs # nightsongs ",
+      "channel": "𝑻𝒉𝒆 𝑬𝒅𝒊𝒕 𝑯𝒖𝒃\n",
+      "duration": 918,
+      "thumbnail": "https://i.ytimg.com/vi/J9FfYvKTOn0/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDITkO-DxFir6hF888Gj5cLj_PIUA",
+      "views": 3739925
+    },
+    {
+      "id": "PaRtmWgVUys",
+      "title": "T-Series Station🎧: Arijit Singh Hits | Non-Stop All-Time Superhit Collection | Best of Arijit Singh",
+      "channel": "T-Series",
+      "duration": 0,
+      "thumbnail": "https://i.ytimg.com/vi/PaRtmWgVUys/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgr4bv4T7mN_nxLAKlUtCdTVZUog",
+      "views": 23508707
+    },
+    {
+      "id": "MKRaMcToV5U",
+      "title": "Karan Aujla 2025 Top All Songs New Punjabi Songs Karan Aujla Jukebox",
+      "channel": "Satte wala",
+      "duration": 1778,
+      "thumbnail": "https://i.ytimg.com/vi/MKRaMcToV5U/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhmIGYoZjAP&rs=AOn4CLCtsJt_AqvRHL67yK98Sr9RQUVyQA",
+      "views": 659989
+    },
+    {
+      "id": "cWMxCE2HTag",
+      "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
+      "channel": "Karan Aujla",
+      "duration": 171,
+      "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
+      "views": 501464189
     }
   ],
   "likes": [
@@ -4123,7 +4114,10 @@
     "local_1787671223327_l2zkj": 1,
     "local_1787671223255_fqx0v": 1,
     "eM8Mjuq4MwQ": 2,
-    "5tpBbrtu7yU": 2
+    "5tpBbrtu7yU": 2,
+    "h5U7FQhhwKM": 1,
+    "mLMmlWC6AUg": 1,
+    "VcFEtvtCAc4": 1
   },
   "eqState": {
     "gains": [

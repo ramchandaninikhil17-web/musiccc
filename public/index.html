@@ -106,7 +106,7 @@
         <div class="search-bar-wrap" id="searchBarWrap">
           <div class="search-bar">
             <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, albums..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
+            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, lyrics, or paste YouTube link..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
             <button class="search-mode-pill" id="lyricsModeBtn" title="Toggle Search by Lyrics Mode (Find Song from Lyrics)" type="button" aria-pressed="false">
               <span class="smp-icon">🎤</span>
               <span class="smp-label">Lyrics</span>
@@ -121,6 +121,10 @@
         </div>
 
         <div class="top-bar-actions">
+          <!-- Play or Download from YouTube Link Button -->
+          <button class="top-btn" id="ytLinkBtn" title="Play or Download from YouTube Link (Key: L)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
           <!-- Voice assistant. VoiceAssistant.init() hides this outright when the
                browser has no SpeechRecognition, so it can never be a button that
                does nothing. It is a switch for always-on listening: once the
@@ -1595,6 +1599,45 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
           <span>Download MP3</span>
         </button>
+      </div>
+  <!-- ============ YOUTUBE LINK MODAL ============ -->
+  <div class="modal-overlay" id="ytLinkModal" style="display:none;">
+    <div class="modal yt-link-modal" style="max-width:500px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🔗 Play or Download YouTube Link</h3>
+          <p class="modal-subtitle">Paste any YouTube video, Shorts, or Music URL</p>
+        </div>
+        <button class="modal-close" id="ytLinkModalClose" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="yt-link-input-group" style="margin-bottom:16px;">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">YouTube URL</label>
+          <div style="position:relative;display:flex;align-items:center;">
+            <input type="text" id="ytLinkInput" class="search-input" placeholder="https://www.youtube.com/watch?v=... or youtu.be/..." style="width:100%;padding-right:45px;" autocomplete="off" />
+            <button id="ytLinkPasteBtn" type="button" title="Paste from clipboard" style="position:absolute;right:8px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;">📋</button>
+          </div>
+        </div>
+
+        <div id="ytLinkPreview" style="display:none;margin-bottom:16px;padding:12px;border-radius:12px;background:var(--bg-glass);border:1px solid var(--border);display:flex;gap:12px;align-items:center;">
+          <img id="ytLinkThumb" src="" alt="" style="width:80px;height:55px;border-radius:8px;object-fit:cover;flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div id="ytLinkTitle" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);"></div>
+            <div id="ytLinkChannel" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+            <div id="ytLinkDuration" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="modal-submit-btn" id="ytLinkPlayBtn" type="button" style="flex:1;background:var(--accent);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span>▶️ Play Now</span>
+          </button>
+          <button class="modal-submit-btn" id="ytLinkDownloadBtn" type="button" style="flex:1;background:linear-gradient(135deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span>⬇️ Download</span>
+          </button>
+        </div>
       </div>
     </div>
   </div>

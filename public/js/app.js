@@ -591,6 +591,7 @@
     BrowseTabs.init();
     VoiceAssistant.init();
     DownloadOptionsManager.init();
+    YouTubeLinkManager.init();
 
     // Instant cache hydration: render home from localStorage before network
     const cachedRecs = Storage.get('cached_recommendations', null);
@@ -1461,19 +1462,23 @@
   };
 
   async function doSearch(query) {
-    query = (query || '').trim().slice(0, 200);
+    query = (query || '').trim().slice(0, 300);
     if (!query) return;
 
-    // Detect if this is a lyrics query
-    const isExplicitLyrics = isLyricsSearchMode || /^lyrics?:/i.test(query);
-    let effectiveQuery = query.replace(/^lyrics?:/i, '').trim();
+    // Detect if this is a YouTube link or direct Video ID
+    const directYtId = extractYouTubeId(query);
+    const isYtLink = !!directYtId && (query.includes('youtu') || query.includes('youtube.com') || /^[a-zA-Z0-9_-]{11}$/.test(query.trim()));
 
-    // Auto-fix spelling before search if not raw lyrics
+    // Detect if this is a lyrics query
+    const isExplicitLyrics = !isYtLink && (isLyricsSearchMode || /^lyrics?:/i.test(query));
+    let effectiveQuery = isYtLink ? query : query.replace(/^lyrics?:/i, '').trim();
+
+    // Auto-fix spelling before search if not raw lyrics and not a YouTube link
     const originalQuery = effectiveQuery;
-    if (!isExplicitLyrics) {
+    if (!isExplicitLyrics && !isYtLink) {
       effectiveQuery = QueryCleaner.clean(effectiveQuery);
     }
-    const wasCorrected = !isExplicitLyrics && QueryCleaner.lastCorrected && QueryCleaner.lastCorrected !== originalQuery;
+    const wasCorrected = !isExplicitLyrics && !isYtLink && QueryCleaner.lastCorrected && QueryCleaner.lastCorrected !== originalQuery;
 
     if (activeSearchController) activeSearchController.abort();
     const requestId = ++searchRequestId;
@@ -1487,7 +1492,9 @@
     renderSearchHistory();
 
     resultsHeader.style.display = 'flex';
-    if (isExplicitLyrics) {
+    if (isYtLink) {
+      resultsTitle.innerHTML = `🔗 YouTube Link Match <span class="card-ytlink-badge" style="margin-left:8px;vertical-align:middle;">${esc(directYtId)}</span>`;
+    } else if (isExplicitLyrics) {
       resultsTitle.innerHTML = `🎤 Lyrics Matches for \u201c${esc(effectiveQuery)}\u201d <span class="card-lyrics-badge" style="margin-left:8px;vertical-align:middle;">✨ 100% Accurate Finder</span>`;
     } else if (wasCorrected) {
       resultsTitle.innerHTML = `Results for \u201c${esc(effectiveQuery)}\u201d <span class="search-correction">\ud83d\udd24 corrected from \u201c${esc(originalQuery)}\u201d</span>`;
@@ -1526,13 +1533,16 @@
           } catch (e) {}
         }
       } else {
-        // Standard high-performance search
+        // Standard high-performance search (with direct YouTube link support)
         try {
           const timeoutId = setTimeout(() => controller.abort(), 15000);
           const res = await fetch(`/api/search?q=${encodeURIComponent(effectiveQuery)}`, { signal: controller.signal });
           clearTimeout(timeoutId);
           if (res.ok) {
             results = await res.json();
+            if (isYtLink && results && results.length > 0) {
+              toast(`🔗 Loaded YouTube track: ${results[0].title || directYtId}`);
+            }
           }
         } catch (e) {}
 
@@ -1541,7 +1551,7 @@
         }
 
         // Smart lyrics detection fallback: if query looks like lyrics (> 4 words) and gave few results, check lyrics
-        if ((!results || results.length < 3) && effectiveQuery.split(' ').length >= 4) {
+        if ((!results || results.length < 3) && !isYtLink && effectiveQuery.split(' ').length >= 4) {
           try {
             const lres = await fetch(`/api/lyrics-search?q=${encodeURIComponent(effectiveQuery)}`, { signal: controller.signal });
             if (lres.ok) {
@@ -1563,7 +1573,7 @@
         resultsGrid.innerHTML = `
           <div class="empty-msg" style="grid-column:1/-1;text-align:center;padding:40px 20px;">
             <p style="font-size:16px;font-weight:600;margin-bottom:8px;">No songs found for \u201c${esc(effectiveQuery)}\u201d</p>
-            <p style="color:var(--text-secondary);font-size:13px;">${isExplicitLyrics ? 'Try typing a different line or fewer words from the lyrics.' : 'Try checking spelling or tap 🎤 Lyrics to search by lyrics.'}</p>
+            <p style="color:var(--text-secondary);font-size:13px;">${isYtLink ? 'The video might be private, deleted, or age-restricted.' : isExplicitLyrics ? 'Try typing a different line or fewer words from the lyrics.' : 'Try checking spelling or tap 🎤 Lyrics to search by lyrics.'}</p>
           </div>`;
       } else {
         renderResults(searchResults);
@@ -3440,6 +3450,8 @@
               </button>`;
 
     container.innerHTML = songs.map((item, i) => {
+      const ytLinkBadge = item.isDirectLink ? `
+        <div class="card-ytlink-badge">🔗 YouTube Link Match</div>` : '';
       const lyricsBadge = item.isLyricsMatch ? `
         <div class="card-lyrics-badge">✨ ${item.confidence || 100}% Lyrics Match</div>` : '';
       const lyricsSnippet = item.matchedSnippet ? `
@@ -3453,6 +3465,7 @@
           <div class="card-play-overlay" data-action="play"><div class="overlay-play-btn"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg></div></div>
         </div>
         <div class="card-info">
+          ${ytLinkBadge}
           ${lyricsBadge}
           <div class="card-title" title="${esc(item.title)}">${esc(item.title)}</div>
           ${lyricsSnippet}
@@ -6130,6 +6143,17 @@
 
   function fmtTime(sec) { return !sec || isNaN(sec) ? '0:00' : fmtDur(Math.floor(sec)); }
 
+  function extractYouTubeId(urlOrId) {
+    if (!urlOrId || typeof urlOrId !== 'string') return null;
+    const s = urlOrId.trim();
+    if (/^[a-zA-Z0-9_-]{11}$/.test(s)) return s;
+    const m = s.match(/(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:watch\?(?:.*&)?v=|v\/|embed\/|shorts\/|live\/|e\/|user\/[^\/]+\/u\/\d+\/))([a-zA-Z0-9_-]{11})/i);
+    if (m && m[1]) return m[1];
+    const m2 = s.match(/[?&]v=([a-zA-Z0-9_-]{11})/i);
+    if (m2 && m2[1]) return m2[1];
+    return null;
+  }
+
   // Serializing a text node escapes &, < and > but leaves quotes intact, and
   // esc() output is interpolated into double-quoted attributes (title=, data-query=).
   // A title of `x" onmouseover="…` would break out and land a live handler on the
@@ -6988,6 +7012,169 @@
         setTimeout(() => {
           if (testBtn) testBtn.classList.remove('audio-test-playing');
         }, 600);
+      }
+    }
+  };
+
+  /* ================================================================
+     YOUTUBE LINK PLAYER & DOWNLOADER MANAGER
+     ================================================================ */
+  const YouTubeLinkManager = {
+    modal: null,
+    input: null,
+    preview: null,
+    resolvedSong: null,
+    debounceTimer: null,
+
+    init() {
+      this.modal = $('#ytLinkModal');
+      this.input = $('#ytLinkInput');
+      this.preview = $('#ytLinkPreview');
+      if (!this.modal) return;
+
+      $('#ytLinkBtn')?.addEventListener('click', () => this.open());
+      $('#ytLinkModalClose')?.addEventListener('click', () => this.close());
+      this.modal.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.close();
+      });
+
+      $('#ytLinkPasteBtn')?.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText && this.input) {
+              this.input.value = clipText.trim();
+              this.onInputChanged();
+            }
+          } else {
+            toast('Please paste your YouTube link into the box.');
+          }
+        } catch (e) {
+          toast('Please paste your YouTube link into the box.');
+        }
+      });
+
+      this.input?.addEventListener('input', () => this.onInputChanged());
+
+      $('#ytLinkPlayBtn')?.addEventListener('click', () => this.play());
+      $('#ytLinkDownloadBtn')?.addEventListener('click', () => this.download());
+    },
+
+    open(initialUrl = '') {
+      if (!this.modal) return;
+      this.modal.style.display = 'flex';
+      if (this.input) {
+        if (initialUrl) this.input.value = initialUrl;
+        this.input.focus();
+        if (this.input.value) this.onInputChanged();
+      }
+    },
+
+    close() {
+      if (this.modal) this.modal.style.display = 'none';
+      this.resolvedSong = null;
+    },
+
+    onInputChanged() {
+      const val = (this.input?.value || '').trim();
+      clearTimeout(this.debounceTimer);
+      if (!val) {
+        if (this.preview) this.preview.style.display = 'none';
+        this.resolvedSong = null;
+        return;
+      }
+
+      const ytId = extractYouTubeId(val);
+      if (!ytId) {
+        if (this.preview) this.preview.style.display = 'none';
+        return;
+      }
+
+      this.debounceTimer = setTimeout(() => {
+        this.resolve(val);
+      }, 350);
+    },
+
+    async resolve(urlOrId) {
+      try {
+        const res = await fetch(`/api/resolve-link?url=${encodeURIComponent(urlOrId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.song) {
+            this.resolvedSong = data.song;
+            this.showPreview(data.song);
+            return data.song;
+          }
+        }
+      } catch (e) {}
+      return null;
+    },
+
+    showPreview(song) {
+      if (!this.preview) return;
+      const thumbEl = $('#ytLinkThumb');
+      const titleEl = $('#ytLinkTitle');
+      const chanEl = $('#ytLinkChannel');
+      const durEl = $('#ytLinkDuration');
+      if (thumbEl) thumbEl.src = song.thumbnail || `https://i.ytimg.com/vi/${song.id}/hqdefault.jpg`;
+      if (titleEl) titleEl.textContent = song.title || 'YouTube Video';
+      if (chanEl) chanEl.textContent = song.channel || 'YouTube';
+      if (durEl) durEl.textContent = song.duration ? fmtDur(song.duration) : '';
+      this.preview.style.display = 'flex';
+    },
+
+    async play() {
+      const val = (this.input?.value || '').trim();
+      if (!val) {
+        toast('Please enter a YouTube link or ID');
+        return;
+      }
+
+      let song = this.resolvedSong;
+      if (!song) {
+        toast('Resolving YouTube link...');
+        song = await this.resolve(val);
+      }
+
+      if (song) {
+        this.close();
+        playSong(song);
+        toast(`▶ Playing from YouTube: ${song.title}`);
+      } else {
+        const id = extractYouTubeId(val);
+        if (id) {
+          this.close();
+          const fallbackSong = { id, title: 'YouTube Track', channel: 'YouTube', duration: 0 };
+          playSong(fallbackSong);
+        } else {
+          toast('Could not find YouTube video from link.');
+        }
+      }
+    },
+
+    async download() {
+      const val = (this.input?.value || '').trim();
+      if (!val) {
+        toast('Please enter a YouTube link or ID');
+        return;
+      }
+
+      let song = this.resolvedSong;
+      if (!song) {
+        toast('Resolving YouTube link for download...');
+        song = await this.resolve(val);
+      }
+
+      if (!song) {
+        const id = extractYouTubeId(val);
+        if (id) song = { id, title: 'YouTube Track', channel: 'YouTube', duration: 0 };
+      }
+
+      if (song) {
+        this.close();
+        DownloadOptionsManager.open(song);
+      } else {
+        toast('Could not resolve YouTube link for download.');
       }
     }
   };
