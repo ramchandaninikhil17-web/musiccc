@@ -1651,10 +1651,13 @@
   <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
   <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
   <video id="pipVideo" playsinline muted style="position:fixed; bottom:-9999px; left:-9999px; width:480px; height:270px; opacity:0; pointer-events:none;"></video>
-  <!-- Hidden IFrame for isolated file downloads -->
-  <iframe id="downloadFrame" name="downloadFrame" style="display:none; width:0; height:0; border:none; visibility:hidden;" aria-hidden="true"></iframe>
+  <!-- Hidden YouTube Player Container for Resilient Direct Playback -->
+  <div id="ytFallbackContainer" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-100;" aria-hidden="true">
+    <div id="ytFallbackPlayer"></div>
+  </div>
 
-  <script src="/js/app.js?v=3.1"></script>
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="/js/app.js?v=3.2"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

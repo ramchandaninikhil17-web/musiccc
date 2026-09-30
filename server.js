@@ -1210,6 +1210,53 @@ app.get('/api/diagnose/:videoId', async (req, res) => {
   res.json(results);
 });
 
+app.get('/api/diagnose-tier3/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  const invidiousHosts = await getInvidiousInstances();
+  const apis = invidiousHosts.map(host => `${host}/api/v1/videos/${videoId}`);
+  const log = [];
+
+  for (const apiUrl of apis) {
+    try {
+      const data = await new Promise((resolve, reject) => {
+        const r = https.get(apiUrl, { timeout: 6000, agent: httpsAgent }, (resp) => {
+          if (!resp.statusCode || resp.statusCode >= 400) {
+            resp.resume();
+            return reject(new Error(`HTTP ${resp.statusCode}`));
+          }
+          let body = '';
+          resp.setEncoding('utf8');
+          resp.on('data', c => {
+            body += c;
+            if (body.length > 4 * 1024 * 1024) { r.destroy(); reject(new Error('response too large')); }
+          });
+          resp.on('end', () => {
+            try { resolve(JSON.parse(body)); } catch (e) { reject(e); }
+          });
+          resp.on('error', reject);
+        });
+        r.on('error', reject);
+        r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
+      });
+
+      const rawStreams = [
+        ...(data.adaptiveFormats || []),
+        ...(data.formatStreams || []),
+        ...(data.audioStreams || []),
+      ];
+      log.push({
+        url: apiUrl,
+        ok: true,
+        streamCount: rawStreams.length,
+        hasAudioUrl: rawStreams.some(s => s.url)
+      });
+    } catch (e) {
+      log.push({ url: apiUrl, ok: false, error: e.message });
+    }
+  }
+  res.json({ instances: invidiousHosts, log });
+});
+
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';

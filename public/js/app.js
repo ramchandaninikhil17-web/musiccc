@@ -553,12 +553,171 @@
   const queueSidebar = $('#queueSidebar');
   const queueBadge = $('#queueBadge');
   const queueList = $('#queueList');
-  const pageContent = $('#pageContent');
+  /* ================================================================
+     YOUTUBE DIRECT FALLBACK ENGINE
+     When cloud servers (Render, VPS) encounter YouTube datacenter IP
+     blocks on /api/stream, this engine plays the track directly in the
+     client browser/mobile WebView using YouTube's official IFrame Player API.
+     ================================================================ */
+  const YouTubeDirectPlayer = {
+    player: null,
+    isReady: false,
+    isActive: false,
+    timer: null,
+    currentVideoId: null,
+
+    init() {
+      if (this.player) return;
+      if (window.YT && window.YT.Player) {
+        this.setupPlayer();
+      } else {
+        const oldReady = window.onYouTubeIframeAPIReady;
+        window.onYouTubeIframeAPIReady = () => {
+          if (typeof oldReady === 'function') oldReady();
+          this.setupPlayer();
+        };
+      }
+    },
+
+    setupPlayer() {
+      try {
+        const target = document.getElementById('ytFallbackPlayer');
+        if (!target) return;
+        this.player = new YT.Player('ytFallbackPlayer', {
+          height: '1',
+          width: '1',
+          videoId: '',
+          playerVars: {
+            autoplay: 1,
+            controls: 0,
+            disablekb: 1,
+            fs: 0,
+            playsinline: 1,
+            rel: 0,
+            modestbranding: 1
+          },
+          events: {
+            onReady: () => {
+              this.isReady = true;
+              if (this.currentVideoId && this.isActive) {
+                try {
+                  this.player.loadVideoById(this.currentVideoId);
+                  this.player.playVideo();
+                } catch (e) {}
+              }
+            },
+            onStateChange: (e) => {
+              if (!this.isActive) return;
+              if (e.data === YT.PlayerState.PLAYING) {
+                setPlayState(true);
+                this.startTimer();
+              } else if (e.data === YT.PlayerState.PAUSED) {
+                setPlayState(false);
+                this.stopTimer();
+              } else if (e.data === YT.PlayerState.ENDED) {
+                this.stopTimer();
+                onSongEnded();
+              }
+            },
+            onError: (err) => {
+              console.warn('[YT Direct Player Error]', err);
+              this.stopTimer();
+              toast(`Track unavailable on direct player, trying next...`);
+              setTimeout(() => { if (currentSong) playNext(); }, 1200);
+            }
+          }
+        });
+      } catch (err) {
+        console.warn('[YT Direct Setup Error]', err);
+      }
+    },
+
+    play(videoId) {
+      this.init();
+      this.isActive = true;
+      this.currentVideoId = videoId;
+      try {
+        audioPlayer.pause();
+        audioPlayer.removeAttribute('src');
+      } catch (e) {}
+
+      if (this.player && this.isReady) {
+        try {
+          this.player.loadVideoById(videoId);
+          this.player.playVideo();
+          setPlayState(true);
+          this.startTimer();
+        } catch (e) {
+          console.warn('[YT Direct Play Error]', e);
+        }
+      }
+    },
+
+    pause() {
+      if (this.player && this.isReady) {
+        try { this.player.pauseVideo(); } catch (e) {}
+      }
+      setPlayState(false);
+      this.stopTimer();
+    },
+
+    resume() {
+      if (this.player && this.isReady) {
+        try { this.player.playVideo(); } catch (e) {}
+        setPlayState(true);
+        this.startTimer();
+      }
+    },
+
+    seek(seconds) {
+      if (this.player && this.isReady) {
+        try { this.player.seekTo(seconds, true); } catch (e) {}
+      }
+      onTimeUpdate();
+    },
+
+    getCurrentTime() {
+      if (this.player && this.isReady && typeof this.player.getCurrentTime === 'function') {
+        try { return this.player.getCurrentTime() || 0; } catch (e) {}
+      }
+      return 0;
+    },
+
+    getDuration() {
+      if (this.player && this.isReady && typeof this.player.getDuration === 'function') {
+        try { return this.player.getDuration() || 0; } catch (e) {}
+      }
+      return 0;
+    },
+
+    setVolume(vol) {
+      if (this.player && this.isReady && typeof this.player.setVolume === 'function') {
+        try { this.player.setVolume(Math.round(vol * 100)); } catch (e) {}
+      }
+    },
+
+    startTimer() {
+      this.stopTimer();
+      this.timer = setInterval(() => {
+        if (this.isActive) {
+          onTimeUpdate();
+        }
+      }, 250);
+    },
+
+    stopTimer() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    }
+  };
 
   /* ================================================================
      INIT
      ================================================================ */
   function init() {
+    YouTubeDirectPlayer.init();
     createOrbs();
     applyTheme(currentTheme);
     if (audioPlayer) audioPlayer.volume = volume;
@@ -1779,9 +1938,14 @@
         });
       }
     } else {
-      applyCrossOrigin(null);
-      audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
-      startPlayback(song);
+      if (YouTubeDirectPlayer.isActive) {
+        YouTubeDirectPlayer.play(song.id);
+        setPlayState(true);
+      } else {
+        applyCrossOrigin(null);
+        audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
+        startPlayback(song);
+      }
     }
 
     // History
@@ -1805,6 +1969,14 @@
   }
 
   function togglePlayPause() {
+    if (YouTubeDirectPlayer.isActive) {
+      if (isPlaying) {
+        YouTubeDirectPlayer.pause();
+      } else {
+        YouTubeDirectPlayer.resume();
+      }
+      return;
+    }
     if (!audioPlayer.src || currentIndex < 0) return;
     if (audioPlayer.paused) {
       // This is a user gesture, so it is the right moment to un-suspend the
@@ -1997,11 +2169,10 @@
       return;
     }
 
-    if (audioRetryCount < 3) {
-      audioRetryCount++;
-      const fallbackQuality = audioRetryCount === 1 ? 'low' : 'high';
-      audioPlayer.src = `/api/stream/${song.id}?quality=${fallbackQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
-      startPlayback(song);
+    if (!song.isLocal && !song.isCloud) {
+      console.log('[MusicFlow] 🚀 Switching to YouTube Direct Player for', song.id);
+      toast(`▶ Direct Stream: ${(song.title || 'track').slice(0, 24)}`);
+      YouTubeDirectPlayer.play(song.id);
       return;
     }
 
@@ -2011,6 +2182,13 @@
   }
 
   function getEffectiveDuration() {
+    if (YouTubeDirectPlayer.isActive) {
+      const yd = YouTubeDirectPlayer.getDuration();
+      if (yd > 0) return yd;
+      if (currentSong && Number.isFinite(Number(currentSong.duration)) && Number(currentSong.duration) > 0) {
+        return Number(currentSong.duration);
+      }
+    }
     const ad = Number(audioPlayer.duration);
     if (Number.isFinite(ad) && ad > 0) return ad;
     if (currentSong && Number.isFinite(Number(currentSong.duration)) && Number(currentSong.duration) > 0) {
@@ -2024,7 +2202,7 @@
 
     if (pendingSeekTarget !== null) {
       if (Date.now() < pendingSeekExpiry) {
-        const cur = audioPlayer.currentTime || 0;
+        const cur = YouTubeDirectPlayer.isActive ? YouTubeDirectPlayer.getCurrentTime() : (audioPlayer.currentTime || 0);
         if (audioPlayer.seeking || Math.abs(cur - pendingSeekTarget) > 1.5) {
           return;
         }
@@ -2032,7 +2210,7 @@
       pendingSeekTarget = null;
     }
 
-    const c = audioPlayer.currentTime || 0;
+    const c = YouTubeDirectPlayer.isActive ? YouTubeDirectPlayer.getCurrentTime() : (audioPlayer.currentTime || 0);
     const d = getEffectiveDuration();
     npCurrentTime.textContent = fmtTime(c);
     if (d > 0) {
@@ -2517,6 +2695,9 @@
   function setVolume(v) {
     volume = Math.max(0, Math.min(1, v));
     audioPlayer.volume = volume;
+    if (YouTubeDirectPlayer.isActive) {
+      YouTubeDirectPlayer.setVolume(volume);
+    }
     // Nudging the volume while muted used to appear to do nothing at all:
     // updateVolumeUI() reports 0 whenever muted is set.
     if (volume > 0 && audioPlayer.muted) { audioPlayer.muted = false; setMuteIcon(false); }
@@ -2582,7 +2763,11 @@
         pendingSeekExpiry = Date.now() + 2500;
         npCurrentTime.textContent = fmtTime(targetTime);
         try {
-          audioPlayer.currentTime = targetTime;
+          if (YouTubeDirectPlayer.isActive) {
+            YouTubeDirectPlayer.seek(targetTime);
+          } else {
+            audioPlayer.currentTime = targetTime;
+          }
         } catch (err) {
           console.warn('Seek error:', err);
         }
