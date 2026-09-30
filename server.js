@@ -1173,6 +1173,26 @@ const httpsAgent = new https.Agent({
   rejectUnauthorized: true,
 });
 
+app.get('/api/diagnose/:videoId', (req, res) => {
+  const { videoId } = req.params;
+  execFile(ytDlpPath, [
+    ...BASE_YTDLP_ARGS,
+    `https://www.youtube.com/watch?v=${videoId}`,
+    '-f', 'bestaudio/best',
+    '-g'
+  ], { timeout: 15000 }, (err, stdout, stderr) => {
+    res.json({
+      error: err ? err.message : null,
+      stderr: stderr || null,
+      stdout: (stdout || '').slice(0, 200),
+      ytDlpPath,
+      nodeVersion: process.version,
+      platform: process.platform,
+      baseArgs: BASE_YTDLP_ARGS,
+    });
+  });
+});
+
 app.get('/api/stream/:videoId', async (req, res) => {
   const { videoId } = req.params;
   const quality = req.query.quality || 'high';
