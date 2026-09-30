@@ -66,20 +66,21 @@ app.use(express.static(path.join(__dirname, 'public'), { etag: false, maxAge: 0 
 // default client (currently visionos) returns the full DASH ladder from 144p
 // to 4K without any tokens and adapts automatically when yt-dlp ships a new
 // client strategy in future updates.
+// Cloud-compatible extractor arguments for high reliability on Render & datacenter IPs
 const BASE_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
   '--no-playlist',
+  '--js-runtimes', 'node',
+  '--extractor-args', 'youtube:player_client=android,web',
 ];
 
-// Video downloads use the same base args. yt-dlp's default client returns the
-// full high-res DASH ladder (up to 4K) without needing PO tokens or cookies.
-// --format-sort on the download call then picks the largest frame within the
-// requested height cap.
 const VIDEO_YTDLP_ARGS = [
   '--geo-bypass',
   '--no-check-certificates',
   '--no-playlist',
+  '--js-runtimes', 'node',
+  '--extractor-args', 'youtube:player_client=android,web',
 ];
 
 const YOUTUBE_ANDROID_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
@@ -1182,8 +1183,8 @@ app.get('/api/stream/:videoId', async (req, res) => {
   }
 
   const formatMap = {
-    low: 'worstaudio[ext=m4a]/worstaudio/worst',
-    high: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+    low: 'worstaudio/worst/18',
+    high: 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best/18',
   };
 
   // Check cached audio URL first (skip on retry to force fresh extraction)
@@ -1199,26 +1200,29 @@ app.get('/api/stream/:videoId', async (req, res) => {
     }
   }
 
-  // Tier 1: Try direct audio URL extraction via yt-dlp (with retry)
-  const maxTier1Attempts = isRetry ? 1 : 2;
-  for (let attempt = 0; attempt < maxTier1Attempts; attempt++) {
+  // Tier 1: Try direct audio URL extraction via yt-dlp across player strategies
+  const clientStrategies = [
+    ['--extractor-args', 'youtube:player_client=android,web'],
+    ['--extractor-args', 'youtube:player_client=android_music,android'],
+    []
+  ];
+
+  for (const clientArgs of clientStrategies) {
     try {
       const audioUrl = await runYtDlp([
+        ...clientArgs,
         `https://www.youtube.com/watch?v=${videoId}`,
         '-f', formatMap[quality] || formatMap.high,
         '-g', '--no-warnings',
-      ], 90000);
+      ], 15000);
 
       if (audioUrl && audioUrl.startsWith('http')) {
-        setCachedAudioUrl(videoId, quality, audioUrl);
-        return fetchAndProxyAudio(audioUrl, req, res, videoId, 0);
+        const finalUrl = audioUrl.split(/\r?\n/).filter(u => u.startsWith('http'))[0] || audioUrl;
+        setCachedAudioUrl(videoId, quality, finalUrl);
+        return fetchAndProxyAudio(finalUrl, req, res, videoId, 0);
       }
     } catch (err) {
-      console.warn(`[Stream Tier 1 Attempt ${attempt + 1} for ${videoId}]`, err.message);
-      if (attempt < maxTier1Attempts - 1) {
-        // Brief pause before retry
-        await new Promise(r => setTimeout(r, 1000));
-      }
+      console.warn(`[Stream Tier 1 for ${videoId}]`, err.message);
     }
   }
 
@@ -1359,7 +1363,7 @@ function streamViaPipeFallback(videoId, req, res) {
     streamProcess = spawn(ytDlpPath, [
       ...BASE_YTDLP_ARGS,
       `https://www.youtube.com/watch?v=${videoId}`,
-      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best',
+      '-f', 'bestaudio[ext=m4a]/bestaudio[ext=webm]/bestaudio/best/18',
       '-o', '-',
       '--no-warnings',
     ], { windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'] });
@@ -1397,10 +1401,6 @@ function streamViaPipeFallback(videoId, req, res) {
 
   streamProcess.stdout.on('error', () => {});
 
-  // NOTE the `end: false`. Letting pipe() end the response automatically meant
-  // that a failed spawn — whose stdout ends immediately with zero bytes —
-  // answered the client with an empty HTTP 200 before Tier 3 could take over.
-  // The response is now ended explicitly, and only once audio actually flowed.
   streamProcess.stdout.pipe(res, { end: false });
 
   streamProcess.stdout.on('end', () => {
@@ -1419,21 +1419,18 @@ function streamViaPipeFallback(videoId, req, res) {
       }
       handOffToTier3();
     } else if (headersSet && !res.writableEnded) {
-      // Guards the case where stdout emitted 'close' without a clean 'end'.
       res.end();
     }
   });
 
   res.on('close', () => {
-    // Only kill the child if the client bailed before we finished writing.
     if (!res.writableEnded) {
       try { streamProcess.kill('SIGTERM'); } catch (e) {}
     }
   });
 }
 
-// Tier 3: Serverless Piped / Invidious API Fallback (Works on Vercel / Cloud Functions with 0 binaries!)
-// Dynamic Invidious instance discovery with fallback to hardcoded list
+// Tier 3: Serverless Invidious API Fallback
 let cachedInvidiousInstances = null;
 let invidiousInstanceFetchedAt = 0;
 const INVIDIOUS_INSTANCE_TTL = 1000 * 60 * 60; // refresh every hour
@@ -1458,45 +1455,36 @@ async function getInvidiousInstances() {
       r.on('error', reject);
       r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
     });
-    // Filter for instances with API enabled and HTTPS
     const instances = data
-      .filter(([, info]) => info && info.api === true && info.type === 'https' && info.uri)
-      .slice(0, 8)
+      .filter(([, info]) => info && info.type === 'https' && info.uri && !info.monitor?.down)
+      .slice(0, 6)
       .map(([, info]) => info.uri);
     if (instances.length > 0) {
       cachedInvidiousInstances = instances;
       invidiousInstanceFetchedAt = Date.now();
-      console.log(`[MusicFlow] ✅ Fetched ${instances.length} Invidious instances`);
       return instances;
     }
   } catch (err) {
     console.warn('[MusicFlow] ⚠️ Could not fetch Invidious instances:', err.message);
   }
-  // Fallback hardcoded list
   return [
-    'https://vid.puffyan.us',
-    'https://invidious.snopyta.org',
-    'https://yewtu.be',
+    'https://invidious.f5.si',
+    'https://invidious.nerdvpn.de',
     'https://inv.nadeko.net',
+    'https://yt.chocolatemoo53.com',
   ];
 }
 
 async function streamViaServerlessApi(videoId, req, res) {
   if (res.headersSent || res.writableEnded) return;
 
-  // Build API list from dynamic Invidious instances + Piped
   const invidiousHosts = await getInvidiousInstances();
-  const apis = [
-    ...invidiousHosts.map(host => `${host}/api/v1/videos/${videoId}`),
-    `https://pipedapi.kavin.rocks/streams/${videoId}`,
-    `https://api.piped.video/streams/${videoId}`,
-    `https://pipedapi.adminforge.de/streams/${videoId}`,
-  ];
+  const apis = invidiousHosts.map(host => `${host}/api/v1/videos/${videoId}`);
 
   for (const apiUrl of apis) {
     try {
       const data = await new Promise((resolve, reject) => {
-        const r = https.get(apiUrl, { timeout: 8000, agent: httpsAgent }, (resp) => {
+        const r = https.get(apiUrl, { timeout: 6000, agent: httpsAgent }, (resp) => {
           if (!resp.statusCode || resp.statusCode >= 400) {
             resp.resume();
             return reject(new Error(`HTTP ${resp.statusCode}`));
@@ -1505,7 +1493,6 @@ async function streamViaServerlessApi(videoId, req, res) {
           resp.setEncoding('utf8');
           resp.on('data', c => {
             body += c;
-            // Guard against an endpoint streaming an unbounded body at us.
             if (body.length > 4 * 1024 * 1024) {
               r.destroy();
               reject(new Error('response too large'));
@@ -1520,14 +1507,19 @@ async function streamViaServerlessApi(videoId, req, res) {
         r.on('timeout', () => { r.destroy(); reject(new Error('timeout')); });
       });
 
-      const audioStreams = data.audioStreams || data.adaptiveFormats;
-      if (Array.isArray(audioStreams) && audioStreams.length > 0) {
-        const bestStream = audioStreams.find(s => s.mimeType && s.mimeType.includes('audio/mp4')) || audioStreams[0];
+      const rawStreams = [
+        ...(data.adaptiveFormats || []),
+        ...(data.formatStreams || []),
+        ...(data.audioStreams || []),
+      ];
+      const audioStreams = rawStreams.filter(s => {
+        const mime = s.mimeType || s.type || '';
+        return mime.includes('audio') || s.container === 'm4a' || s.container === 'webm' || s.itag === 140 || s.itag === 18;
+      });
+      if (audioStreams.length > 0) {
+        const bestStream = audioStreams.find(s => (s.mimeType || s.type || '').includes('audio/mp4') || s.container === 'm4a') || audioStreams[0];
         if (bestStream && bestStream.url && /^https?:\/\//i.test(bestStream.url)) {
           if (res.headersSent || res.writableEnded) return;
-          // Proxy rather than 302. A redirect pushed the client off-origin,
-          // which broke range requests and caused the Web Audio equalizer to
-          // output silence (cross-origin media taints the graph).
           return fetchAndProxyAudio(bestStream.url, req, res, videoId, 0, true);
         }
       }
