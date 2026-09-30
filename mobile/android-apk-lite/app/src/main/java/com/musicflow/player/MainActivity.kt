@@ -47,7 +47,7 @@ import androidx.core.view.WindowInsetsControllerCompat
 class MainActivity : AppCompatActivity() {
 
     companion object {
-        const val DEFAULT_URL = "https://musicwalahnar.com"
+        const val DEFAULT_URL = "https://musiccc-59kv.onrender.com"
         private const val PREFS_NAME = "musicflow_prefs"
         private const val KEY_SERVER_URL = "server_url"
         private const val PERMISSION_REQUEST_NOTIFICATION = 1001
