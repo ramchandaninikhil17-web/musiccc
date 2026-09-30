@@ -11,14 +11,16 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Copy package manifests and install dependencies
-COPY package*.json ./
-RUN npm ci --omit=dev || npm install --omit=dev
+# Copy package manifests and prepare-binaries script
+COPY package*.json prepare-binaries.js ./
+
+# Install production dependencies (skipping scripts here since we run prepare-binaries explicitly next)
+RUN npm ci --omit=dev --ignore-scripts || npm install --omit=dev --ignore-scripts
 
 # Copy application source code
 COPY . .
 
-# Run pre-build binary preparation (downloads Linux yt-dlp & sets chmod)
+# Run pre-build binary preparation (downloads Linux yt-dlp & sets executable permissions)
 RUN node prepare-binaries.js
 
 # Ensure data directory exists
