@@ -1,67 +1,72 @@
-# MusicFlow — Standalone Android Mobile App (Media3 + ExoPlayer)
+# MusicFlow Native — Spotify-Grade Android Music Player
 
-Production-grade, 100% standalone native Android app for **MusicFlow**. It replicates every feature of the website, runs natively on the phone with **zero connection to any PC** (no localhost, no LAN IP, no adb reverse), features zero lag with Media3 disk caching, and presents a modern Spotify-style dark UI.
-
----
-
-## ⚡ Standalone Architecture Highlights
-
-- **100% On-Device Standalone**: Direct YouTube search extraction + multi-instance Invidious fallback; zero external PC server required.
-- **AndroidX Media3 (ExoPlayer)**: Native audio playback engine with hardware audio decoding, audio focus, gapless transitions, and sleep timer.
-- **300 MB Disk Cache (`SimpleCache`)**: Automatically caches streamed tracks to device flash memory. Songs replay with 0ms network latency and work in Airplane Mode.
-- **MediaSessionService**: Official Android foreground service (`FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK`) with lock-screen scrubber, Android 13/14+ notification controls, and Bluetooth headphone buttons.
-- **Full LRCLIB Synced Lyrics**: Line-by-line synchronized lyrics scroll and click-to-seek.
-- **Spotify Mobile UI**: Bottom navigation (Home, Search, Library, Moods), sticky mini-player, full-screen player with swipe-to-dismiss and dynamic dominant-color gradient background (Android Palette).
-- **Native Downloads**: Directly saves MP3 files to `Music/MusicFlow/` via Android `DownloadManager`.
-- **Local Media**: Native Android Storage Access Framework (SAF) file picker for device MP3, FLAC, WAV, and M4A files.
+MusicFlow Native is a 100% standalone, zero-lag, modern Android music streaming and offline playback application built with **Jetpack Compose Material 3**, **AndroidX Media3 (ExoPlayer)**, **Room Database**, **DataStore**, and on-device YouTube streaming extractors.
 
 ---
 
-## 📦 How to Build the Release APK
+## Architecture Overview
 
-### Prerequisite
-- JDK 17 or JDK 21 (installed on your PC at `C:\Program Files\Java\jdk-21.0.12.1`)
-- Android SDK (API 34)
-
-### One-Click Build Command:
-```bat
-cd mobile\android-apk-lite
-build.bat release
-```
-Outputs signed release APK to:
-- `mobile\android-apk-lite\apk-output\MusicFlow-release.apk`
-- `MusicFlow.apk` (in the workspace root)
+- **UI Framework:** Jetpack Compose Material 3 with 120fps GPU-accelerated rendering and dynamic accent palette theming (Indigo, Cyan, Emerald, Orange, Pink, Purple).
+- **Audio Engine:** AndroidX Media3 (`MediaSessionService` + `ExoPlayer`), providing background playback, lock-screen notification controls, gapless playback, 0–10s dual-buffer crossfade, and 500MB `SimpleCache` disk caching.
+- **DSP & Effects:** Native Android `AudioEffect` (`Equalizer` and `BassBoost`) with 7 presets (*Flat*, *Bass Boost*, *Vocal*, *Rock*, *Pop*, *EDM*, *Acoustic*).
+- **On-Device Data Extraction:** Modular YouTube InnerTube + Piped extractor with fallback redundancy and in-app source health monitoring.
+- **Synced Lyrics:** LRCLIB integration with auto-scrolling synced LRC lyrics and tap-to-seek timestamp navigation.
+- **Offline Downloads:** Android `WorkManager` resumable background downloader supporting multi-format audio (MP3 128k/192k/320k) and video (MP4 360p–1080p).
+- **Local Persistence:** Room Database (`MusicFlowDatabase`) for playlists, favorites, listening event diary, and search history.
+- **Preferences:** Jetpack DataStore Preferences for audio quality, theme, accent color, crossfade, and resume tracking.
+- **Voice Assistant:** Native Android `SpeechRecognizer` recognizing wake phrase *"Hey My Ruby"* and hands-free voice commands.
 
 ---
 
-## 📲 How to Install onto Phone
+## Build Instructions
 
-### Option 1: Via USB using ADB
-1. Connect phone with USB and enable USB Debugging.
-2. Run `install-apk.bat` in the project root:
-   ```bat
-   install-apk.bat
-   ```
-   Or:
+### Prerequisites
+- **JDK:** Java 21 LTS (`jdk-21.0.12.1` or newer)
+- **Android SDK:** Compile SDK 35, Min SDK 26, Target SDK 35
+
+### Commands
+
+From the workspace root or inside `mobile/android-apk-lite`:
+
+1. **Run Unit Tests:**
    ```bash
-   adb install -r MusicFlow.apk
+   ./gradlew test
    ```
 
-### Option 2: Direct Phone Install (No PC after transfer)
-1. Send `MusicFlow.apk` to your phone via WhatsApp, Telegram, Google Drive, or USB file transfer.
-2. Tap the APK on your phone and tap **Install**.
-3. Open **MusicFlow** from your app drawer. It immediately streams on mobile data or Wi-Fi!
+2. **Build Debug APK:**
+   ```bash
+   ./gradlew assembleDebug
+   ```
+
+3. **Build Signed Release APK:**
+   ```bash
+   ./gradlew assembleRelease
+   ```
+   Output APK: `app/release/MusicFlow.apk`
+
+4. **Build Release Android App Bundle (AAB):**
+   ```bash
+   ./gradlew bundleRelease
+   ```
+   Output AAB: `app/release/MusicFlow.aab`
 
 ---
 
-## 🧪 Real-Device Test Checklist
+## Signing Configuration
 
-- [x] **Install on device**: Clean install with no permission crashes; requests notification permissions on Android 13+.
-- [x] **Zero PC dependency**: Turn off PC or disconnect USB; app searches, plays, syncs lyrics, and downloads completely independently.
-- [x] **Background Playback (30+ min)**: Lock phone / turn screen off; Media3 foreground service continues playing with zero stutter.
-- [x] **Notification & Lock Screen**: Android media notification shows artwork, title, channel, seekbar, play/pause, next, and previous buttons.
-- [x] **Bluetooth / Headset**: Unplugging headphones automatically pauses audio; headset button resumes/skips.
-- [x] **Airplane Mode / Offline**: Songs previously played or downloaded continue to play from ExoPlayer's disk cache.
-- [x] **Rotation & Activity Restore**: Rotating screen or multitasking preserves player state and playback position.
-- [x] **Synced Lyrics**: Lyrics panel displays scrolling LRC lines synchronized to the audio position.
-- [x] **Equalizer & Sleep Timer**: 10-band presets (Bass Boost, Vocal, etc.) and sleep timer smoothly fade out and stop playback.
+The release build is signed with the project keystore:
+- **Keystore File:** `mobile/android-apk-lite/release-key.jks`
+- **Configuration File:** `mobile/android-apk-lite/keystore.properties`
+- **Keystore Password:** `musicflow123`
+- **Key Alias:** `musicflow`
+- **Key Password:** `musicflow123`
+
+---
+
+## Installation via ADB
+
+Connect an Android device with USB debugging enabled, then run:
+
+```bash
+adb install -r app/release/MusicFlow.apk
+```
