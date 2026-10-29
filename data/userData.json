@@ -1,7 +1,56 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-10-21T12:37:32.984Z",
+  "lastSaved": "2026-10-29T10:34:38.168Z",
   "history": [
+    {
+      "song": {
+        "id": "aT4N7jn2Eww",
+        "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
+        "channel": "Saregama Music and Reble",
+        "duration": 148,
+        "thumbnail": "https://i.ytimg.com/vi/aT4N7jn2Eww/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD8pjY4nfm4K8szbIVnsxELHTq3PQ",
+        "views": 77570553
+      },
+      "playedAt": "2026-10-29T10:34:37.650Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "iSo9l950QLo",
+        "title": "Shiddat Title Track (Full Video) |Sunny Kaushal,Radhika Madan, Mohit Raina, Diana P | Manan Bhardwaj",
+        "channel": "T-Series",
+        "duration": 244,
+        "thumbnail": "https://i.ytimg.com/vi/iSo9l950QLo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbAa4UgL9bRjWnTGi76kuTTCfOEA",
+        "views": 182713922
+      },
+      "playedAt": "2026-10-29T10:33:44.859Z",
+      "listenedSec": 40,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "oMesPehN_Do",
+        "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+        "channel": "T-Series",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC0tzB3EXxBkep8aJ283HA__OOFUQ",
+        "views": 91342681
+      },
+      "playedAt": "2026-10-29T10:33:13.950Z",
+      "listenedSec": 9
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-29T10:33:09.497Z",
+      "listenedSec": 4
+    },
     {
       "song": {
         "id": "YyepU5ztLf4",
@@ -12,7 +61,8 @@
         "views": 849061513
       },
       "playedAt": "2026-10-21T12:37:32.464Z",
-      "listenedSec": 0
+      "listenedSec": 174,
+      "counted": true
     },
     {
       "song": {
@@ -3139,58 +3189,6 @@
       "playedAt": "2026-09-05T13:18:05.145Z",
       "listenedSec": 185,
       "counted": true
-    },
-    {
-      "song": {
-        "id": "Jw4wLVnFJ-E",
-        "title": "Khwaab Ho Tum Ya Koi | Teen Deviyan | Dev Anand | Romantic Old Hindi Songs | Kishore Kumar",
-        "channel": "Shemaroo Filmi Gaane",
-        "duration": 369,
-        "thumbnail": "https://i.ytimg.com/vi/Jw4wLVnFJ-E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC5Y0oSMPQp82ird-islYwabx4qeQ",
-        "views": 45067441
-      },
-      "playedAt": "2026-09-05T13:17:31.480Z",
-      "listenedSec": 33,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "7dO_MS9tZ5E",
-        "title": "Dekha Ek Khwab Song | Silsila | Amitabh Bachchan, Rekha | Kishore Kumar, Lata Mangeshkar, Shiv-Hari",
-        "channel": "YRF",
-        "duration": 267,
-        "thumbnail": "https://i.ytimg.com/vi/7dO_MS9tZ5E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCYir8ei-49OFL-HcCGEiBal0m-OQ",
-        "views": 385466128
-      },
-      "playedAt": "2026-09-05T13:14:32.760Z",
-      "listenedSec": 178,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "O9xX4hM5NAo",
-        "title": "Old Hindi Songs Mashup | Bollywood Retro Medley | Siddharth Slathia",
-        "channel": "Siddharth Slathia",
-        "duration": 498,
-        "thumbnail": "https://i.ytimg.com/vi/O9xX4hM5NAo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBWk0H8Q33nd41s6yA4LcLOnzClLw",
-        "views": 15041154
-      },
-      "playedAt": "2026-09-05T13:02:56.775Z",
-      "listenedSec": 496,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "2bwGVDl9sTA",
-        "title": "Itna Na Mujhse Tu Pyaar Badha ❤️ | Timeless Retro Love Song | Soulful Cover",
-        "channel": "Purani Yaadein Music",
-        "duration": 275,
-        "thumbnail": "https://i.ytimg.com/vi/2bwGVDl9sTA/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLCWdYllVhBr3TBxg3x4ET9EBGvpzA",
-        "views": 3030735
-      },
-      "playedAt": "2026-09-05T13:00:17.304Z",
-      "listenedSec": 159,
-      "counted": true
     }
   ],
   "searchHistory": [],
@@ -3750,108 +3748,36 @@
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "k85UB5b6pJU",
-      "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-      "channel": "Karan Aujla",
-      "duration": 211,
-      "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
-      "views": 194107294
+      "id": "LedDxbUCBVE",
+      "title": "Mixtape 2024 | T-Series Mixtape songs | Armaan Malik, Neha kakkar, Jubin, Shirley Setia...",
+      "channel": "MusicBench",
+      "duration": 1436,
+      "thumbnail": "https://i.ytimg.com/vi/LedDxbUCBVE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBcoTzAP&rs=AOn4CLCQSGwMvhaLrqFnGnNIbsyczV_06A",
+      "views": 4512652
     },
     {
-      "id": "oMesPehN_Do",
-      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
-      "channel": "T-Series",
-      "duration": 268,
-      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC0tzB3EXxBkep8aJ283HA__OOFUQ",
-      "views": 91342681
+      "id": "aT4N7jn2Eww",
+      "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
+      "channel": "Saregama Music and Reble",
+      "duration": 148,
+      "thumbnail": "https://i.ytimg.com/vi/aT4N7jn2Eww/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD8pjY4nfm4K8szbIVnsxELHTq3PQ",
+      "views": 77570553
     },
     {
-      "id": "K9R7KcaettM",
-      "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 194,
-      "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-      "views": 105475600
+      "id": "7KXVzkxM0-g",
+      "title": "Bheegi Bheegi Raaton Mein | The Paradise | Nani | Raghav Juyal | Lata Mangeshkar, Kishore Kumar",
+      "channel": "Saregama Music",
+      "duration": 58,
+      "thumbnail": "https://i.ytimg.com/vi/7KXVzkxM0-g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDCTfkuSHM2Q287UjYW0WM5siLxRA",
+      "views": 1801
     },
     {
-      "id": "1r69kzqaGSc",
-      "title": "AUJLA SZN 1 | KARAN AUJLA (FULL EP)",
-      "channel": "Badfella music 🎵 ",
-      "duration": 1059,
-      "thumbnail": "https://i.ytimg.com/vi/1r69kzqaGSc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjI3MeaSHIBy9WKOFWw6qQZvaJbg",
-      "views": 577341
-    },
-    {
-      "id": "cWMxCE2HTag",
-      "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-      "channel": "Karan Aujla",
-      "duration": 171,
-      "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-      "views": 506577977
-    },
-    {
-      "id": "rfV8gjIDrHQ",
-      "title": "🔥 Karan Aujla – Best Songs Playlist 2026 | All Time Biggest Hits | Punjabi Hits #karanaujla ",
-      "channel": "Only_Music_Official",
-      "duration": 1642,
-      "thumbnail": "https://i.ytimg.com/vi/rfV8gjIDrHQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAhO0E16hfekuiCcjD_Ttvbe5aB0g",
-      "views": 461
-    },
-    {
-      "id": "zbj5-l8h72M",
-      "title": "Trending karan aujla songs | non stop karan aujla songs | RockMusicnb🤟 |",
-      "channel": "RockMusicnb🤟",
-      "duration": 1150,
-      "thumbnail": "https://i.ytimg.com/vi/zbj5-l8h72M/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhyIEwoMDAP&rs=AOn4CLBRbMf38Q7cP8PGe_X5cdN_qq5G-A",
-      "views": 1242613
-    },
-    {
-      "id": "5GCfYLguTIs",
-      "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 162,
-      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-      "views": 323476228
-    },
-    {
-      "id": "hoHo8h2JOgY",
-      "title": "@ARRahman - Hosanna Best Video | Ekk Deewana Tha | Amy Jackson | Prateik Babbar | Leon | Suzanne",
-      "channel": "Sony Music India",
-      "duration": 317,
-      "thumbnail": "https://i.ytimg.com/vi/hoHo8h2JOgY/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLAbpsrKP8yj3O3zsN-ACkX5ydnRRg",
-      "views": 69293423
-    },
-    {
-      "id": "3j7bhOvW6jw",
-      "title": "LOW FADE (Music Video) KARAN AUJLA",
-      "channel": "Karan Aujla",
-      "duration": 179,
-      "thumbnail": "https://i.ytimg.com/vi/3j7bhOvW6jw/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhXIGUoZTAP&rs=AOn4CLDuYbNaDIL2aL1Mn_bItLvHKzQuBw",
-      "views": 72493245
-    },
-    {
-      "id": "-YlmnPh-6rE",
-      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-      "channel": "Rehaan Records",
-      "duration": 189,
-      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-      "views": 386278381
-    },
-    {
-      "id": "W0--lTnDEgQ",
-      "title": "Karan Aujla 2025 Top All Songs  New Punjabi Songs   Karan Aujla Jukebox",
-      "channel": "The Singh Vlog (Balli Singh)",
-      "duration": 1741,
-      "thumbnail": "https://i.ytimg.com/vi/W0--lTnDEgQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhGIFIoZTAP&rs=AOn4CLBhe7EPQXOq6R4LtJxILCjhtIHrMQ",
-      "views": 3474451
-    },
-    {
-      "id": "H4IRWXePhnU",
-      "title": "Karan aujla new song ||Karan  aujla  all song ||karan aujla punjabi song #karanaujla ",
-      "channel": "punjabi boys",
-      "duration": 1580,
-      "thumbnail": "https://i.ytimg.com/vi/H4IRWXePhnU/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCo5g9KwNc-bIokZWVuOlnCYAzZPw",
-      "views": 2264525
+      "id": "TFTnJzWRTJ8",
+      "title": "Naal Nachna | Dhurandhar | Ranveer Singh, Sara Arjun, Shashwat Sachdev, Afsana Khan, Reble, Irshad",
+      "channel": "Saregama Music and 2 more",
+      "duration": 126,
+      "thumbnail": "https://i.ytimg.com/vi/TFTnJzWRTJ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDbQ7__wkzoG5VtOU3jwVN3pP-wtQ",
+      "views": 102073884
     },
     {
       "id": "vJQMhj6WYZA",
@@ -3859,39 +3785,47 @@
       "channel": "T-Series",
       "duration": 242,
       "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
-      "views": 210509908
+      "views": 210986167
     },
     {
-      "id": "qe4agjXLbtM",
-      "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
-      "channel": "Rytham Riyasat",
-      "duration": 1275,
-      "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLAsKPFoa1l30Uj7VZwTs3hqmQyAxQ",
-      "views": 4459085
-    },
-    {
-      "id": "7mTDBsdfw88",
-      "title": "\"Safarnama\" Video Song | Tamasha | Ranbir Kapoor, Deepika Padukone | T-Series",
+      "id": "nJZcbidTutE",
+      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
       "channel": "T-Series",
-      "duration": 142,
-      "thumbnail": "https://i.ytimg.com/vi/7mTDBsdfw88/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDRxfz7sEuuOoH0c6kg64-sdo4K7w",
-      "views": 29757299
+      "duration": 248,
+      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
+      "views": 393495057
     },
     {
-      "id": "7eKJFnvYfOE",
-      "title": "Chann | Udta Teer | Ayushmann Khurrana, Sara Ali Khan | Sachin-Jigar, Arijit Singh, Amitabh B.",
-      "channel": "Sony Music India and 4 more",
-      "duration": 190,
-      "thumbnail": "https://i.ytimg.com/vi/7eKJFnvYfOE/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLCe0EqdqLXYPw8eCilipGafLCbmWQ",
-      "views": 4084324
+      "id": "oMesPehN_Do",
+      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+      "channel": "T-Series",
+      "duration": 268,
+      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP2fr86VttexE6AnKdeYVbit0-3w",
+      "views": 92293494
     },
     {
-      "id": "J9FfYvKTOn0",
-      "title": "Songs 🩷🎵  to vibe at ✨️🙌#karanaujla#drivesongs # nightsongs ",
-      "channel": "𝑻𝒉𝒆 𝑬𝒅𝒊𝒕 𝑯𝒖𝒃\n",
-      "duration": 918,
-      "thumbnail": "https://i.ytimg.com/vi/J9FfYvKTOn0/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDITkO-DxFir6hF888Gj5cLj_PIUA",
-      "views": 3969396
+      "id": "n2dVFdqMYGA",
+      "title": "Sahiba (Official Music Video) : Aditya Rikhari, Ankita Chhetri | T-Series",
+      "channel": "T-Series",
+      "duration": 184,
+      "thumbnail": "https://i.ytimg.com/vi/n2dVFdqMYGA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjHSYXox1RX8Z-IgSuu9Pdqe_ljQ",
+      "views": 401617978
+    },
+    {
+      "id": "dR9B_gPxjkk",
+      "title": "Kiliye Kiliye - Video Song | Lokah Chapter 1: Chandra | Kalyani Priyadarshan | Naslen | Dominic Arun",
+      "channel": "Saregama Malayalam",
+      "duration": 125,
+      "thumbnail": "https://i.ytimg.com/vi/dR9B_gPxjkk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAwl9b3hQJqOyRNAUj1fD-e9AnAXQ",
+      "views": 79131907
+    },
+    {
+      "id": "iSo9l950QLo",
+      "title": "Shiddat Title Track (Full Video) |Sunny Kaushal,Radhika Madan, Mohit Raina, Diana P | Manan Bhardwaj",
+      "channel": "T-Series",
+      "duration": 244,
+      "thumbnail": "https://i.ytimg.com/vi/iSo9l950QLo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbAa4UgL9bRjWnTGi76kuTTCfOEA",
+      "views": 182713922
     }
   ],
   "likes": [
@@ -4160,7 +4094,8 @@
     "ZBiaUvvFAFk": 4,
     "Lf4vdiKLhNE": 1,
     "p5EeJ9bHAOI": 2,
-    "f-9IaGAlgEA": 2
+    "f-9IaGAlgEA": 2,
+    "iSo9l950QLo": 1
   },
   "eqState": {
     "gains": [
@@ -4263,5 +4198,38 @@
     }
   ],
   "audioOutputDeviceId": "communications",
-  "audioOutputDeviceLabel": "🎧 Communications - Headphones (M-101) (Bluetooth)"
+  "audioOutputDeviceLabel": "🎧 Communications - Headphones (M-101) (Bluetooth)",
+  "daily_listening_diary": {
+    "2026-10-29": {
+      "date": "2026-10-29",
+      "minutes": 0,
+      "tracks": [
+        {
+          "id": "aT4N7jn2Eww",
+          "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
+          "channel": "Saregama Music and Reble",
+          "playedAt": "04:04 pm"
+        },
+        {
+          "id": "iSo9l950QLo",
+          "title": "Shiddat Title Track (Full Video) |Sunny Kaushal,Radhika Madan, Mohit Raina, Diana P | Manan Bhardwaj",
+          "channel": "T-Series",
+          "playedAt": "04:03 pm"
+        },
+        {
+          "id": "oMesPehN_Do",
+          "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+          "channel": "T-Series",
+          "playedAt": "04:03 pm"
+        },
+        {
+          "id": "YyepU5ztLf4",
+          "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+          "channel": "Saregama Music",
+          "playedAt": "04:02 pm"
+        }
+      ]
+    }
+  },
+  "autoFixSearch": true
 }

@@ -6,3 +6,4 @@ cd "$DIR/mobile/android-apk-lite"
 EXIT_CODE=$?
 cd "$DIR"
 exit $EXIT_CODE
+

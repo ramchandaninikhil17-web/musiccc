@@ -5,3 +5,4 @@ call gradlew.bat %*
 set EXIT_CODE=%ERRORLEVEL%
 cd "%~dp0"
 exit /b %EXIT_CODE%
+

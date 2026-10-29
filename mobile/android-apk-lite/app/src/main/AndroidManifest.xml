@@ -2,7 +2,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Network access for streaming & search -->
+    <!-- Network access for streaming from musicwalahnar.com -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
@@ -14,13 +14,14 @@
     <!-- Notification controls (Android 13+) -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
-    <!-- Media & Storage permissions (Scoped storage on Android 13/14/15) -->
-    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
+    <!-- Download handling: scoped storage on Android 10+, legacy on older -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28"
+        tools:ignore="ScopedStorage" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
         android:maxSdkVersion="32" />
-
-    <!-- Voice commands ("Hey My Ruby") -->
-    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+    <!-- Android 13+ media permissions -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <application
         android:name=".MusicFlowApp"
@@ -34,7 +35,7 @@
         android:hardwareAccelerated="true"
         android:theme="@style/Theme.MusicFlow"
         android:largeHeap="false"
-        tools:targetApi="35">
+        tools:targetApi="34">
 
         <activity
             android:name=".MainActivity"
@@ -42,41 +43,25 @@
             android:launchMode="singleTask"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|uiMode|layoutDirection|smallestScreenSize"
             android:windowSoftInputMode="adjustResize"
-            android:theme="@style/Theme.MusicFlow">
+            android:theme="@style/Theme.MusicFlow.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
-            <!-- Deep link to YouTube and YouTube Music URLs -->
-            <intent-filter>
+            <!-- Deep link to MusicFlow website -->
+            <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="https" android:host="youtu.be" />
-                <data android:scheme="https" android:host="www.youtube.com" android:pathPrefix="/watch" />
-                <data android:scheme="https" android:host="music.youtube.com" android:pathPrefix="/watch" />
-            </intent-filter>
-
-            <!-- Custom URI scheme -->
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="musicflow" />
+                <data android:scheme="https" android:host="musicwalahnar.com" />
             </intent-filter>
         </activity>
 
         <service
-            android:name=".playback.PlaybackService"
+            android:name=".PlaybackService"
             android:enabled="true"
-            android:exported="true"
-            android:foregroundServiceType="mediaPlayback">
-            <intent-filter>
-                <action android:name="androidx.media3.session.MediaSessionService" />
-                <action android:name="android.media.browse.MediaBrowserService" />
-            </intent-filter>
-        </service>
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
 
         <!-- File provider for downloads -->
         <provider

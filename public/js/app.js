@@ -2091,6 +2091,11 @@
     if ('mediaSession' in navigator) {
       navigator.mediaSession.playbackState = playing ? 'playing' : 'paused';
     }
+    if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.updatePlaybackState === 'function') {
+      try {
+        window.MusicFlowAndroid.updatePlaybackState(playing);
+      } catch (e) {}
+    }
   }
 
   /* ----------------------------------------------------------------
@@ -6436,6 +6441,18 @@
         { src: thumb(song), sizes: '512x512', type: 'image/jpeg' }
       ]
     });
+    if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.updateMetadata === 'function') {
+      try {
+        var durMs = Math.round(Number(song.duration || 0) * 1000);
+        window.MusicFlowAndroid.updateMetadata(
+          song.title || '',
+          song.channel || song.artist || '',
+          'MusicFlow',
+          thumb(song),
+          durMs
+        );
+      } catch (e) {}
+    }
   }
 
   /* ================================================================
@@ -9491,7 +9508,7 @@
           if (e.target.closest('#playPauseBtn') || e.target.closest('#nextBtn') || e.target.closest('#prevBtn') || e.target.closest('#npMoreBtn')) {
             return;
           }
-          if (window.innerWidth <= 768 && currentSong) {
+          if ((window.innerWidth <= 768 || window.MusicFlowAndroid) && currentSong) {
             this.openFullscreen();
           }
         });
