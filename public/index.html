@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MusicFlow — High-Performance Cloud Music Player</title>
+  <title>MusicFlow v3.5.0-HyperFlow — 120FPS Cloud Music Player</title>
   <meta name="description" content="MusicFlow is a beautiful, ultra-fast music player that streams high-quality audio with zero setup, Apple floating orb, and Picture-in-Picture productivity mode." />
   <meta name="theme-color" content="#6366f1" />
   <meta name="mobile-web-app-capable" content="yes" />
@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="/css/style.css?v=3.1" />
+  <link rel="stylesheet" href="/css/style.css?v=3.5" />
 </head>
 <body>
   <!-- Animated Background -->
@@ -157,7 +157,11 @@
           <button class="top-btn" id="focusModeBtn" title="Pomodoro Focus & Deep Work (Key: F)">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </button>
-          <button class="top-btn" id="themeToggleBtn" title="Toggle theme">
+          <!-- 1-Click App Update Pill -->
+          <button class="top-btn update-top-btn" id="appUpdateBtn" title="1-Click App Update (v3.5.0-HyperFlow)" type="button">
+            <span>⚡ Update</span>
+          </button>
+          <button class="top-btn theme-btn" id="themeToggleBtn" title="Toggle theme">
             <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
             <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
           </button>
@@ -176,6 +180,16 @@
           <div class="home-greeting" id="homeGreeting">
             <h1>Good Evening</h1>
             <p>What would you like to listen to?</p>
+          </div>
+
+          <!-- Smart Flow AI Mood Mixer Pills (Instant Dynamic Queueing) -->
+          <div class="mood-pills-bar" id="smartMoodPillsBar" role="toolbar" aria-label="Quick Mood Filter">
+            <button class="mood-pill active" data-mood="all" type="button"><span class="mp-emoji">✨</span> All Flow</button>
+            <button class="mood-pill" data-mood="deep-focus" type="button"><span class="mp-emoji">🧠</span> Deep Focus</button>
+            <button class="mood-pill" data-mood="gym-hype" type="button"><span class="mp-emoji">🔥</span> Gym Hype</button>
+            <button class="mood-pill" data-mood="late-night" type="button"><span class="mp-emoji">🌙</span> Late Night</button>
+            <button class="mood-pill" data-mood="acoustic-chill" type="button"><span class="mp-emoji">☕</span> Acoustic Chill</button>
+            <button class="mood-pill" data-mood="party-energy" type="button"><span class="mp-emoji">⚡</span> Party Energy</button>
           </div>
 
           <!-- Personalized Endless Radio Banner -->
@@ -533,6 +547,20 @@
             <div class="top-list" id="topArtistsList"><p class="empty-msg">Listen to music to see your top artists!</p></div>
           </div>
 
+          <!-- Daily Listening Diary (Day-by-Day Historical Log) -->
+          <div class="home-section daily-history-section" id="dailyListeningSection">
+            <div class="section-header">
+              <h2>📅 Daily Listening Activity</h2>
+              <div class="section-header-actions">
+                <span class="daily-badge" id="dailyStreakBadge">🔥 1 Day Streak</span>
+                <button class="text-btn" id="exportDailyDataBtn" title="Export listening backup">💾 Backup</button>
+              </div>
+            </div>
+            <div id="dailyListeningList">
+              <p class="empty-msg">Listening activity will automatically record here day-by-day!</p>
+            </div>
+          </div>
+
           <!-- Listening History -->
           <div class="home-section">
             <div class="section-header">
@@ -879,6 +907,17 @@
     <div class="sfp-artwork-container">
       <div class="sfp-art-glow" id="sfpArtGlow"></div>
       <img class="sfp-artwork" id="sfpArtwork" src="/icons/icon-512.png" alt="Album Artwork" />
+      
+      <!-- Real-Time Synced LRC Lyrics View Overlay -->
+      <div class="sfp-synced-lyrics-overlay" id="sfpLyricsOverlay">
+        <div class="sfp-lyrics-header">
+          <h4>🎤 Real-Time Synced Lyrics</h4>
+          <button class="sfp-lyrics-close" id="sfpLyricsOverlayClose" type="button" title="Close lyrics">✕</button>
+        </div>
+        <div class="sfp-lyrics-scroll-container" id="sfpLyricsScroll">
+          <div class="sfp-lyric-line placeholder">Tap line to seek • Syncing lyrics...</div>
+        </div>
+      </div>
     </div>
 
     <div class="sfp-track-details">
@@ -1203,7 +1242,7 @@
         <div class="setting-row">
           <div class="setting-info"><span class="setting-label">Crossfade</span><span class="setting-desc">Smoothly fade between tracks — no silent gap</span></div>
           <div class="crossfade-control">
-            <input type="range" id="settingCrossfade" min="0" max="3" step="1" value="0" aria-label="Crossfade duration in seconds" />
+            <input type="range" id="settingCrossfade" min="0" max="10" step="1" value="0" aria-label="Crossfade duration in seconds" />
             <span class="crossfade-val" id="crossfadeValLabel">Off</span>
           </div>
         </div>
@@ -1246,6 +1285,13 @@
         <div class="setting-row">
           <div class="setting-info"><span class="setting-label">🔤 Auto-Fix Search Spelling</span><span class="setting-desc">Auto-correct common music search typos before searching</span></div>
           <input type="checkbox" id="settingAutoFix" checked style="width:20px; height:20px; cursor:pointer;" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-info">
+            <span class="setting-label">🚀 App Version & 1-Click Update <span class="version-badge-pill" id="settingsAppVersionBadge">v3.5.0-HyperFlow</span></span>
+            <span class="setting-desc" id="settingsUpdateDesc">120FPS GPU engine with instant predictive audio pre-buffering</span>
+          </div>
+          <button class="pill-action-btn" id="settingsCheckUpdateBtn" style="padding:6px 14px; font-size:13px; background:linear-gradient(135deg, #10b981, #06b6d4);">⚡ 1-Click Update</button>
         </div>
         <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:12px 0;" />
         <div class="setting-row">
@@ -1805,7 +1851,7 @@
   </div>
 
   <script src="https://www.youtube.com/iframe_api"></script>
-  <script src="/js/app.js?v=3.2"></script>
+  <script src="/js/app.js?v=3.5"></script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {

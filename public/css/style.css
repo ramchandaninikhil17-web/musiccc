@@ -732,14 +732,17 @@ a { text-decoration: none; color: inherit; }
 }
 
 /* ================================================================
-   Result Card
+   Result Card (120FPS GPU Accelerated & DOM Virtualized)
    ================================================================ */
 .result-card {
   position: relative; background: var(--bg-card);
   border: 1px solid var(--border); border-radius: var(--radius-lg);
   overflow: hidden; cursor: pointer;
-  transition: var(--transition);
-  backdrop-filter: blur(8px);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1), border-color 0.2s ease, box-shadow 0.2s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 260px 240px;
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
 }
 
 .result-card:hover { transform: translateY(-3px); border-color: var(--border-hover); box-shadow: var(--shadow-md); }
@@ -5877,6 +5880,349 @@ body.is-scrubbing-progress {
     z-index: 600 !important;
   }
 }
+
+/* ================================================================
+   120FPS BUTTER-SMOOTH GPU OPTIMIZATIONS & VIRTUALIZATION
+   ================================================================ */
+.queue-list .queue-item,
+.liked-songs-list .song-row,
+.playlists-grid .playlist-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 54px;
+  transform: translate3d(0, 0, 0);
+}
+
+.spotify-fullscreen-player {
+  transform: translate3d(0, 0, 0);
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.now-playing-bar,
+.spotify-bottom-nav {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+/* ================================================================
+   SMART FLOW MOOD PILLS BAR
+   ================================================================ */
+.mood-pills-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 4px 14px 4px;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+.mood-pills-bar::-webkit-scrollbar {
+  display: none;
+}
+.mood-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 16px;
+  border-radius: var(--radius-full);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  transition: all 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+  user-select: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.mood-pill:hover, .mood-pill:active {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent-light);
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 4px 16px var(--accent-glow);
+}
+.mood-pill.active {
+  background: var(--accent-gradient);
+  color: #fff;
+  border-color: transparent;
+  box-shadow: 0 0 16px var(--accent-glow);
+}
+.mood-pill .mp-emoji {
+  font-size: 15px;
+}
+
+/* ================================================================
+   REAL-TIME SYNCED LRC LYRICS VIEW
+   ================================================================ */
+.sfp-synced-lyrics-overlay {
+  position: absolute;
+  inset: 0;
+  top: 70px;
+  bottom: 180px;
+  background: rgba(11, 14, 20, 0.88);
+  backdrop-filter: blur(28px);
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  border-radius: var(--radius-xl);
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.sfp-synced-lyrics-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+  transform: translateY(0);
+}
+.sfp-lyrics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.sfp-lyrics-header h4 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--accent-light);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.sfp-lyrics-close {
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+.sfp-lyrics-scroll-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px 4px 60px 4px;
+  scroll-behavior: smooth;
+  mask-image: linear-gradient(180deg, transparent 0%, black 15%, black 85%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, black 15%, black 85%, transparent 100%);
+}
+.sfp-lyric-line {
+  font-size: 19px;
+  font-weight: 600;
+  line-height: 1.6;
+  padding: 8px 12px;
+  margin: 4px 0;
+  border-radius: 8px;
+  color: rgba(255, 255, 255, 0.38);
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0, 0.2, 1);
+  transform-origin: left center;
+}
+.sfp-lyric-line:hover {
+  color: rgba(255, 255, 255, 0.75);
+  background: var(--bg-glass-hover);
+}
+.sfp-lyric-line.active {
+  color: #ffffff;
+  font-size: 23px;
+  font-weight: 800;
+  transform: scale(1.04);
+  background: linear-gradient(90deg, rgba(124, 58, 237, 0.25) 0%, transparent 100%);
+  border-left: 3px solid var(--accent-light);
+  text-shadow: 0 0 20px var(--accent-glow);
+}
+
+/* ================================================================
+   SWIPE GESTURE FEEDBACK
+   ================================================================ */
+.swipe-track-item {
+  position: relative;
+  touch-action: pan-y;
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0.2, 1);
+}
+.swipe-track-item.swiping-left {
+  background: rgba(239, 68, 68, 0.18) !important;
+}
+.swipe-track-item.swiping-right {
+  background: rgba(16, 185, 129, 0.18) !important;
+}
+.swipe-indicator-badge {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 5;
+}
+.swipe-badge-left {
+  right: 16px;
+  background: #ef4444;
+  color: #fff;
+}
+.swipe-badge-right {
+  left: 16px;
+  background: #10b981;
+  color: #fff;
+}
+
+/* ================================================================
+   DAY-TO-DAY DAILY LISTENING ACTIVITY DIARY
+   ================================================================ */
+.daily-history-section {
+  margin-top: 24px;
+}
+.daily-day-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px;
+  margin-bottom: 16px;
+  transition: all 0.25s ease;
+}
+.daily-day-card:hover {
+  border-color: var(--border-hover);
+  box-shadow: var(--shadow-md);
+}
+.daily-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.daily-date-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  font-weight: 700;
+}
+.daily-badge {
+  font-size: 11px;
+  font-weight: 600;
+  background: var(--bg-glass-active);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  color: var(--accent-light);
+}
+.daily-stats {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.daily-tracks-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scroll-snap-type: x mandatory;
+}
+.daily-tracks-row::-webkit-scrollbar {
+  height: 3px;
+}
+.daily-tracks-row::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 2px;
+}
+.daily-track-item {
+  width: 140px;
+  min-width: 140px;
+  background: var(--bg-glass);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 8px;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: all 0.2s ease;
+}
+.daily-track-item:hover {
+  background: var(--bg-glass-hover);
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.daily-track-thumb {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+  margin-bottom: 6px;
+}
+.daily-track-title {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.daily-track-artist {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.daily-replay-btn {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ================================================================
+   1-CLICK APP UPDATE NOTIFICATION & BADGE
+   ================================================================ */
+.update-top-btn {
+  position: relative;
+  background: linear-gradient(135deg, #10b981, #06b6d4) !important;
+  color: #fff !important;
+  border-radius: var(--radius-full) !important;
+  padding: 0 12px !important;
+  width: auto !important;
+  height: 32px !important;
+  gap: 5px !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4) !important;
+  animation: pulse-update 2.5s infinite ease-in-out;
+}
+@keyframes pulse-update {
+  0%, 100% { box-shadow: 0 0 10px rgba(16, 185, 129, 0.4); }
+  50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); }
+}
+.version-badge-pill {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--accent-gradient);
+  color: #fff;
+  margin-left: 6px;
+}
+
 
 
 

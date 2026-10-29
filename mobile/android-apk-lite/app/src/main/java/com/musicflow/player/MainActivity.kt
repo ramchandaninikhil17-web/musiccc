@@ -45,6 +45,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
@@ -534,30 +535,101 @@ class MainActivity : AppCompatActivity(), PlaybackService.PlaybackEventListener 
         }
 
         @JavascriptInterface
-        fun getAppVersion(): String = BuildConfig.VERSION_NAME
+        fun getAppVersion(): String = "3.5.0-HyperFlow"
+
+        @JavascriptInterface
+        fun getVersionCode(): Int = 350
 
         @JavascriptInterface
         fun startNativeDownload(url: String, title: String, artist: String) {
+            val isVideo = url.contains("format=video")
+            val format = if (isVideo) "video" else "audio"
+            val quality = if (isVideo) "1080" else "192"
+            startNativeDownloadAdvanced(url, title, artist, format, quality)
+        }
+
+        @JavascriptInterface
+        fun startNativeDownloadAdvanced(url: String, title: String, artist: String, format: String, quality: String) {
             runOnUiThread {
                 try {
-                    val safeTitle = (title.ifEmpty { "Song" }).replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim()
-                    val filename = "$safeTitle.mp3"
+                    val isVideo = format.equals("video", ignoreCase = true) || url.contains("format=video")
+                    val ext = if (isVideo) "mp4" else "mp3"
+                    val mime = if (isVideo) "video/mp4" else "audio/mpeg"
+                    val subDir = if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_MUSIC
+                    val safeTitle = (title.ifEmpty { "Media" }).replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim()
+                    val filename = "$safeTitle.$ext"
+
                     val resolvedUrl = if (url.startsWith("/")) {
                         "http://127.0.0.1:${LOCAL_PORT}$url"
                     } else url
 
                     val request = DownloadManager.Request(Uri.parse(resolvedUrl)).apply {
-                        setMimeType("audio/mpeg")
+                        setMimeType(mime)
                         setTitle(safeTitle)
-                        setDescription("Downloading $safeTitle")
+                        setDescription("Downloading $safeTitle (${if (isVideo) "Video $quality p" else "Audio $quality kbps"})")
                         setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "MusicFlow/$filename")
+                        setDestinationInExternalPublicDir(subDir, "MusicFlow/$filename")
                     }
                     val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
                     manager.enqueue(request)
-                    Toast.makeText(this@MainActivity, "⬇ Downloading to Music/MusicFlow: $safeTitle", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this@MainActivity, "⬇ Downloading to ${if (isVideo) "Movies" else "Music"}/MusicFlow: $filename", Toast.LENGTH_SHORT).show()
                 } catch (e: Exception) {
                     Log.w(TAG, "Native download trigger notice: ${e.message}")
+                    Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun installAppUpdate(apkUrl: String) {
+            runOnUiThread {
+                Toast.makeText(this@MainActivity, "⏳ Starting 1-Click Update...", Toast.LENGTH_SHORT).show()
+            }
+            executor.execute {
+                try {
+                    val resolvedUrl = if (apkUrl.startsWith("/")) "http://127.0.0.1:${LOCAL_PORT}$apkUrl" else apkUrl
+                    val client = okhttp3.OkHttpClient.Builder()
+                        .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                        .readTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
+                        .build()
+
+                    val request = okhttp3.Request.Builder().url(resolvedUrl).build()
+                    val response = client.newCall(request).execute()
+                    if (!response.isSuccessful) {
+                        runOnUiThread { Toast.makeText(this@MainActivity, "Update download failed (HTTP ${response.code})", Toast.LENGTH_LONG).show() }
+                        return@execute
+                    }
+
+                    val apkFile = File(getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS), "MusicFlow_update.apk")
+                    response.body?.byteStream()?.use { input ->
+                        FileOutputStream(apkFile).use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+
+                    runOnUiThread {
+                        try {
+                            val apkUri = FileProvider.getUriForFile(
+                                this@MainActivity,
+                                "${applicationContext.packageName}.fileprovider",
+                                apkFile
+                            )
+                            val installIntent = Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(apkUri, "application/vnd.android.package-archive")
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_GRANT_READ_URI_PERMISSION
+                            }
+                            startActivity(installIntent)
+                            Toast.makeText(this@MainActivity, "✅ Ready to install! Tap Install to update MusicFlow.", Toast.LENGTH_LONG).show()
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Failed to launch package installer: ${e.message}", e)
+                            Toast.makeText(this@MainActivity, "Could not open installer: ${e.message}", Toast.LENGTH_LONG).show()
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error downloading update: ${e.message}", e)
+                    runOnUiThread {
+                        Toast.makeText(this@MainActivity, "Update error: ${e.message}", Toast.LENGTH_LONG).show()
+                    }
                 }
             }
         }

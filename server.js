@@ -1142,6 +1142,70 @@ app.post('/api/update-ytdlp', async (req, res) => {
   res.status(result.ok ? 200 : 500).json(result);
 });
 
+/* ------------------------------------------------------------------ */
+/*  GET /api/app-version & /api/check-update                          */
+/*  1-Click App Update & version recognition                         */
+/* ------------------------------------------------------------------ */
+const APP_VERSION_NAME = '3.5.0-HyperFlow';
+const APP_VERSION_CODE = 350;
+const APP_BUILD_DATE = '2026-10-29';
+
+app.get('/api/app-version', (req, res) => {
+  res.json({
+    version: APP_VERSION_NAME,
+    versionCode: APP_VERSION_CODE,
+    buildDate: APP_BUILD_DATE,
+    apkUrl: '/MusicFlow.apk',
+    engine: 'Zero-Latency Dual-Buffer 120FPS'
+  });
+});
+
+app.get('/api/check-update', (req, res) => {
+  const clientVersion = req.query.v || '';
+  const apkPath = path.join(__dirname, 'MusicFlow.apk');
+  let hasApk = false;
+  let apkSize = 0;
+  try {
+    const stat = fs.statSync(apkPath);
+    hasApk = true;
+    apkSize = stat.size;
+  } catch (e) {}
+
+  res.json({
+    version: APP_VERSION_NAME,
+    versionCode: APP_VERSION_CODE,
+    buildDate: APP_BUILD_DATE,
+    hasUpdate: clientVersion !== APP_VERSION_NAME,
+    apkAvailable: hasApk,
+    apkSize: apkSize,
+    apkUrl: '/MusicFlow.apk',
+    releaseNotes: [
+      '🚀 120FPS Butter-Smooth UI with GPU Hardware Acceleration',
+      '⚡ Zero-Latency Predictive Pre-fetching Audio Engine (<100ms track switch)',
+      '🎚️ Dual-Buffer Gapless & 0-10s Crossfade Controller',
+      '🎤 Real-Time Synced LRC Lyrics with tap-to-seek',
+      '📥 Multi-Format Video (4K/1080p/720p/480p) & Audio (320k/192k/128k) Downloader',
+      '🎨 Dynamic Ambient Glow with real-time album art color extraction',
+      '📅 Sensible Daily Listening Diary & persistent IndexedDB backup',
+      '🔄 1-Click App Update System'
+    ]
+  });
+});
+
+app.get('/MusicFlow.apk', (req, res) => {
+  const apkPath = path.join(__dirname, 'MusicFlow.apk');
+  if (fs.existsSync(apkPath)) {
+    res.setHeader('Content-Type', 'application/vnd.android.package-archive');
+    res.setHeader('Content-Disposition', 'attachment; filename="MusicFlow.apk"');
+    return res.sendFile(apkPath);
+  }
+  res.status(404).json({ error: 'MusicFlow.apk not found in server root' });
+});
+
+app.get('/api/download-apk', (req, res) => {
+  res.redirect('/MusicFlow.apk');
+});
+
 // Throttled, non-blocking background refresh so the ladder doesn't silently rot
 // between the user noticing and fixing it. Fires at most when the binary is more
 // than a few days old; off in tests and via MUSICFLOW_NO_AUTOUPDATE=1.

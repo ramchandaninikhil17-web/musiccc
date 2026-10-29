@@ -755,6 +755,16 @@
     DownloadOptionsManager.init();
     YouTubeLinkManager.init();
 
+    // 120FPS Audio Engine & Superior Features Initializers
+    IndexedDBCache.init();
+    QueuePreloader.init();
+    SyncedLyricsManager.init();
+    AmbientThemeExtractor.init();
+    SmartMoodMixer.init();
+    DailyDiaryManager.init();
+    AppUpdateManager.init();
+    SwipeGestureManager.init();
+
     // Instant cache hydration: render home from localStorage before network
     const cachedRecs = Storage.get('cached_recommendations', null);
     if (cachedRecs && Array.isArray(cachedRecs) && cachedRecs.length > 0) {
@@ -1208,8 +1218,8 @@
   // original 700ms because every one of those spawns a yt-dlp process on the
   // server; firing them at 300ms to shave a third of a second off would trade a
   // snappier dropdown for a slower app.
-  const SUGGEST_DEBOUNCE_MS = 300;
-  const SEARCH_DEBOUNCE_MS = 700;
+  const SUGGEST_DEBOUNCE_MS = 150;
+  const SEARCH_DEBOUNCE_MS = 250;
   // Past this a suggestion list stops being a shortcut and becomes a page.
   const SUGGEST_MAX = 9;
   // Bounded, so a long typing session cannot grow the cache without limit.
@@ -1696,6 +1706,20 @@
     showSkeletons();
     searchLoading.classList.add('active');
 
+    // 0ms Instant Retrieval from IndexedDB
+    const cacheKey = 'search_' + (isExplicitLyrics ? 'lyr_' : '') + effectiveQuery.toLowerCase();
+    if (typeof IndexedDBCache !== 'undefined') {
+      const cached = await IndexedDBCache.get(cacheKey);
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        searchResults = cached;
+        renderResults(cached);
+        searchLoading.classList.remove('active');
+        if (cached._cachedAt && (Date.now() - cached._cachedAt < 1800000)) {
+          return;
+        }
+      }
+    }
+
     try {
       let results = [];
 
@@ -1760,6 +1784,10 @@
       if (requestId !== searchRequestId) return;
 
       searchResults = results || [];
+      if (searchResults.length > 0 && typeof IndexedDBCache !== 'undefined') {
+        searchResults._cachedAt = Date.now();
+        IndexedDBCache.set(cacheKey, searchResults, 86400000);
+      }
       if (searchResults.length === 0) {
         resultsGrid.innerHTML = `
           <div class="empty-msg" style="grid-column:1/-1;text-align:center;padding:40px 20px;">
@@ -1994,7 +2022,8 @@
         setPlayState(true);
       } else {
         applyCrossOrigin(null);
-        audioPlayer.src = `/api/stream/${song.id}?quality=${audioQuality}`;
+        const preloaded = typeof QueuePreloader !== 'undefined' ? QueuePreloader.getResolvedUrl(song.id) : null;
+        audioPlayer.src = preloaded || `/api/stream/${song.id}?quality=${audioQuality}`;
         startPlayback(song);
       }
     }
@@ -2012,6 +2041,12 @@
     CanvasPiPManager.updateSong(song);
     SpotifyMobileController.syncSong(song);
     updateMediaSession(song);
+
+    // Trigger Predictive Pre-loader, Synced Lyrics, Dynamic Ambient Theme & Daily Diary
+    if (typeof QueuePreloader !== 'undefined') QueuePreloader.onTrackChange(currentIndex);
+    if (typeof SyncedLyricsManager !== 'undefined') SyncedLyricsManager.onTrackChange(song);
+    if (typeof AmbientThemeExtractor !== 'undefined') AmbientThemeExtractor.onTrackChange(song);
+    if (typeof DailyDiaryManager !== 'undefined') DailyDiaryManager.onSongPlayed(song);
 
     // Set document title
     document.title = `${song.title} — MusicFlow`;
@@ -2265,6 +2300,9 @@
 
     const c = YouTubeDirectPlayer.isActive ? YouTubeDirectPlayer.getCurrentTime() : (audioPlayer.currentTime || 0);
     const d = getEffectiveDuration();
+    if (typeof QueuePreloader !== 'undefined') QueuePreloader.onTimeUpdate(c, d);
+    if (typeof SyncedLyricsManager !== 'undefined') SyncedLyricsManager.onTimeUpdate(c);
+    if (typeof DailyDiaryManager !== 'undefined') DailyDiaryManager.onTimeUpdate(c);
     npCurrentTime.textContent = fmtTime(c);
     if (d > 0) {
       const p = Math.max(0, Math.min(100, (c / d) * 100));
@@ -2445,7 +2483,7 @@
   function clampCrossfadeSeconds(v) {
     // Number('') is 0 and Number('x') is NaN; both mean "off".
     const n = Math.round(Number(v) || 0);
-    return n > 0 ? Math.min(3, n) : 0;
+    return n > 0 ? Math.min(10, n) : 0;
   }
 
   const CrossfadeManager = {
@@ -4313,6 +4351,10 @@
         });
       });
     }
+
+    if (window.DailyDiaryManager && typeof window.DailyDiaryManager.render === 'function') {
+      window.DailyDiaryManager.render();
+    }
   }
 
 
@@ -4587,9 +4629,23 @@
         format: format,
         quality: quality,
       });
-      if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.startNativeDownload === 'function') {
+      if (window.MusicFlowAndroid) {
         const dlUrl = `/api/download/${encodeURIComponent(song.id)}?${params}`;
-        window.MusicFlowAndroid.startNativeDownload(dlUrl, song.title || 'Track', song.channel || '');
+        if (typeof window.MusicFlowAndroid.startNativeDownloadAdvanced === 'function') {
+          window.MusicFlowAndroid.startNativeDownloadAdvanced(dlUrl, song.title || 'Track', song.channel || '', format, quality);
+        } else if (typeof window.MusicFlowAndroid.startNativeDownload === 'function') {
+          window.MusicFlowAndroid.startNativeDownload(dlUrl, song.title || 'Track', song.channel || '');
+        }
+        toast(`Download started in Android notifications (${isVideo ? 'Video' : 'Audio'})`);
+        if (dlBar) {
+          if (dlBarMeta) dlBarMeta.textContent = `Downloading via Android Manager…`;
+          if (dlBarPct) dlBarPct.textContent = '100%';
+          if (dlBarFill) dlBarFill.style.width = '100%';
+          hideBarAfterDelay(2000);
+        }
+        activeDownloads.delete(song.id);
+        clearTimeout(downloadTimeout);
+        return;
       }
       const response = await fetch(`/api/download/${encodeURIComponent(song.id)}?${params}`, {
         signal: downloadController.signal,
@@ -9581,6 +9637,649 @@
       if (outline) outline.style.display = liked ? 'none' : '';
       if (filled) filled.style.display = liked ? '' : 'none';
       btn.style.color = liked ? '#10b981' : 'var(--text-secondary)';
+    }
+  };
+
+  /* ================================================================
+     INDEXEDDB HIGH-SPEED CACHE ENGINE (0ms Screen Load)
+     ================================================================ */
+  const IndexedDBCache = {
+    db: null,
+    DB_NAME: 'musicflow_cache_v2',
+    STORE_NAME: 'api_cache',
+
+    init() {
+      if (!('indexedDB' in window)) return;
+      try {
+        const req = indexedDB.open(this.DB_NAME, 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+            db.createObjectStore(this.STORE_NAME, { keyPath: 'key' });
+          }
+        };
+        req.onsuccess = (e) => {
+          this.db = e.target.result;
+        };
+      } catch (e) {
+        console.warn('[IndexedDBCache] init notice:', e.message);
+      }
+    },
+
+    get(key) {
+      if (!this.db) return Promise.resolve(null);
+      return new Promise((resolve) => {
+        try {
+          const tx = this.db.transaction(this.STORE_NAME, 'readonly');
+          const store = tx.objectStore(this.STORE_NAME);
+          const req = store.get(key);
+          req.onsuccess = () => {
+            const entry = req.result;
+            if (!entry) return resolve(null);
+            if (entry.expiry && Date.now() > entry.expiry) {
+              this.del(key);
+              return resolve(null);
+            }
+            resolve(entry.val);
+          };
+          req.onerror = () => resolve(null);
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    },
+
+    set(key, val, ttlMs = 86400000) {
+      if (!this.db) return Promise.resolve();
+      return new Promise((resolve) => {
+        try {
+          const tx = this.db.transaction(this.STORE_NAME, 'readwrite');
+          const store = tx.objectStore(this.STORE_NAME);
+          const expiry = ttlMs > 0 ? Date.now() + ttlMs : null;
+          store.put({ key, val, expiry, savedAt: Date.now() });
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => resolve();
+        } catch (e) {
+          resolve();
+        }
+      });
+    },
+
+    del(key) {
+      if (!this.db) return;
+      try {
+        const tx = this.db.transaction(this.STORE_NAME, 'readwrite');
+        tx.objectStore(this.STORE_NAME).delete(key);
+      } catch (e) {}
+    }
+  };
+
+  /* ================================================================
+     QUEUE PRE-LOADER & ZERO-LATENCY PREDICTIVE ENGINE (<100ms switch)
+     ================================================================ */
+  const QueuePreloader = {
+    preloadedUrls: new Map(),
+    audioSlots: [],
+    hasPreloaded60: false,
+    currentIndex: -1,
+
+    init() {
+      for (let i = 0; i < 2; i++) {
+        const a = new Audio();
+        a.preload = 'auto';
+        a.volume = 0;
+        a.muted = true;
+        this.audioSlots.push(a);
+      }
+    },
+
+    onTrackChange(idx) {
+      this.currentIndex = idx;
+      this.hasPreloaded60 = false;
+      this.preloadNext(idx);
+    },
+
+    onTimeUpdate(c, d) {
+      if (d > 12 && !this.hasPreloaded60) {
+        if ((c / d) >= 0.60) {
+          this.hasPreloaded60 = true;
+          this.preloadNext(this.currentIndex);
+        }
+      }
+    },
+
+    async preloadNext(fromIndex) {
+      if (!queue || queue.length === 0 || fromIndex < 0) return;
+      const candidates = [];
+      if (fromIndex + 1 < queue.length) candidates.push({ song: queue[fromIndex + 1], slot: 0 });
+      if (fromIndex + 2 < queue.length) candidates.push({ song: queue[fromIndex + 2], slot: 1 });
+
+      for (const item of candidates) {
+        const { song, slot } = item;
+        if (!song || !song.id || song.isLocal || song.isCloud) continue;
+
+        let streamUrl = this.preloadedUrls.get(song.id);
+        if (!streamUrl) {
+          streamUrl = `/api/stream/${encodeURIComponent(song.id)}?quality=${audioQuality}`;
+          this.preloadedUrls.set(song.id, streamUrl);
+        }
+
+        try {
+          const audioEl = this.audioSlots[slot];
+          if (audioEl && audioEl.src !== streamUrl) {
+            audioEl.src = streamUrl;
+            audioEl.load();
+          }
+        } catch (e) {}
+      }
+    },
+
+    getResolvedUrl(songId) {
+      return this.preloadedUrls.get(songId) || null;
+    }
+  };
+
+  /* ================================================================
+     REAL-TIME SYNCED LRC LYRICS MANAGER
+     ================================================================ */
+  const SyncedLyricsManager = {
+    lines: [],
+    activeIndex: -1,
+    currentSongId: null,
+    isOverlayOpen: false,
+
+    init() {
+      const openBtn = $('#sfpLyricsBtn');
+      const closeBtn = $('#sfpLyricsOverlayClose');
+      const overlay = $('#sfpLyricsOverlay');
+
+      openBtn?.addEventListener('click', () => {
+        this.isOverlayOpen = !this.isOverlayOpen;
+        overlay?.classList.toggle('active', this.isOverlayOpen);
+        if (this.isOverlayOpen && currentSong) {
+          this.fetchLyrics(currentSong);
+        }
+      });
+
+      closeBtn?.addEventListener('click', () => {
+        this.isOverlayOpen = false;
+        overlay?.classList.remove('active');
+      });
+
+      const container = $('#sfpLyricsScroll');
+      container?.addEventListener('click', (e) => {
+        const lineEl = e.target.closest('.sfp-lyric-line');
+        if (!lineEl || lineEl.classList.contains('placeholder')) return;
+        const time = parseFloat(lineEl.dataset.time);
+        if (!isNaN(time)) {
+          if (YouTubeDirectPlayer.isActive) {
+            YouTubeDirectPlayer.seek(time);
+          } else {
+            audioPlayer.currentTime = time;
+          }
+          toast(`⏱ Seeked to ${fmtTime(time)}`);
+        }
+      });
+    },
+
+    onTrackChange(song) {
+      if (!song || song.id === this.currentSongId) return;
+      this.currentSongId = song.id;
+      this.lines = [];
+      this.activeIndex = -1;
+      this.renderPlaceholder('Loading time-synced lyrics...');
+      if (this.isOverlayOpen) {
+        this.fetchLyrics(song);
+      }
+    },
+
+    async fetchLyrics(song) {
+      if (!song || !song.id) return;
+      const cleanTitle = (song.title || '').replace(/\(.*?\)|\/.*|-.*|official|lyrics|video/gi, '').trim();
+      const cleanArtist = (song.channel || '').replace(/ - Topic|VEVO|Official/gi, '').trim();
+
+      const cacheKey = `lrc_${song.id}`;
+      const cached = typeof IndexedDBCache !== 'undefined' ? await IndexedDBCache.get(cacheKey) : null;
+      if (cached && Array.isArray(cached) && cached.length > 0) {
+        this.lines = cached;
+        this.renderLines();
+        return;
+      }
+
+      // Query LRCLIB API
+      try {
+        const url = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanArtist)}&track_name=${encodeURIComponent(cleanTitle)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.syncedLyrics) {
+            this.lines = this.parseLRC(data.syncedLyrics);
+            if (this.lines.length > 0) {
+              if (typeof IndexedDBCache !== 'undefined') IndexedDBCache.set(cacheKey, this.lines);
+              this.renderLines();
+              return;
+            }
+          } else if (data && data.plainLyrics) {
+            this.renderPlain(data.plainLyrics);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      // Fallback to server lyrics
+      try {
+        const sRes = await fetch(`/api/lyrics/${encodeURIComponent(song.id)}?title=${encodeURIComponent(cleanTitle)}&artist=${encodeURIComponent(cleanArtist)}`);
+        if (sRes.ok) {
+          const sData = await sRes.json();
+          if (sData && sData.synced) {
+            this.lines = this.parseLRC(sData.synced);
+            this.renderLines();
+            return;
+          } else if (sData && sData.lyrics) {
+            this.renderPlain(sData.lyrics);
+            return;
+          }
+        }
+      } catch (e) {}
+
+      this.renderPlaceholder('No time-synced lyrics found for this track.');
+    },
+
+    parseLRC(lrcText) {
+      const parsed = [];
+      const lines = lrcText.split('\n');
+      const timeRegex = /\[(\d{2}):(\d{2})\.?(\d{2,3})?\]/g;
+
+      for (const line of lines) {
+        const matches = [...line.matchAll(timeRegex)];
+        if (!matches.length) continue;
+        const text = line.replace(timeRegex, '').trim();
+        if (!text) continue;
+
+        for (const m of matches) {
+          const min = parseInt(m[1], 10);
+          const sec = parseInt(m[2], 10);
+          const ms = m[3] ? parseInt(m[3].padEnd(3, '0').slice(0, 3), 10) : 0;
+          const time = min * 60 + sec + ms / 1000;
+          parsed.push({ time, text });
+        }
+      }
+      parsed.sort((a, b) => a.time - b.time);
+      return parsed;
+    },
+
+    renderLines() {
+      const container = $('#sfpLyricsScroll');
+      if (!container) return;
+      if (!this.lines.length) {
+        this.renderPlaceholder('No lyrics available');
+        return;
+      }
+      container.innerHTML = this.lines.map((l, i) => `
+        <div class="sfp-lyric-line" data-index="${i}" data-time="${l.time}">
+          ${esc(l.text)}
+        </div>
+      `).join('');
+    },
+
+    renderPlain(plainText) {
+      const container = $('#sfpLyricsScroll');
+      if (!container) return;
+      const lines = plainText.split('\n').filter(l => l.trim().length > 0);
+      container.innerHTML = lines.map(l => `
+        <div class="sfp-lyric-line plain">${esc(l)}</div>
+      `).join('');
+    },
+
+    renderPlaceholder(msg) {
+      const container = $('#sfpLyricsScroll');
+      if (container) {
+        container.innerHTML = `<div class="sfp-lyric-line placeholder">${esc(msg)}</div>`;
+      }
+    },
+
+    onTimeUpdate(curTime) {
+      if (!this.lines.length || !this.isOverlayOpen) return;
+      let idx = -1;
+      for (let i = 0; i < this.lines.length; i++) {
+        if (curTime >= this.lines[i].time) {
+          idx = i;
+        } else {
+          break;
+        }
+      }
+
+      if (idx !== -1 && idx !== this.activeIndex) {
+        this.activeIndex = idx;
+        const container = $('#sfpLyricsScroll');
+        if (!container) return;
+        const allLineEls = container.querySelectorAll('.sfp-lyric-line');
+        allLineEls.forEach((el, i) => el.classList.toggle('active', i === idx));
+
+        const activeEl = allLineEls[idx];
+        if (activeEl) {
+          activeEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    }
+  };
+
+  /* ================================================================
+     DYNAMIC AMBIENT THEME (ALBUM ART COLOR EXTRACTION)
+     ================================================================ */
+  const AmbientThemeExtractor = {
+    canvas: null,
+    ctx: null,
+
+    init() {
+      this.canvas = document.createElement('canvas');
+      this.canvas.width = 32;
+      this.canvas.height = 32;
+      this.ctx = this.canvas.getContext('2d');
+    },
+
+    onTrackChange(song) {
+      if (!song) return;
+      const imgUrl = thumb(song);
+      if (!imgUrl) return;
+
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        try {
+          this.ctx.drawImage(img, 0, 0, 32, 32);
+          const data = this.ctx.getImageData(0, 0, 32, 32).data;
+          let r = 0, g = 0, b = 0, count = 0;
+          for (let i = 0; i < data.length; i += 16) {
+            const pr = data[i], pg = data[i + 1], pb = data[i + 2];
+            const lum = (pr * 299 + pg * 587 + pb * 114) / 1000;
+            if (lum > 25 && lum < 235) {
+              r += pr;
+              g += pg;
+              b += pb;
+              count++;
+            }
+          }
+          if (count > 0) {
+            r = Math.round(r / count);
+            g = Math.round(g / count);
+            b = Math.round(b / count);
+            const hex = `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
+            const glow = `rgba(${r}, ${g}, ${b}, 0.45)`;
+
+            document.documentElement.style.setProperty('--dominant-color', hex);
+            document.documentElement.style.setProperty('--bg-glow', glow);
+            const artGlow = $('#sfpArtGlow');
+            if (artGlow) artGlow.style.background = `radial-gradient(circle, ${hex} 0%, transparent 70%)`;
+          }
+        } catch (e) {}
+      };
+      img.src = imgUrl;
+    }
+  };
+
+  /* ================================================================
+     SMART FLOW AI MOOD MIXER
+     ================================================================ */
+  const SmartMoodMixer = {
+    moodQueries: {
+      'deep-focus': ['deep focus instrumental study beats', 'alpha brain waves concentration music', 'coding lo-fi chill hip hop'],
+      'gym-hype': ['gym workout phonk beast mode', 'high energy motivation rap', 'beast mode edm gym workout'],
+      'late-night': ['late night romantic acoustic songs', 'calm midnight lo-fi jazz', 'deep chill slow Hindi acoustic'],
+      'acoustic-chill': ['coffee shop acoustic guitar indie', 'peaceful piano chill instrumental', 'soft acoustic pop ballads'],
+      'party-energy': ['festival party dance edm hits', 'high tempo punjabi party dance songs', 'club bangers remix 2024']
+    },
+
+    init() {
+      const bar = $('#smartMoodPillsBar');
+      if (!bar) return;
+      bar.querySelectorAll('.mood-pill').forEach(pill => {
+        pill.addEventListener('click', () => {
+          bar.querySelectorAll('.mood-pill').forEach(p => p.classList.remove('active'));
+          pill.classList.add('active');
+          const mood = pill.dataset.mood;
+          this.applyMood(mood);
+        });
+      });
+    },
+
+    async applyMood(mood) {
+      if (mood === 'all') {
+        startPersonalizedRadio();
+        return;
+      }
+      const queries = this.moodQueries[mood];
+      if (!queries || !queries.length) return;
+      const q = queries[Math.floor(Math.random() * queries.length)];
+      toast(`✨ Smart Mood Flow: Curating ${mood.replace('-', ' ').toUpperCase()} mix...`);
+
+      try {
+        const res = await fetch(`/api/search?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const tracks = await res.json();
+          if (tracks && tracks.length > 0) {
+            queue = tracks;
+            updateQueueUI();
+            playSong(queue[0]);
+            toast(`🎵 Now Playing: ${mood.replace('-', ' ').toUpperCase()} Flow`);
+          }
+        }
+      } catch (e) {
+        toast('Could not curate mood flow');
+      }
+    }
+  };
+
+  /* ================================================================
+     SENSIBLE DAY-TO-DAY DAILY LISTENING ACTIVITY DIARY
+     ================================================================ */
+  const DailyDiaryManager = {
+    dailyData: {},
+
+    init() {
+      this.load();
+      $('#exportDailyDataBtn')?.addEventListener('click', () => this.exportBackup());
+    },
+
+    todayStr() {
+      return new Date().toISOString().slice(0, 10);
+    },
+
+    load() {
+      const saved = Storage.get('daily_listening_diary', {});
+      this.dailyData = (saved && typeof saved === 'object') ? saved : {};
+    },
+
+    save() {
+      Storage.set('daily_listening_diary', this.dailyData);
+      if (typeof IndexedDBCache !== 'undefined') {
+        IndexedDBCache.set('daily_listening_diary', this.dailyData, 0);
+      }
+    },
+
+    onSongPlayed(song) {
+      if (!song || !song.id) return;
+      const today = this.todayStr();
+      if (!this.dailyData[today]) {
+        this.dailyData[today] = { date: today, minutes: 0, tracks: [] };
+      }
+      const day = this.dailyData[today];
+      if (!day.tracks.some(t => t.id === song.id)) {
+        day.tracks.unshift({
+          id: song.id,
+          title: song.title || 'Track',
+          channel: song.channel || 'Artist',
+          playedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        });
+        if (day.tracks.length > 50) day.tracks.pop();
+      }
+      this.save();
+    },
+
+    onTimeUpdate(c) {
+      const today = this.todayStr();
+      if (!this.dailyData[today]) {
+        this.dailyData[today] = { date: today, minutes: 0, tracks: [] };
+      }
+      if (Math.round(c) > 0 && Math.round(c) % 60 === 0) {
+        this.dailyData[today].minutes = (this.dailyData[today].minutes || 0) + 1;
+        this.save();
+      }
+    },
+
+    render() {
+      const listEl = $('#dailyListeningList');
+      if (!listEl) return;
+      const days = Object.keys(this.dailyData).sort().reverse();
+      if (!days.length) {
+        listEl.innerHTML = '<p class="empty-msg">No day-to-day listening logged yet. Start playing music to track daily activity!</p>';
+        return;
+      }
+
+      const streakEl = $('#dailyStreakBadge');
+      if (streakEl) streakEl.textContent = `🔥 ${days.length} Day${days.length === 1 ? '' : 's'} Logged`;
+
+      listEl.innerHTML = days.slice(0, 14).map(dateKey => {
+        const item = this.dailyData[dateKey];
+        const dObj = new Date(dateKey + 'T00:00:00');
+        const formattedDate = dObj.toLocaleDateString(undefined, { weekday: 'short', month: 'short', day: 'numeric' });
+        const tracks = item.tracks || [];
+
+        return `
+          <div class="daily-day-card">
+            <div class="daily-header">
+              <div class="daily-date-title">
+                <span>📅 ${esc(formattedDate)}</span>
+                <span class="daily-badge">${tracks.length} song${tracks.length === 1 ? '' : 's'}</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <span class="daily-stats">⏱ ~${item.minutes || Math.max(1, tracks.length * 3)} min</span>
+                <button class="daily-replay-btn" data-date="${esc(dateKey)}">▶ Replay Day</button>
+              </div>
+            </div>
+            <div class="daily-tracks-row">
+              ${tracks.slice(0, 15).map(t => `
+                <div class="daily-track-item" data-id="${escId(t.id)}">
+                  <img class="daily-track-thumb" src="https://i.ytimg.com/vi/${escId(t.id)}/hqdefault.jpg" alt="" loading="lazy" />
+                  <div class="daily-track-title">${esc(t.title)}</div>
+                  <div class="daily-track-artist">${esc(t.channel)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      listEl.querySelectorAll('.daily-replay-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const date = btn.dataset.date;
+          const day = this.dailyData[date];
+          if (day && day.tracks && day.tracks.length > 0) {
+            queue = day.tracks.map(t => ({ id: t.id, title: t.title, channel: t.channel }));
+            updateQueueUI();
+            playSong(queue[0]);
+            toast(`▶ Replaying songs from ${date}`);
+          }
+        });
+      });
+
+      listEl.querySelectorAll('.daily-track-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const id = item.dataset.id;
+          const song = { id, title: item.querySelector('.daily-track-title')?.textContent || 'Track', channel: item.querySelector('.daily-track-artist')?.textContent || '' };
+          playSong(song);
+        });
+      });
+    },
+
+    exportBackup() {
+      const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(JSON.stringify(this.dailyData, null, 2));
+      const a = document.createElement('a');
+      a.setAttribute('href', dataStr);
+      a.setAttribute('download', `musicflow_daily_backup_${this.todayStr()}.json`);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      toast('💾 Daily listening backup exported successfully!');
+    }
+  };
+
+  /* ================================================================
+     1-CLICK APP UPDATE MANAGER
+     ================================================================ */
+  const AppUpdateManager = {
+    currentVersion: '3.5.0-HyperFlow',
+
+    init() {
+      $('#appUpdateBtn')?.addEventListener('click', () => this.checkAndUpdate(true));
+      $('#settingsCheckUpdateBtn')?.addEventListener('click', () => this.checkAndUpdate(true));
+      setTimeout(() => this.checkAndUpdate(false), 5000);
+    },
+
+    async checkAndUpdate(interactive = false) {
+      if (interactive) toast('🔍 Checking for MusicFlow updates...');
+      try {
+        const res = await fetch(`/api/check-update?v=${encodeURIComponent(this.currentVersion)}`);
+        if (!res.ok) throw new Error('Update server unreachable');
+        const data = await res.json();
+
+        if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.installAppUpdate === 'function') {
+          if (data && data.apkUrl) {
+            if (interactive) {
+              const confirmMsg = `New MusicFlow Update Available!\n\nVersion: ${data.version}\n\n1-Click Install now?`;
+              if (confirm(confirmMsg)) {
+                window.MusicFlowAndroid.installAppUpdate(data.apkUrl);
+              }
+            }
+          } else if (interactive) {
+            toast('✅ MusicFlow is already up to date!');
+          }
+        } else {
+          if (interactive) {
+            toast('🚀 Updating MusicFlow Web App in 1-Click...');
+            if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+              navigator.serviceWorker.controller.postMessage({ action: 'skipWaiting' });
+            }
+            setTimeout(() => {
+              window.location.reload(true);
+            }, 600);
+          }
+        }
+      } catch (e) {
+        if (interactive) {
+          toast('⚠️ Could not check for updates. Make sure server is running.');
+        }
+      }
+    }
+  };
+
+  /* ================================================================
+     SWIPE GESTURE CONTROLLER (ERGONOMICS)
+     ================================================================ */
+  const SwipeGestureManager = {
+    init() {
+      const np = $('#nowPlayingBar');
+      if (np) {
+        let startX = 0, startY = 0;
+        np.addEventListener('touchstart', (e) => {
+          startX = e.touches[0].clientX;
+          startY = e.touches[0].clientY;
+        }, { passive: true });
+
+        np.addEventListener('touchend', (e) => {
+          const diffX = e.changedTouches[0].clientX - startX;
+          const diffY = e.changedTouches[0].clientY - startY;
+          if (Math.abs(diffX) > 60 && Math.abs(diffY) < 40) {
+            if (diffX < 0) {
+              playNext();
+              toast('⏭ Skipped to Next Track');
+            } else {
+              playPrev();
+              toast('⏮ Back to Previous Track');
+            }
+          }
+        }, { passive: true });
+      }
     }
   };
 

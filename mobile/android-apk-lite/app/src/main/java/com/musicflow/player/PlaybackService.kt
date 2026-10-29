@@ -92,6 +92,18 @@ class PlaybackService : MediaSessionService() {
 
     override fun onCreate() {
         super.onCreate()
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+            val channel = android.app.NotificationChannel(
+                "musicflow_playback",
+                "MusicFlow Playback",
+                android.app.NotificationManager.IMPORTANCE_LOW
+            ).apply {
+                description = "MusicFlow background audio playback & lock-screen controls"
+                setShowBadge(false)
+            }
+            val manager = getSystemService(android.app.NotificationManager::class.java)
+            manager?.createNotificationChannel(channel)
+        }
         setupExoPlayer()
         setupMediaSession()
         startPositionReporting()
