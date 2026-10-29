@@ -72,7 +72,6 @@ const BASE_YTDLP_ARGS = [
   '--no-check-certificates',
   '--no-playlist',
   '--js-runtimes', 'node',
-  '--extractor-args', 'youtube:player_client=android,web',
 ];
 
 const VIDEO_YTDLP_ARGS = [
@@ -80,7 +79,6 @@ const VIDEO_YTDLP_ARGS = [
   '--no-check-certificates',
   '--no-playlist',
   '--js-runtimes', 'node',
-  '--extractor-args', 'youtube:player_client=android,web',
 ];
 
 const YOUTUBE_ANDROID_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
@@ -1045,6 +1043,8 @@ app.get('/api/formats/:videoId', async (req, res) => {
       heights: parsed.heights,
       maxHeight: parsed.maxHeight,
       hasVideo: parsed.hasVideo,
+      audioBitrates: [128, 192, 256, 320],
+      maxAudioBitrate: 320,
     };
     formatsCache.set(videoId, { at: Date.now(), data });
     // Keep the cache from growing without bound on a long-running server.
@@ -1054,9 +1054,15 @@ app.get('/api/formats/:videoId', async (req, res) => {
     res.json(data);
   } catch (err) {
     console.error('[Formats]', err.message);
-    // Fail-open: hasVideo:null means "couldn't tell", so the client keeps every
-    // option enabled rather than blocking a download on a metadata hiccup.
-    res.status(200).json({ heights: [], maxHeight: 0, hasVideo: null, unknown: true });
+    // Fail-open: keep options enabled rather than blocking on a metadata hiccup.
+    res.status(200).json({
+      heights: [360, 480, 720, 1080, 1440, 2160],
+      maxHeight: 2160,
+      hasVideo: true,
+      audioBitrates: [128, 192, 256, 320],
+      maxAudioBitrate: 320,
+      unknown: true,
+    });
   }
 });
 
@@ -2268,8 +2274,8 @@ app.get('/api/download/:videoId', async (req, res) => {
 
     // Format and quality from client (defaults preserve backward compatibility)
     const dlFormat = (req.query.format === 'video') ? 'video' : 'audio';
-    const ALLOWED_AUDIO_Q = ['128', '192', '320'];
-    const ALLOWED_VIDEO_Q = ['480', '720', '1080', '1440', '2160'];
+    const ALLOWED_AUDIO_Q = ['128', '192', '256', '320'];
+    const ALLOWED_VIDEO_Q = ['360', '480', '720', '1080', '1440', '2160'];
     let dlQuality;
     if (dlFormat === 'audio') {
       dlQuality = ALLOWED_AUDIO_Q.includes(req.query.quality) ? req.query.quality : '192';
@@ -2282,14 +2288,11 @@ app.get('/api/download/:videoId', async (req, res) => {
 
     let info = {};
     try {
-      // For video, enumerate with the web-first client (VIDEO_YTDLP_ARGS) — the
-      // android client under-reports the DASH ladder, which would make the clamp
-      // below think a genuine 4K video tops out at 360p. Must match the client the
-      // download itself uses so "available" equals "downloadable".
+      // For video, enumerate with the web-first client (VIDEO_YTDLP_ARGS)
       const infoStdout = await runYtDlp([
         `https://www.youtube.com/watch?v=${videoId}`,
         '--dump-json', '--no-warnings', '--skip-download',
-      ], 10000, isVideo ? VIDEO_YTDLP_ARGS : BASE_YTDLP_ARGS);
+      ], 12000, isVideo ? VIDEO_YTDLP_ARGS : BASE_YTDLP_ARGS);
       if (infoStdout) info = JSON.parse(infoStdout) || {};
     } catch (e) {}
 
@@ -2298,10 +2301,6 @@ app.get('/api/download/:videoId', async (req, res) => {
     const requestedQuality = dlQuality;
     let availMaxHeight = 0;
     if (isVideo) {
-      // Cap the requested height to what the track actually offers. Asking for 2K
-      // on a video whose best is 1080p used to let yt-dlp's fallback cascade slide
-      // all the way to a 360p progressive stream; capping to the real ceiling makes
-      // it fetch the true best (1080p here) and keeps the returned header honest.
       availMaxHeight = parseAvailableHeights(info).maxHeight;
       if (availMaxHeight > 0 && Number(dlQuality) > availMaxHeight) {
         dlQuality = String(availMaxHeight);
@@ -2316,25 +2315,17 @@ app.get('/api/download/:videoId', async (req, res) => {
 
     let dlArgs;
     if (isVideo) {
-      // Best video up to the requested height + best audio, merged to MP4. The
-      // fallback chain widens step by step so we still return real video when the
-      // exact mp4/m4a pair or the height cap can't be met, only dropping to a
-      // progressive/best single file as a last resort.
+      // Best video up to the requested height + best audio, merged to MP4.
+      // Selecting bestvideo[height<=quality] allows YouTube DASH VP9/AV1/H264 (including 4K/2K)
+      // to cleanly merge with the best audio into a complete, pristine MP4 container.
       dlArgs = [
         ...VIDEO_YTDLP_ARGS,
         '--ffmpeg-location', ffmpegPath,
         '--no-part',
         '--no-progress',
-        // Rank candidates by resolution first (then fps, then h264/mp4 for broad
-        // compatibility) so within the height cap yt-dlp takes the *largest* frame
-        // available instead of whatever it happened to list first. The old ordering
-        // is what let a 1440p request collapse to a 360p progressive stream.
-        '--format-sort', 'res,fps,vcodec:h264,ext:mp4:m4a',
+        '--format-sort', 'res,fps',
         '-f',
-        `bestvideo[height<=${dlQuality}][ext=mp4]+bestaudio[ext=m4a]/` +
-        `bestvideo[height<=${dlQuality}]+bestaudio/` +
-        `best[height<=${dlQuality}][ext=mp4]/best[height<=${dlQuality}]/` +
-        `bestvideo+bestaudio/best`,
+        `bestvideo[height<=${dlQuality}]+bestaudio/best[height<=${dlQuality}]/bestvideo+bestaudio/best`,
         '--merge-output-format', 'mp4',
         '-o', `${tempPrefix}.%(ext)s`,
         `https://www.youtube.com/watch?v=${videoId}`

@@ -18,6 +18,11 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.os.IBinder
+import android.speech.RecognitionListener
+import android.speech.RecognizerIntent
+import android.speech.SpeechRecognizer
+import android.speech.tts.TextToSpeech
+import android.util.Base64
 import android.util.Log
 import android.view.KeyEvent
 import android.view.View
@@ -25,6 +30,7 @@ import android.view.WindowManager
 import android.webkit.CookieManager
 import android.webkit.DownloadListener
 import android.webkit.JavascriptInterface
+import android.webkit.PermissionRequest
 import android.webkit.URLUtil
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
@@ -34,7 +40,6 @@ import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.media.MediaScannerConnection
-import android.util.Base64
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -52,6 +57,7 @@ import androidx.palette.graphics.Palette
 import java.io.File
 import java.io.FileOutputStream
 import java.net.URL
+import java.util.Locale
 import java.util.concurrent.Executors
 
 class MainActivity : AppCompatActivity() {
@@ -61,6 +67,7 @@ class MainActivity : AppCompatActivity() {
         const val LOCAL_PORT = 8765
         const val LOCAL_URL = "http://127.0.0.1:$LOCAL_PORT"
         private const val PERMISSION_REQUEST_NOTIFICATION = 1001
+        private const val PERMISSION_REQUEST_AUDIO = 1002
     }
 
     private lateinit var webView: WebView
@@ -72,6 +79,12 @@ class MainActivity : AppCompatActivity() {
     private var serviceBound = false
     private var fileUploadCallback: ValueCallback<Array<Uri>>? = null
     private var hasLoadedOnce = false
+
+    // Native Speech Recognizer & Text-to-Speech (Hey Ruby AI)
+    private var speechRecognizer: SpeechRecognizer? = null
+    private var textToSpeech: TextToSpeech? = null
+    private var isSpeechListening = false
+    private var isAlwaysListeningMode = false
 
     private val executor = Executors.newSingleThreadExecutor()
 
@@ -139,8 +152,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         setupWebView()
+        initTextToSpeech()
         retryButton.setOnClickListener { startServerAndLoad() }
-        requestNotificationPermission()
+        requestAppPermissions()
 
         // Bind Foreground PlaybackService for native background audio & lock-screen controls
         Intent(this, PlaybackService::class.java).also { intent ->
@@ -223,17 +237,26 @@ class MainActivity : AppCompatActivity() {
         offlineView.visibility = View.VISIBLE
     }
 
-    private fun requestNotificationPermission() {
+    private fun requestAppPermissions() {
+        val perms = mutableListOf<String>()
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED
             ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
-                    PERMISSION_REQUEST_NOTIFICATION
-                )
+                perms.add(Manifest.permission.POST_NOTIFICATIONS)
             }
+        }
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO)
+            != PackageManager.PERMISSION_GRANTED
+        ) {
+            perms.add(Manifest.permission.RECORD_AUDIO)
+        }
+        if (perms.isNotEmpty()) {
+            ActivityCompat.requestPermissions(
+                this,
+                perms.toTypedArray(),
+                PERMISSION_REQUEST_NOTIFICATION
+            )
         }
     }
 
@@ -284,6 +307,131 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    // ── Native Speech Recognition Engine (Hey Ruby AI) ──
+
+    private fun initTextToSpeech() {
+        try {
+            textToSpeech = TextToSpeech(applicationContext) { status ->
+                if (status == TextToSpeech.SUCCESS) {
+                    textToSpeech?.language = Locale.US
+                }
+            }
+        } catch (e: Exception) {
+            Log.w(TAG, "TTS init error: ${e.message}")
+        }
+    }
+
+    private fun speakNativeText(text: String) {
+        if (text.isEmpty()) return
+        try {
+            textToSpeech?.speak(text, TextToSpeech.QUEUE_FLUSH, null, "ruby_tts_${System.currentTimeMillis()}")
+        } catch (e: Exception) {
+            Log.w(TAG, "TTS speak error: ${e.message}")
+        }
+    }
+
+    private fun startNativeSpeechListening(always: Boolean) {
+        isAlwaysListeningMode = always
+        if (!SpeechRecognizer.isRecognitionAvailable(this)) {
+            Log.w(TAG, "SpeechRecognizer is not available on this device")
+            sendSpeechEvent("onError", "not_available")
+            return
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.RECORD_AUDIO), PERMISSION_REQUEST_AUDIO)
+            return
+        }
+
+        try {
+            if (speechRecognizer == null) {
+                speechRecognizer = SpeechRecognizer.createSpeechRecognizer(applicationContext)
+                speechRecognizer?.setRecognitionListener(object : RecognitionListener {
+                    override fun onReadyForSpeech(params: Bundle?) {
+                        isSpeechListening = true
+                        sendSpeechEvent("onReady", "")
+                    }
+                    override fun onBeginningOfSpeech() {
+                        sendSpeechEvent("onBeginning", "")
+                    }
+                    override fun onRmsChanged(rmsdB: Float) {
+                        sendSpeechEvent("onRmsChanged", rmsdB.toString())
+                    }
+                    override fun onBufferReceived(buffer: ByteArray?) {}
+                    override fun onEndOfSpeech() {
+                        isSpeechListening = false
+                        sendSpeechEvent("onEndOfSpeech", "")
+                    }
+                    override fun onError(error: Int) {
+                        isSpeechListening = false
+                        sendSpeechEvent("onError", "code_$error")
+                        // If always-listening is armed and error was timeout or no match, schedule restart
+                        if (isAlwaysListeningMode && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
+                            scheduleSpeechRestart(350)
+                        }
+                    }
+                    override fun onResults(results: Bundle?) {
+                        isSpeechListening = false
+                        val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val text = matches?.firstOrNull() ?: ""
+                        sendSpeechEvent("onResult", text)
+                        if (isAlwaysListeningMode) {
+                            scheduleSpeechRestart(450)
+                        }
+                    }
+                    override fun onPartialResults(partialResults: Bundle?) {
+                        val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
+                        val text = matches?.firstOrNull() ?: ""
+                        sendSpeechEvent("onPartial", text)
+                    }
+                    override fun onEvent(eventType: Int, params: Bundle?) {}
+                })
+            }
+
+            val intent = Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH).apply {
+                putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM)
+                putExtra(RecognizerIntent.EXTRA_PARTIAL_RESULTS, true)
+                putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 3)
+                putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, packageName)
+            }
+            speechRecognizer?.startListening(intent)
+            isSpeechListening = true
+        } catch (e: Exception) {
+            Log.e(TAG, "startSpeechListening error: ${e.message}", e)
+            isSpeechListening = false
+        }
+    }
+
+    private fun scheduleSpeechRestart(delayMs: Long) {
+        executor.execute {
+            try {
+                Thread.sleep(delayMs)
+                runOnUiThread {
+                    if (isAlwaysListeningMode && !isFinishing) {
+                        startNativeSpeechListening(true)
+                    }
+                }
+            } catch (e: Exception) {}
+        }
+    }
+
+    private fun stopNativeSpeechListening() {
+        isAlwaysListeningMode = false
+        isSpeechListening = false
+        try {
+            speechRecognizer?.stopListening()
+            speechRecognizer?.cancel()
+        } catch (e: Exception) {}
+    }
+
+    private fun sendSpeechEvent(type: String, data: String) {
+        val safeData = data.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "")
+        val js = "if(window.MusicFlowNativeSpeech && typeof window.MusicFlowNativeSpeech.handleNativeSpeechEvent === 'function'){ window.MusicFlowNativeSpeech.handleNativeSpeechEvent('$type', '$safeData'); }"
+        runOnUiThread {
+            webView.evaluateJavascript(js, null)
+        }
+    }
+
     // ── WebView Clients ──
 
     private inner class MusicFlowWebViewClient : WebViewClient() {
@@ -320,6 +468,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private inner class MusicFlowChromeClient : WebChromeClient() {
+        override fun onPermissionRequest(request: PermissionRequest?) {
+            runOnUiThread {
+                try {
+                    request?.grant(request.resources)
+                } catch (e: Exception) {
+                    Log.w(TAG, "PermissionRequest grant error: ${e.message}")
+                }
+            }
+        }
+
         override fun onShowFileChooser(
             webView: WebView?,
             filePathCallback: ValueCallback<Array<Uri>>?,
@@ -370,6 +528,15 @@ class MainActivity : AppCompatActivity() {
             // Signal to web app that it is running inside the Android APK shell
             document.documentElement.classList.add('is-mobile-app');
             if (document.body) document.body.classList.add('is-mobile-app');
+
+            // Native Speech Event Handler Bridge
+            window.MusicFlowNativeSpeech = {
+                handleNativeSpeechEvent: function(type, data) {
+                    if (window.VoiceAssistant && typeof window.VoiceAssistant.handleNativeSpeech === 'function') {
+                        window.VoiceAssistant.handleNativeSpeech(type, data);
+                    }
+                }
+            };
 
             // Hook MediaSession metadata and playbackState for native track synchronization
             if (navigator.mediaSession) {
@@ -543,6 +710,36 @@ class MainActivity : AppCompatActivity() {
         @JavascriptInterface
         fun getVersionCode(): Int = 350
 
+        // ── Native Speech Recognition & TTS (Hey Ruby AI) ──
+
+        @JavascriptInterface
+        fun isSpeechAvailable(): Boolean = SpeechRecognizer.isRecognitionAvailable(this@MainActivity)
+
+        @JavascriptInterface
+        fun startNativeSpeech(always: Boolean) {
+            runOnUiThread { startNativeSpeechListening(always) }
+        }
+
+        @JavascriptInterface
+        fun stopNativeSpeech() {
+            runOnUiThread { stopNativeSpeechListening() }
+        }
+
+        @JavascriptInterface
+        fun speakText(text: String) {
+            runOnUiThread { speakNativeText(text) }
+        }
+
+        @JavascriptInterface
+        fun stopSpeaking() {
+            runOnUiThread { textToSpeech?.stop() }
+        }
+
+        @JavascriptInterface
+        fun isSpeechListening(): Boolean = isSpeechListening
+
+        // ── Native Media Downloads ──
+
         @JavascriptInterface
         fun startNativeDownload(url: String, title: String, artist: String) {
             val isVideo = url.contains("format=video")
@@ -569,7 +766,7 @@ class MainActivity : AppCompatActivity() {
                     val request = DownloadManager.Request(Uri.parse(resolvedUrl)).apply {
                         setMimeType(mime)
                         setTitle(safeTitle)
-                        setDescription("Downloading $safeTitle (${if (isVideo) "Video $quality p" else "Audio $quality kbps"})")
+                        setDescription("Downloading $safeTitle (${if (isVideo) "${quality}p Video" else "${quality} kbps Audio"})")
                         setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                         setDestinationInExternalPublicDir(subDir, "MusicFlow/$filename")
                     }
@@ -751,6 +948,13 @@ class MainActivity : AppCompatActivity() {
 
     override fun onDestroy() {
         super.onDestroy()
+        stopNativeSpeechListening()
+        speechRecognizer?.destroy()
+        speechRecognizer = null
+        textToSpeech?.stop()
+        textToSpeech?.shutdown()
+        textToSpeech = null
+
         if (serviceBound) {
             unbindService(serviceConnection)
             serviceBound = false
@@ -763,10 +967,40 @@ class MainActivity : AppCompatActivity() {
 
     @Deprecated("Deprecated in API 33+")
     override fun onBackPressed() {
-        if (webView.canGoBack()) {
-            webView.goBack()
-        } else {
-            @Suppress("DEPRECATION") super.onBackPressed()
+        // If Spotify fullscreen player is open, close it on back press
+        webView.evaluateJavascript(
+            """
+            (function() {
+                var sfp = document.getElementById('spotifyFullscreenPlayer');
+                if (sfp && sfp.classList.contains('active')) {
+                    if (window.SpotifyMobileController && typeof window.SpotifyMobileController.closeFullscreen === 'function') {
+                        window.SpotifyMobileController.closeFullscreen();
+                        return true;
+                    }
+                }
+                var rubyModal = document.getElementById('rubyVoiceModal');
+                if (rubyModal && rubyModal.classList.contains('active')) {
+                    rubyModal.classList.remove('active');
+                    return true;
+                }
+                var qSidebar = document.getElementById('queueSidebar');
+                if (qSidebar && qSidebar.classList.contains('open')) {
+                    qSidebar.classList.remove('open');
+                    return true;
+                }
+                return false;
+            })();
+            """.trimIndent()
+        ) { result ->
+            if (result == "true") {
+                // Handled in JS
+                return@evaluateJavascript
+            }
+            if (webView.canGoBack()) {
+                webView.goBack()
+            } else {
+                @Suppress("DEPRECATION") super.onBackPressed()
+            }
         }
     }
 

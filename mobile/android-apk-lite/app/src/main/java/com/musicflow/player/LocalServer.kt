@@ -60,8 +60,8 @@ class LocalServer(
         .build()
 
     private val streamProxyClient = OkHttpClient.Builder()
-        .connectTimeout(25, TimeUnit.SECONDS)
-        .readTimeout(120, TimeUnit.SECONDS)
+        .connectTimeout(45, TimeUnit.SECONDS)
+        .readTimeout(600, TimeUnit.SECONDS)
         .followRedirects(true)
         .build()
 
@@ -461,7 +461,12 @@ class LocalServer(
                         val candidates = (if (mp4Audio.isNotEmpty()) mp4Audio else allAudio)
                             .sortedByDescending { it.get("bitrate")?.asLong ?: 0L }
 
-                        val chosen = if (quality == "low") candidates.last() else candidates.first()
+                        val chosen = when (quality) {
+                            "low", "64" -> candidates.last()
+                            "128" -> candidates.getOrNull(candidates.size / 2) ?: candidates.last()
+                            "192" -> candidates.getOrNull(1) ?: candidates.first()
+                            else -> candidates.first() // "320", "256", "high"
+                        }
                         val directAudioUrl = chosen.get("url")?.asString
                         if (!directAudioUrl.isNullOrEmpty()) {
                             currentInstanceIdx.set(idx)
@@ -914,15 +919,33 @@ class LocalServer(
         return jsonOk(gson.toJson(json))
     }
 
+    private fun extractFormatHeight(obj: JsonObject): Int? {
+        val h = obj.get("height")?.asInt
+        if (h != null && h > 0) return h
+        val ql = obj.get("qualityLabel")?.asString
+        if (!ql.isNullOrEmpty()) {
+            val m = Regex("""(\d+)p""").find(ql)
+            val v = m?.groupValues?.get(1)?.toIntOrNull()
+            if (v != null && v > 0) return v
+        }
+        val res = obj.get("resolution")?.asString
+        if (!res.isNullOrEmpty()) {
+            val m = Regex("""(\d{3,4})""").find(res)
+            val v = m?.groupValues?.get(1)?.toIntOrNull()
+            if (v != null && v > 0) return v
+        }
+        return null
+    }
+
     private fun handleFormats(uri: String): Response {
         val videoId = uri.removePrefix("/api/formats/").split("?")[0].trim()
         if (!isValidVideoId(videoId)) {
-            return jsonOk("""{"heights":[360,480,720,1080],"maxHeight":1080,"hasVideo":true}""")
+            return jsonOk("""{"heights":[360,480,720,1080,1440,2160],"maxHeight":2160,"hasVideo":true,"audioBitrates":[128,192,256,320],"maxAudioBitrate":320}""")
         }
 
         // Probe real heights from video metadata
         val count = invidiousInstances.size
-        for (i in 0 until minOf(count, 3)) {
+        for (i in 0 until minOf(count, 4)) {
             val idx = (currentInstanceIdx.get() + i) % count
             val host = invidiousInstances[idx]
             try {
@@ -941,16 +964,15 @@ class LocalServer(
 
                     val heights = mutableSetOf<Int>()
                     for (elem in formats) {
-                        val obj = elem.asJsonObject
-                        val q = obj.get("qualityLabel")?.asString?.replace("p", "")?.toIntOrNull()
-                        if (q != null && q > 0) heights.add(q)
+                        val h = extractFormatHeight(elem.asJsonObject)
+                        if (h != null && h > 0) heights.add(h)
                     }
                     for (elem in adaptive) {
                         val obj = elem.asJsonObject
                         val type = obj.get("type")?.asString ?: obj.get("mimeType")?.asString ?: ""
                         if (type.startsWith("video/")) {
-                            val q = obj.get("qualityLabel")?.asString?.replace("p", "")?.toIntOrNull()
-                            if (q != null && q > 0) heights.add(q)
+                            val h = extractFormatHeight(obj)
+                            if (h != null && h > 0) heights.add(h)
                         }
                     }
 
@@ -958,10 +980,15 @@ class LocalServer(
                         val sorted = heights.sorted()
                         val maxH = sorted.last()
                         val heightsJson = JsonArray().apply { sorted.forEach { add(it) } }
+                        val audioBitratesJson = JsonArray().apply {
+                            add(128); add(192); add(256); add(320)
+                        }
                         val respObj = JsonObject().apply {
                             add("heights", heightsJson)
                             addProperty("maxHeight", maxH)
                             addProperty("hasVideo", true)
+                            add("audioBitrates", audioBitratesJson)
+                            addProperty("maxAudioBitrate", 320)
                         }
                         return jsonOk(gson.toJson(respObj))
                     }
@@ -982,7 +1009,7 @@ class LocalServer(
                 return jsonOk(body)
             }
         } catch (e: Exception) {}
-        return jsonOk("""{"heights":[360,480,720,1080],"maxHeight":1080,"hasVideo":true}""")
+        return jsonOk("""{"heights":[360,480,720,1080,1440,2160],"maxHeight":2160,"hasVideo":true,"audioBitrates":[128,192,256,320],"maxAudioBitrate":320}""")
     }
 
     // ── Downloads (Supports Both Multi-Quality Video MP4 & Audio MP3) ──
@@ -997,11 +1024,57 @@ class LocalServer(
 
         val isVideo = format == "video"
         val safeTitle = titleHint.replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim().ifEmpty { "Media" }
+        val encodedTitle = try { java.net.URLEncoder.encode(safeTitle, "UTF-8") } catch (e: Exception) { "Media" }
 
+        // 1. High-resolution Video (1080p, 1440p 2K, 2160p 4K) or High-bitrate Audio (320k, 256k):
+        // YouTube DASH splits 1080p+ into video-only and audio-only streams. To deliver a complete,
+        // high-resolution file WITH audio, route through the cloud muxed downloader.
+        val targetHeight = quality.toIntOrNull() ?: 720
+        val needsCloudMux = (isVideo && targetHeight >= 1080) || (!isVideo && (quality == "320" || quality == "256"))
+
+        if (needsCloudMux) {
+            try {
+                val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=$format&quality=$quality&title=$encodedTitle"
+                val reqBuilder = Request.Builder()
+                    .url(cloudUrl)
+                    .header("User-Agent", CHROME_UA)
+                val range = session.headers?.get("range")
+                if (!range.isNullOrEmpty()) {
+                    reqBuilder.header("Range", range)
+                }
+
+                val cloudResp = streamProxyClient.newCall(reqBuilder.build()).execute()
+                if (cloudResp.isSuccessful && cloudResp.body != null) {
+                    val body = cloudResp.body!!
+                    val ext = if (isVideo) "mp4" else "mp3"
+                    val mimeType = if (isVideo) "video/mp4" else "audio/mpeg"
+                    val filename = "$safeTitle.$ext"
+                    val status = if (cloudResp.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
+                    val contentLength = body.contentLength()
+                    val stream = body.byteStream()
+
+                    val nanoResponse = newFixedLengthResponse(status, mimeType, stream, contentLength)
+                    nanoResponse.addHeader("Accept-Ranges", "bytes")
+                    nanoResponse.addHeader("Content-Disposition", "attachment; filename=\"$filename\"")
+                    nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
+                    nanoResponse.addHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition")
+                    cloudResp.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
+                    if (contentLength > 0) {
+                        nanoResponse.addHeader("Content-Length", contentLength.toString())
+                    }
+                    return nanoResponse
+                }
+                cloudResp.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Cloud mux download notice for $videoId: ${e.message}")
+            }
+        }
+
+        // 2. Direct Stream Fallback (or standard progressive download for 720p / 480p / 360p / 192k / 128k)
         val downloadStreamUrl = if (isVideo) {
             extractVideoUrl(videoId, quality)
         } else {
-            extractAudioUrl(videoId, if (quality == "320" || quality == "192") "high" else "low")
+            extractAudioUrl(videoId, quality)
         } ?: return jsonError(502, "Could not resolve stream for ${if (isVideo) "video" else "audio"} download")
 
         return try {
@@ -1061,40 +1134,30 @@ class LocalServer(
                 if (resp.isSuccessful && !body.isNullOrEmpty()) {
                     val root = JsonParser.parseString(body).asJsonObject
                     val formats = root.getAsJsonArray("formatStreams") ?: JsonArray()
-                    val adaptive = root.getAsJsonArray("adaptiveFormats") ?: JsonArray()
 
-                    // Try formatStreams first (has both audio and video multiplexed into single MP4)
-                    val formatMatches = mutableListOf<JsonObject>()
+                    // FormatStreams have both audio + video pre-multiplexed into MP4
+                    val formatMatches = mutableListOf<Pair<JsonObject, Int>>()
                     for (elem in formats) {
                         val obj = elem.asJsonObject
                         val container = obj.get("container")?.asString ?: "mp4"
                         if (container.contains("mp4") || obj.get("type")?.asString?.contains("mp4") == true) {
-                            formatMatches.add(obj)
+                            val h = extractFormatHeight(obj) ?: 0
+                            formatMatches.add(Pair(obj, h))
                         }
                     }
 
                     if (formatMatches.isNotEmpty()) {
-                        // Find closest resolution <= targetHeight or best
-                        val bestMuxed = formatMatches.maxByOrNull {
-                            val h = it.get("resolution")?.asString?.replace("p", "")?.toIntOrNull()
-                                ?: it.get("qualityLabel")?.asString?.replace("p", "")?.toIntOrNull() ?: 0
-                            if (h <= targetHeight) h else -h
-                        } ?: formatMatches.first()
+                        // Find stream matching or closest <= targetHeight
+                        val best = formatMatches.minByOrNull { (_, h) ->
+                            if (h == targetHeight) 0
+                            else if (h < targetHeight) targetHeight - h
+                            else (h - targetHeight) + 10000
+                        }?.first
 
-                        val url = bestMuxed.get("url")?.asString
+                        val url = best?.get("url")?.asString
                         if (!url.isNullOrEmpty()) {
                             currentInstanceIdx.set(idx)
                             return url
-                        }
-                    }
-
-                    // Fallback to adaptive video
-                    for (elem in adaptive) {
-                        val obj = elem.asJsonObject
-                        val type = obj.get("type")?.asString ?: obj.get("mimeType")?.asString ?: ""
-                        if (type.startsWith("video/mp4")) {
-                            val url = obj.get("url")?.asString
-                            if (!url.isNullOrEmpty()) return url
                         }
                     }
                 }
@@ -1102,20 +1165,6 @@ class LocalServer(
                 Log.w(TAG, "Video extract notice for $host: ${e.message}")
             }
         }
-        try {
-            val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=video&quality=$quality"
-            val req = Request.Builder()
-                .url(cloudUrl)
-                .header("User-Agent", CHROME_UA)
-                .head()
-                .build()
-            val resp = httpClient.newCall(req).execute()
-            val code = resp.code
-            resp.close()
-            if (code in 200..302) {
-                return cloudUrl
-            }
-        } catch (e: Exception) {}
         return null
     }
 

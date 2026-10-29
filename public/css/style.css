@@ -6502,3 +6502,443 @@ body.is-scrubbing-progress {
   border-radius: 18px;
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.6);
 }
+
+/* ================================================================
+   RUBY AI VOICE ASSISTANT STYLING (Always-On Mobile & Desktop)
+   ================================================================ */
+.mobile-ruby-btn {
+  position: relative !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(139, 92, 246, 0.25)) !important;
+  border: 1px solid rgba(16, 185, 129, 0.5) !important;
+  color: #34d399 !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.3) !important;
+}
+
+.mobile-ruby-btn .ruby-pulse-ring {
+  display: block;
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid #10b981;
+  animation: rubyPulse 2s infinite ease-out;
+  pointer-events: none;
+}
+
+.mobile-ruby-btn.active {
+  background: linear-gradient(135deg, #10b981, #8b5cf6) !important;
+  color: #fff !important;
+  border-color: #34d399 !important;
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.8) !important;
+}
+
+@keyframes rubyPulse {
+  0% { transform: scale(0.95); opacity: 0.9; }
+  50% { transform: scale(1.3); opacity: 0; }
+  100% { transform: scale(0.95); opacity: 0; }
+}
+
+.search-mic-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: transparent;
+  border: none;
+  color: var(--accent);
+  cursor: pointer;
+  padding: 6px;
+  margin-right: 4px;
+  transition: transform 0.15s ease, background 0.15s ease;
+}
+
+.search-mic-btn:hover, .search-mic-btn:active {
+  background: rgba(16, 185, 129, 0.15);
+  transform: scale(1.08);
+}
+
+.search-mic-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.sfp-ruby-pill {
+  border-color: rgba(16, 185, 129, 0.5) !important;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(139, 92, 246, 0.15)) !important;
+  color: #34d399 !important;
+}
+
+/* Ruby Voice Assistant Bottom Sheet Modal */
+.ruby-voice-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ruby-voice-modal-overlay.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.ruby-voice-sheet {
+  background: linear-gradient(180deg, rgba(20, 27, 45, 0.98) 0%, rgba(10, 14, 23, 0.99) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-top-left-radius: 28px;
+  border-top-right-radius: 28px;
+  padding: 16px 20px calc(24px + env(safe-area-inset-bottom, 0px)) 20px;
+  box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(16, 185, 129, 0.15);
+  transform: translateY(100%);
+  transition: transform 0.38s cubic-bezier(0.2, 0.9, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: 540px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.ruby-voice-modal-overlay.active .ruby-voice-sheet {
+  transform: translateY(0);
+}
+
+.ruby-sheet-handle {
+  width: 44px;
+  height: 4.5px;
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 3px;
+  margin-bottom: 14px;
+}
+
+.ruby-header {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.ruby-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ruby-avatar-icon {
+  font-size: 24px;
+  filter: drop-shadow(0 0 10px rgba(16, 185, 129, 0.6));
+}
+
+.ruby-title {
+  font-size: 16px;
+  font-weight: 800;
+  background: linear-gradient(135deg, #34d399 0%, #06b6d4 50%, #a78bfa 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  letter-spacing: -0.2px;
+}
+
+.ruby-subtitle {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.ruby-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: var(--text-secondary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ruby-visualizer-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  margin: 10px 0 18px 0;
+  position: relative;
+  width: 100%;
+  min-height: 110px;
+}
+
+.ruby-orb {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ruby-orb-core {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 60%, #8b5cf6 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow: 0 0 25px rgba(16, 185, 129, 0.6), inset 0 0 12px rgba(255, 255, 255, 0.4);
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+  z-index: 2;
+}
+
+.ruby-orb-core svg {
+  width: 24px;
+  height: 24px;
+}
+
+.ruby-orb-ring {
+  position: absolute;
+  inset: -10px;
+  border-radius: 50%;
+  border: 2px solid rgba(16, 185, 129, 0.4);
+  animation: rubyRingPulse 2.4s infinite cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.ruby-orb-ring.r2 {
+  inset: -20px;
+  border-color: rgba(6, 182, 212, 0.25);
+  animation-delay: 0.8s;
+}
+
+.ruby-waves {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 28px;
+  margin-top: 14px;
+}
+
+.ruby-waves span {
+  width: 3.5px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #34d399, #06b6d4);
+  transition: height 0.1s ease;
+}
+
+.ruby-voice-sheet.listening .ruby-waves span {
+  animation: waveDance 1.2s infinite ease-in-out;
+}
+
+.ruby-waves span:nth-child(1) { animation-delay: 0.05s; }
+.ruby-waves span:nth-child(2) { animation-delay: 0.15s; }
+.ruby-waves span:nth-child(3) { animation-delay: 0.25s; }
+.ruby-waves span:nth-child(4) { animation-delay: 0.35s; }
+.ruby-waves span:nth-child(5) { animation-delay: 0.45s; }
+.ruby-waves span:nth-child(6) { animation-delay: 0.35s; }
+.ruby-waves span:nth-child(7) { animation-delay: 0.25s; }
+.ruby-waves span:nth-child(8) { animation-delay: 0.15s; }
+
+.ruby-conversation {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 16px;
+}
+
+.ruby-live-transcript {
+  font-size: 18px;
+  font-weight: 700;
+  color: #fff;
+  min-height: 26px;
+  line-height: 1.35;
+  letter-spacing: -0.2px;
+}
+
+.ruby-ai-response {
+  font-size: 13.5px;
+  color: #94a3b8;
+  line-height: 1.4;
+  padding: 6px 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  margin: 0 auto;
+  max-width: 90%;
+}
+
+.ruby-chips-scroll {
+  width: 100%;
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 0 16px 0;
+  -webkit-overflow-scrolling: touch;
+  scroll-snap-type: x mandatory;
+}
+
+.ruby-chips-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ruby-chip {
+  flex-shrink: 0;
+  padding: 7px 14px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f1f5f9;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  scroll-snap-align: start;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.ruby-chip:active {
+  background: var(--accent);
+  color: #0b0e14;
+  transform: scale(0.96);
+}
+
+.ruby-bottom-bar {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 12px;
+}
+
+.ruby-always-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.ruby-always-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: #10b981;
+  cursor: pointer;
+}
+
+.ruby-mic-action-btn {
+  padding: 7px 16px;
+  border-radius: 20px;
+  background: var(--accent-gradient);
+  border: none;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+  transition: transform 0.15s ease;
+}
+
+.ruby-mic-action-btn:active {
+  transform: scale(0.95);
+}
+
+/* Mobile Queue & Sheet Fixes */
+@media (max-width: 768px) {
+  .queue-sidebar {
+    width: 100% !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    z-index: 2200 !important;
+    background: rgba(11, 14, 20, 0.98) !important;
+    backdrop-filter: blur(28px) !important;
+    padding-top: env(safe-area-inset-top, 0px) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  }
+}
+
+/* ================================================================
+   ADAPTIVE MULTI-DEVICE RESPONSIVENESS & ZERO-BUG MOBILE LAYOUT
+   ================================================================ */
+/* Extra compact screens (width <= 360px - e.g. Galaxy Z Flip, iPhone SE) */
+@media (max-width: 360px) {
+  .sbn-btn {
+    padding: 4px 6px !important;
+    font-size: 9.5px !important;
+    gap: 2px !important;
+  }
+  .sbn-btn svg {
+    width: 19px !important;
+    height: 19px !important;
+  }
+  .now-playing-bar {
+    left: 4px !important;
+    right: 4px !important;
+    height: 52px !important;
+  }
+  .np-thumbnail-wrap {
+    width: 36px !important;
+    height: 36px !important;
+  }
+  .np-title {
+    font-size: 12px !important;
+  }
+  .np-channel {
+    font-size: 10px !important;
+  }
+  .sfp-artwork-container {
+    max-height: 32vh !important;
+    margin-bottom: 12px !important;
+  }
+  .sfp-track-title {
+    font-size: 17px !important;
+  }
+  .sfp-play-btn {
+    width: 52px !important;
+    height: 52px !important;
+  }
+  .mobile-brand-title {
+    font-size: 16px !important;
+  }
+  .mobile-header-btn {
+    width: 32px !important;
+    height: 32px !important;
+  }
+}
+
+/* Landscape Mobile Orientation */
+@media (max-height: 500px) and (orientation: landscape) {
+  .spotify-fullscreen-player {
+    padding: 8px 16px !important;
+    overflow-y: auto !important;
+  }
+  .sfp-artwork-container {
+    max-height: 25vh !important;
+    margin-bottom: 8px !important;
+  }
+  .sfp-controls-row {
+    margin-bottom: 8px !important;
+  }
+  .sfp-play-btn {
+    width: 48px !important;
+    height: 48px !important;
+  }
+}

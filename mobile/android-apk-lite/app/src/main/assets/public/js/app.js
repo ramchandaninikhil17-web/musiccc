@@ -753,6 +753,7 @@
     SuggestionEngine.init();
     BrowseTabs.init();
     VoiceAssistant.init();
+    RubyVoiceUI.init();
     DownloadOptionsManager.init();
     YouTubeLinkManager.init();
 
@@ -5135,7 +5136,7 @@
         sizeMB = (kbps * minutes * 60) / 8 / 1024;
       } else {
         // Rough video size estimates based on quality
-        const videoRates = { '480': 2.5, '720': 5, '1080': 8, '1440': 16, '2160': 35 };
+        const videoRates = { '360': 1.5, '480': 2.5, '720': 5, '1080': 8, '1440': 16, '2160': 35 };
         const mbPerMin = videoRates[this.videoQuality] || 8;
         sizeMB = mbPerMin * minutes;
       }
@@ -8796,17 +8797,13 @@
     clean(raw) {
       return String(raw == null ? '' : raw)
         .toLowerCase()
-        // Apostrophes vanish ("what's" -> "whats"); other punctuation becomes a
-        // space so "play Syaara." and "hey, my ruby" normalise the same way.
-        .replace(/['‘’`]/g, '')
+        .replace(/['‘’]/g, '')
         .replace(/[^a-z0-9]+/g, ' ')
         .trim()
         .replace(/ (?:please|thanks|thank you|for me)$/, '')
         .trim();
     },
 
-    // Longest match wins, so "hey my ruby" is never read as the bare "ruby"
-    // prefix with "my ruby ..." left over.
     stripWake(text) {
       let best = '';
       for (let i = 0; i < VOICE_WAKE.length; i++) {
@@ -8817,9 +8814,6 @@
       return { text: text.slice(best.length).trim(), woke: true };
     },
 
-    // The gate for always-on listening: does this utterance *start* with a led
-    // wake phrase? Takes a raw transcript because it runs on interim results,
-    // before anything else has touched the text.
     wakeStrict(raw) {
       const t = this.clean(raw);
       if (!t) return false;
@@ -8852,48 +8846,102 @@
         return out;
       };
 
-      // ORDER MATTERS. Every specific intent is matched before the generic
-      // "play <anything>" catch-all at the bottom; otherwise "play my liked
-      // songs" would run a search for the words "my liked songs".
-
-      // Transport, matched as whole utterances so a song called "Skipping
-      // Stones" is never mistaken for a skip command.
+      // ── Transport ──
       if (/^(?:play |go |skip )?(?:to )?next(?: song| track| one)?$/.test(t)
         || /^skip(?: this| it| ahead| forward| song| track| this song| this one)?$/.test(t)) return R('next');
 
       if (/^(?:play |go )?(?:to )?(?:previous|prev|last)(?: song| track| one)?$/.test(t)
-        || /^(?:go )?back(?: a song| one song| a track| one)?$/.test(t)) return R('previous');
+        || /^(?:go )?back(?: a song| one song| a track| one)?$/.test(t)
+        || /^(?:restart|replay)(?: this| this song| track| the song)?$/.test(t)) return R('previous');
 
-      if (/^(?:pause|stop)(?: it| this| music| the music| playback| playing| the song| the track)?$/.test(t)) return R('pause');
+      if (/^(?:pause|stop|halt|shh|be quiet)(?: it| this| music| the music| playback| playing| the song| the track)?$/.test(t)) return R('pause');
 
-      if (/^(?:resume|continue|unpause|un pause|keep playing|carry on|play)(?: it| this| music| the music| playing| the song| again)?$/.test(t)) return R('resume');
+      if (/^(?:resume|continue|unpause|un pause|keep playing|carry on)(?: it| this| music| the music| playing| the song| again)?$/.test(t)) return R('resume');
 
-      // "add this to my playlist" — broad on purpose: it must start with
-      // add/save and end in "playlist", which no play/search phrasing does.
-      if (/^(?:add|save)\b.*\bto\b.*\bplaylists?$/.test(t)) return R('addToPlaylist');
+      // ── Volume Controls ──
+      if (/\b(?:volume (?:up|increase|higher|louder)|turn (?:it )?up|louder)\b/.test(t)) return R('volumeUp');
+      if (/\b(?:volume (?:down|decrease|lower|quieter|softer)|turn (?:it )?down|quieter|softer)\b/.test(t)) return R('volumeDown');
+      const volMatch = /\b(?:set )?volume (?:to )?(\d+)(?:%| percent)?\b|\bvolume (\d+)\b/.exec(t);
+      if (volMatch) {
+        const val = parseInt(volMatch[1] || volMatch[2], 10);
+        if (!isNaN(val)) return R('volumeSet', { val: val });
+      }
+      if (/\b(?:max(?:imum)? volume|full volume|loudest)\b/.test(t)) return R('volumeSet', { val: 100 });
+      if (/^(?:mute|silence)$/.test(t)) return R('mute');
+      if (/^(?:unmute|un mute)$/.test(t)) return R('unmute');
 
-      // "play something like this". The discovery word is required: without it
-      // "play feels like this" (a real song) would be hijacked.
-      if (/\b(?:like|similar to) (?:this|it|that|this song|this one|this track|the current song)$/.test(t)
-        && /\b(?:something|some|more|anything|songs?|music|stuff|tracks)\b/.test(t)) return R('similar');
+      // ── Playback Modes & Speed ──
+      if (/\bshuffle\b/.test(t)) return R(/\b(?:off|stop|no|disable)\b/.test(t) ? 'shuffleOff' : 'shuffle');
+      if (/\b(?:repeat|loop)\b/.test(t)) return R(/\b(?:off|stop|no|disable)\b/.test(t) ? 'repeatOff' : 'repeat');
 
+      const speedMatch = /\b(?:playback )?speed (?:to )?([0-9.]+)(?:x)?\b/.exec(t);
+      if (speedMatch) {
+        const s = parseFloat(speedMatch[1]);
+        if (!isNaN(s) && s >= 0.25 && s <= 3.0) return R('speedSet', { speed: s });
+      }
+      if (/\b(?:faster|speed up)\b/.test(t)) return R('speedUp');
+      if (/\b(?:slower|slow down)\b/.test(t)) return R('speedDown');
+      if (/\b(?:normal speed|standard speed|speed 1x)\b/.test(t)) return R('speedSet', { speed: 1.0 });
+
+      // ── Modals & Sheets ──
+      if (/\b(?:show|open|view|display) lyrics\b/.test(t)) return R('lyricsShow');
+      if (/\b(?:hide|close) lyrics\b/.test(t)) return R('lyricsHide');
+      if (/\b(?:show|open|view) (?:queue|up next)\b/.test(t)) return R('queueShow');
+      if (/\b(?:hide|close) queue\b/.test(t)) return R('queueHide');
+      if (/\b(?:show|open) (?:equalizer|eq|audio settings|sound settings)\b/.test(t)) return R('eqShow');
+      if (/\bbass boost(?:er)?\b/.test(t)) return R('bassBoost');
+
+      const sleepMatch = /\b(?:sleep timer|timer) (?:for )?(\d+) (?:minutes|mins?)\b/.exec(t);
+      if (sleepMatch) {
+        const mins = parseInt(sleepMatch[1], 10);
+        if (!isNaN(mins) && mins > 0) return R('sleepTimer', { mins: mins });
+      }
+      if (/\b(?:cancel|stop) (?:sleep )?timer\b/.test(t)) return R('sleepTimerCancel');
+
+      if (/\b(?:open|fullscreen|maximize) player\b/.test(t)) return R('playerShow');
+      if (/\b(?:close|minimize|collapse) player\b/.test(t)) return R('playerHide');
+
+      // ── Actions & Favorites ──
       if (/\b(?:liked|favou?rites?)\b/.test(t) && /\b(?:play|start|queue|shuffle|put on|listen to)\b/.test(t)) {
         return R('liked', { shuffle: /\bshuffle\b/.test(t) });
       }
+      if (/\b(?:download|save) (?:this|this song|the song|audio)\b/.test(t)) return R('downloadAudio');
+      if (/\b(?:download|save) video\b/.test(t)) return R('downloadVideo');
+      if (/^(?:like|favourite|favorite|heart|love)(?: this| this song| the song| track)?$/.test(t)) return R('likeTrack');
+      if (/^(?:unlike|unfavourite|remove from liked|dislike)$/.test(t)) return R('unlikeTrack');
+      if (/^(?:add|save)\b.*\bto\b.*\bplaylists?$/.test(t)) return R('addToPlaylist');
 
-      if (/\bshuffle\b/.test(t)) return R(/\b(?:off|stop|no)\b/.test(t) ? 'shuffleOff' : 'shuffle');
+      if (/\b(?:like|similar to) (?:this|it|that|this song|this one|this track|the current song)$/.test(t)
+        && /\b(?:something|some|more|anything|songs?|music|stuff|tracks)\b/.test(t)) return R('similar');
 
-      if (/^(?:whats (?:this|playing|the song|this song)|what song is (?:this|playing)|what is (?:this|this song|playing)|who sings this|name this song|current song)$/.test(t)) return R('nowPlaying');
+      // ── Navigation ──
+      if (/\b(?:go to|open) (?:home|main)\b/.test(t)) return R('navHome');
+      if (/\b(?:go to|open) (?:search|explore|find)\b/.test(t)) return R('navSearch');
+      if (/\b(?:go to|open) (?:library|my library|playlists)\b/.test(t)) return R('navLibrary');
+      if (/\b(?:go to|open) (?:mood|moods|flow|ai dj)\b/.test(t)) return R('navMood');
 
+      // ── Info & Help ──
+      if (/^(?:whats (?:this|playing|the song|this song)|what song is (?:this|playing)|what is (?:this|this song|playing)|who sings this|name this song|current song|which song)$/.test(t)) return R('nowPlaying');
+      if (/\b(?:how much time|remaining time|duration)\b/.test(t)) return R('timeRemaining');
+      if (/^(?:help|what can you do|commands|what do you do)$/.test(t)) return R('help');
+      if (/^(?:who are you|whats your name|what is your name)$/.test(t)) return R('aboutRuby');
+
+      // ── Search & Play Queries ──
       const m = /^(play|put on|start|queue up|queue|search for|search|find|look for|listen to|i want to hear|i wanna hear) (.+)$/.exec(t);
       if (m) {
         const rest = m[2].replace(/^(?:me )?(?:the )?(?:song|track|album) (?:called |named )?/, '').trim();
         const mood = this.moodOf(rest);
         if (mood) return R('mood', { arg: mood.q, label: mood.label });
         if (!rest) return R('unknown');
-        // "search for X" wants results on screen; "play X" wants audio.
         const lookOnly = /^(?:search for|search|find|look for)$/.test(m[1]);
         return R(lookOnly ? 'lookup' : 'search', { arg: rest.slice(0, 120) });
+      }
+
+      // If user directly said a song/artist name without keyword (e.g., 'kesariya' or 'arijit singh')
+      if (t.length >= 3) {
+        const mood = this.moodOf(t);
+        if (mood) return R('mood', { arg: mood.q, label: mood.label });
+        return R('search', { arg: t.slice(0, 120) });
       }
 
       return R('unknown');
@@ -9024,142 +9072,155 @@
 
   const VoiceAssistant = {
     inited: false, supported: false, disabled: false,
-    // 'off'      nothing is listening, and nothing will restart it
-    // 'wake'     armed: mic open, everything ignored except the wake phrase
-    // 'command'  woken: the next sentence is treated as a command
     mode: 'off',
-    always: false,          // persisted, so the mic re-arms itself after a reload
+    always: true,
     sessionOpen: false,
     turn: 0,
     rec: null, restarts: 0,
     idleTimer: null, restartTimer: null, hudTimer: null, watchdog: null,
-    btn: null, hud: null, stateEl: null, heardEl: null,
+    btn: null, mobileBtn: null, hud: null, stateEl: null, heardEl: null,
 
-    // Derived, never stored. Two flags for one truth is how a button ends up
-    // pulsing "listening" over a mic that closed ten minutes ago.
     get active() { return this.mode !== 'off'; },
 
     init() {
-      if (this.inited) return;          // a second init() would double every listener
+      if (this.inited) return;
       this.inited = true;
       this.btn = $('#voiceBtn');
+      this.mobileBtn = $('#mobileRubyBtn');
       this.hud = $('#voiceHud');
       this.stateEl = $('#voiceHudState');
       this.heardEl = $('#voiceHudHeard');
+
       const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
-      this.supported = !!Rec;
-      if (!this.supported) {
-        // Graceful fallback: remove the control entirely rather than leave a
-        // button that looks live and does nothing when tapped.
-        if (this.btn) this.btn.style.display = 'none';
-        return;
-      }
-      this.always = Storage.get('voiceAlwaysOn', false) === true;
+      this.supported = !!Rec || (typeof window.MusicFlowAndroid !== 'undefined');
+
+      this.always = Storage.get('voiceAlwaysOn', true) !== false;
+
       if (this.btn) this.btn.addEventListener('click', () => this.toggle());
+      if (this.mobileBtn) {
+        this.mobileBtn.addEventListener('click', () => {
+          RubyVoiceUI.open();
+          this.start();
+        });
+      }
+      $('#searchMicBtn')?.addEventListener('click', () => {
+        RubyVoiceUI.open();
+        this.start();
+      });
       $('#voiceHudClose')?.addEventListener('click', () => this.standDown());
-      // One recognizer for the life of the page: a fresh one per session leaves
-      // the old object and its handlers behind on every start.
-      let rec;
-      try { rec = new Rec(); } catch (err) { this.supported = false; if (this.btn) this.btn.style.display = 'none'; return; }
-      rec.lang = 'en-US';
-      // One long session instead of one per sentence. With always-on listening
-      // that is the difference between a mic that goes deaf for 250ms after
-      // every phrase and one that doesn't — and the wake word landing inside
-      // that gap is the failure nobody forgives.
-      rec.continuous = true;
-      rec.interimResults = true;
-      rec.maxAlternatives = 1;
-      rec.onresult = (e) => this.onResult(e);
-      rec.onerror = (e) => this.onError(e);
-      rec.onend = () => this.onEnd();
-      this.rec = rec;
-      // One interval and one listener for the life of the page. Hidden tabs
-      // throttle timers to roughly once a minute — which is exactly when a
-      // session that died in the background needs picking back up.
+
+      if (Rec) {
+        try {
+          const rec = new Rec();
+          rec.lang = 'en-US';
+          rec.continuous = true;
+          rec.interimResults = true;
+          rec.maxAlternatives = 1;
+          rec.onresult = (e) => this.onResult(e);
+          rec.onerror = (e) => this.onError(e);
+          rec.onend = () => this.onEnd();
+          this.rec = rec;
+        } catch (err) {
+          console.warn('[VoiceAssistant] WebSpeech init error:', err);
+        }
+      }
+
       this.watchdog = setInterval(() => this.check(), VOICE_WATCHDOG_MS);
       document.addEventListener('visibilitychange', () => { if (!document.hidden) this.check(); });
+
+      // Automatically arm always-on listening
       this.autoStart();
+      this.paintButton();
     },
 
-    toggle() { if (this.mode === 'off') this.enable(); else this.disable(); },
+    toggle() {
+      if (this.mode === 'off') this.enable();
+      else this.disable();
+    },
 
-    // The mic button is the always-on switch. It also opens a command window
-    // straight away, so the tap that grants microphone permission is useful
-    // immediately instead of being a step on the way to being useful.
     enable() {
-      if (!this.supported || this.disabled) return;
+      if (this.disabled) return;
       this.setAlways(true);
-      VoiceChime.prime();               // inside the click, while a gesture is live
+      VoiceChime.prime();
       this.start();
-      if (this.mode !== 'off') toast('🎙 Always listening — say “Hey My Ruby”');
+      RubyVoiceUI.open();
+      toast('🎙 Always listening — say “Hey Ruby”');
     },
 
     disable() {
       this.setAlways(false);
       this.stop();
       VoiceChime.off();
+      RubyVoiceUI.setListening(false);
       toast('🎙 Voice off');
     },
 
     setAlways(on) {
       this.always = !!on;
-      // setLocal, not set: microphone permission is per browser, so this is a
-      // device setting with no business syncing to the user's other devices.
       Storage.setLocal('voiceAlwaysOn', this.always);
+      const toggle = $('#rubyAlwaysOnToggle');
+      if (toggle) toggle.checked = this.always;
+      this.paintButton();
     },
 
-    // Arm without a tap. Permission has to be granted *already*: calling start()
-    // to find out would pop a prompt on every page load, and a refusal arrives
-    // as not-allowed, which disables voice for the whole page. Where the
-    // Permissions API is missing (Safari) we wait for the tap instead.
     autoStart() {
-      if (!this.always || !this.supported || this.disabled) return;
-      const perms = navigator.permissions;
-      if (!perms || typeof perms.query !== 'function') return;
-      let query;
-      try { query = perms.query({ name: 'microphone' }); } catch (err) { return; }
-      if (!query || typeof query.then !== 'function') return;   // Firefox rejects the name outright
-      query.then((status) => {
-        if (!status || status.state !== 'granted') return;
-        if (this.mode !== 'off' || this.disabled) return;
+      if (!this.always || this.disabled) return;
+      if (window.MusicFlowAndroid) {
+        // Native APK shell: permissions handled by Android OS
         this.arm();
-        // This context was built outside a gesture, so it is suspended and the
-        // chime would be silent. The first tap or keypress anywhere unsticks it.
-        this.primeOnGesture();
-      }).catch(() => { /* a permission lookup is allowed to fail */ });
+        return;
+      }
+      const perms = navigator.permissions;
+      if (perms && typeof perms.query === 'function') {
+        let query;
+        try { query = perms.query({ name: 'microphone' }); } catch (err) { return; }
+        if (query && typeof query.then === 'function') {
+          query.then((status) => {
+            if (status && status.state === 'granted') {
+              if (this.mode === 'off' && !this.disabled) {
+                this.arm();
+                this.primeOnGesture();
+              }
+            } else {
+              this.primeOnGesture();
+            }
+          }).catch(() => { this.primeOnGesture(); });
+          return;
+        }
+      }
+      this.primeOnGesture();
     },
 
     primeOnGesture() {
-      const once = { once: true, passive: true };
-      document.addEventListener('pointerdown', () => VoiceChime.prime(), once);
-      document.addEventListener('keydown', () => VoiceChime.prime(), once);
+      const handler = () => {
+        VoiceChime.prime();
+        if (this.always && this.mode === 'off' && !this.disabled) {
+          this.arm();
+        }
+      };
+      document.addEventListener('pointerdown', handler, { once: true, passive: true });
+      document.addEventListener('keydown', handler, { once: true, passive: true });
     },
 
-    // Listen for the wake phrase and nothing else. No HUD: this state lasts all
-    // day, and a card that is on screen all day is not status, it is litter.
     arm() {
-      if (!this.supported || this.disabled) return;
+      if (this.disabled) return;
       this.mode = 'wake';
       this.paintButton();
       this.openMic();
     },
 
-    // Open a command window right now: what tapping the mic has always done.
     start() {
-      if (!this.supported || this.disabled || this.mode === 'command') return;
+      if (this.disabled || this.mode === 'command') return;
       this.restarts = 0;
       this.mode = 'command';
       this.paintButton();
-      this.paint('listening', 'Listening…', 'Say “Hey My Ruby, play Syaara”');
-      // openMic() is a no-op when a session is already running (armed), so this
-      // cannot restart the recognizer and trip InvalidStateError at the exact
-      // moment everything is working.
+      this.paint('listening', 'Listening…', 'Say “Hey Ruby, play Kesariya”');
+      RubyVoiceUI.setListening(true);
       if (!this.openMic()) {
-        // The other way start() throws: the previous session hasn't ended yet.
-        // Nothing to recover from and nothing the user did wrong.
         this.mode = this.always ? 'wake' : 'off';
         this.paintButton();
         this.paint('error', 'Mic is busy', 'Trying again in a moment');
+        RubyVoiceUI.setListening(false);
         this.autoHide();
         if (this.always) this.scheduleRestart(VOICE_BACKOFF_MS);
         return;
@@ -9167,62 +9228,108 @@
       this.armIdle();
     },
 
-    // The single owner of "is a recognition session running". Every path that
-    // wants the mic open goes through here, so nothing else needs to know that
-    // starting an already-started recognizer throws.
     openMic() {
-      if (!this.rec || this.disabled) return false;
-      if (this.sessionOpen) return true;          // already listening: nothing to do
+      if (this.disabled) return false;
+      if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.startNativeSpeech === 'function') {
+        this.sessionOpen = true;
+        try {
+          window.MusicFlowAndroid.startNativeSpeech(this.always);
+        } catch(e) {}
+        this.paintButton();
+        return true;
+      }
+      if (!this.rec) return false;
+      if (this.sessionOpen) return true;
       try {
         this.rec.start();
         this.sessionOpen = true;
+        this.paintButton();
         return true;
       } catch (err) {
         return false;
       }
     },
 
-    // Reconcile "should be listening" with "is listening". The watchdog, the tab
-    // coming back into view and a restart that failed all land here.
     check() {
       if (this.mode === 'off' || this.disabled) return;
-      // A queued restart owns the reopening. Jumping in ahead of it would turn
-      // the slow backoff retry into a fast one and defeat the point of it.
       if (this.restartTimer) return;
       this.openMic();
     },
 
-    // Tear down the recognition session without touching the HUD, so a command
-    // can keep its "working" state on screen while it runs.
     closeMic() {
       this.mode = 'off';
       this.sessionOpen = false;
       this.clearTimer('idleTimer');
-      this.clearTimer('restartTimer');   // or a queued restart would reopen the mic
+      this.clearTimer('restartTimer');
       this.paintButton();
-      if (this.rec) { try { this.rec.stop(); } catch (err) { /* already stopped */ } }
+      RubyVoiceUI.setListening(false);
+      if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.stopNativeSpeech === 'function') {
+        try { window.MusicFlowAndroid.stopNativeSpeech(); } catch(e) {}
+      }
+      if (this.rec) { try { this.rec.stop(); } catch (err) {} }
     },
 
-    // Full stop: nothing is listening afterwards and nothing restarts it.
     stop(msg) {
       this.closeMic();
       if (msg) { this.paint('done', msg, ''); this.autoHide(); }
       else this.hide();
     },
 
-    // Leave the command window. Under always-on that means dropping back to
-    // waiting for the wake phrase, not closing the mic — otherwise the ✕ and the
-    // idle timeout would quietly switch off the feature they belong to.
     standDown(msg) {
       if (this.always && !this.disabled && this.mode !== 'off') {
         this.mode = 'wake';
         this.clearTimer('idleTimer');
         this.paintButton();
+        RubyVoiceUI.setListening(false);
         if (msg) { this.paint('done', msg, ''); this.autoHide(); }
         else this.hide();
         return;
       }
       this.stop(msg);
+    },
+
+    speak(text) {
+      if (!text) return;
+      try {
+        if (window.MusicFlowAndroid && typeof window.MusicFlowAndroid.speakText === 'function') {
+          window.MusicFlowAndroid.speakText(text);
+          return;
+        }
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const u = new SpeechSynthesisUtterance(text);
+          u.rate = 1.05;
+          u.pitch = 1.05;
+          window.speechSynthesis.speak(u);
+        }
+      } catch(e) {}
+    },
+
+    handleNativeSpeech(type, data) {
+      if (type === 'onReady') {
+        this.sessionOpen = true;
+        this.paintButton();
+        RubyVoiceUI.setListening(true);
+      } else if (type === 'onBeginning') {
+        RubyVoiceUI.setListening(true);
+      } else if (type === 'onPartial') {
+        if (this.mode === 'wake') {
+          if (VoiceCommands.wakeStrict(data)) {
+            this.wakeUp();
+          }
+        } else {
+          this.armIdle();
+          this.paint('listening', 'Listening…', '“' + data + '”');
+        }
+      } else if (type === 'onResult') {
+        RubyVoiceUI.setListening(false);
+        this.handle(data);
+      } else if (type === 'onError') {
+        RubyVoiceUI.setListening(false);
+        if (this.mode !== 'wake') {
+          this.onError({ error: data });
+        }
+      }
     },
 
     onResult(e) {
@@ -9231,52 +9338,52 @@
       let text = '', isFinal = false;
       for (let i = e.resultIndex || 0; i < res.length; i++) {
         const alt = res[i] && res[i][0];
-        if (!alt) continue;                       // malformed event: ignore, don't throw
+        if (!alt) continue;
         text += (text ? ' ' : '') + (alt.transcript || '');
         if (res[i].isFinal) isFinal = true;
       }
       text = text.trim();
       if (!text) return;
-      // Real speech means the mic is working, so the restart budget resets: it
-      // only exists to catch sessions that end without ever hearing anything.
       this.restarts = 0;
       if (this.mode === 'wake') {
-        // Armed but not woken. Anything that isn't the phrase is dropped in
-        // silence: no HUD, no toast, no state change. The mic is open all day,
-        // and an assistant that reacts to ordinary conversation is unbearable.
         if (!VoiceCommands.wakeStrict(text)) return;
         this.wakeUp();
-        // Interim: the phrase has landed but the command may still be on its
-        // way. The final transcript carries the whole sentence, and handle()
-        // strips the phrase off the front of it.
         if (!isFinal) return;
       }
-      if (!isFinal) { this.armIdle(); this.paint('listening', 'Listening…', '“' + text + '”'); return; }
+      if (!isFinal) {
+        this.armIdle();
+        this.paint('listening', 'Listening…', '“' + text + '”');
+        return;
+      }
       this.handle(text);
     },
 
-    // Chime first — the entire point of a wake word is not having to look.
     wakeUp() {
       this.mode = 'command';
       this.restarts = 0;
-      this.turn++;                     // claims the HUD from any command still finishing
+      this.turn++;
       this.paintButton();
       VoiceChime.wake();
-      this.paint('listening', 'Listening…', 'Go ahead');
+      RubyVoiceUI.open();
+      this.paint('listening', 'Listening…', 'Go ahead, I am listening…');
       this.armIdle();
     },
 
     async handle(text) {
       const cmd = VoiceCommands.parse(text);
       if (cmd.intent === 'empty') return;
-      // Bare wake phrase: stay open and wait for the actual command.
-      if (cmd.intent === 'wake') { this.armIdle(); this.paint('listening', 'Listening…', 'Go ahead'); return; }
+      if (cmd.intent === 'wake') {
+        this.armIdle();
+        this.paint('listening', 'Listening…', 'Go ahead');
+        RubyVoiceUI.open();
+        return;
+      }
+
       const turn = ++this.turn;
       this.paint('working', 'Working…', '“' + text + '”');
-      // A final transcript is a complete request, so the command window closes
-      // here. Under always-on the *session* stays open and falls back to waiting
-      // for the phrase: closing it would go deaf for the second or two the
-      // command takes, which is precisely when people say "hey ruby" again.
+      RubyVoiceUI.setTranscript('“' + text + '”');
+      RubyVoiceUI.setListening(false);
+
       if (this.always && this.mode !== 'off') {
         this.mode = 'wake';
         this.clearTimer('idleTimer');
@@ -9284,51 +9391,246 @@
       } else {
         this.closeMic();
       }
+
       let msg;
-      try { msg = await this.execute(cmd); }
-      catch (err) { msg = 'That did not work'; }
-      if (!msg) { if (turn === this.turn) this.hide(); return; }
-      // Two commands can be in flight at once now that the mic never closes.
-      // The toast still fires — it is the durable record of what happened — but
-      // the card belongs to whoever spoke last.
+      try {
+        msg = await this.execute(cmd);
+      } catch (err) {
+        console.error('[VoiceAssistant] execute error:', err);
+        msg = 'That did not work';
+      }
+
+      if (!msg) {
+        if (turn === this.turn) this.hide();
+        return;
+      }
+
       if (turn === this.turn) {
         this.paint(cmd.intent === 'unknown' ? 'error' : 'done', msg, '“' + text + '”');
+        RubyVoiceUI.setResponse(msg);
         this.autoHide();
       }
-      toast('🎙 ' + msg);
+      toast('💎 ' + msg);
     },
 
     async execute(cmd) {
       switch (cmd.intent) {
-        case 'next': playNext(); return 'Next song';
-        case 'previous': playPrev(); return 'Previous song';
+        case 'next':
+          playNext();
+          this.speak('Skipping to next song');
+          return 'Next song';
+
+        case 'previous':
+          playPrev();
+          this.speak('Playing previous song');
+          return 'Previous song';
 
         case 'pause':
-          // togglePlayPause() would *resume* when already paused, the opposite of
-          // what was asked. Read the element and act in one direction only.
-          if (audioPlayer && audioPlayer.src && !audioPlayer.paused) { audioPlayer.pause(); return 'Paused'; }
+          if (audioPlayer && audioPlayer.src && !audioPlayer.paused) {
+            audioPlayer.pause();
+            this.speak('Paused');
+            return 'Paused';
+          }
+          this.speak('Already paused');
           return 'Already paused';
 
         case 'resume':
           if (audioPlayer && audioPlayer.src && currentIndex >= 0) {
             if (audioPlayer.paused) togglePlayPause();
+            this.speak('Resuming playback');
             return 'Playing';
           }
-          startPersonalizedRadio();       // nothing loaded: "play music" still means play music
+          startPersonalizedRadio();
+          this.speak('Starting your music flow');
           return 'Starting your radio';
 
-        // toggleShuffle() flips, so asking for shuffle twice must not turn it off.
-        case 'shuffle': if (!isShuffle) toggleShuffle(); return 'Shuffle on';
-        case 'shuffleOff': if (isShuffle) toggleShuffle(); return 'Shuffle off';
+        case 'volumeUp': {
+          const cur = (audioPlayer ? audioPlayer.volume : 0.8);
+          const next = Math.min(1.0, Math.round((cur + 0.15) * 100) / 100);
+          if (typeof setVolume === 'function') setVolume(next);
+          else if (audioPlayer) audioPlayer.volume = next;
+          const pct = Math.round(next * 100);
+          this.speak(`Volume ${pct}%`);
+          return `Volume set to ${pct}%`;
+        }
+
+        case 'volumeDown': {
+          const cur = (audioPlayer ? audioPlayer.volume : 0.8);
+          const next = Math.max(0.0, Math.round((cur - 0.15) * 100) / 100);
+          if (typeof setVolume === 'function') setVolume(next);
+          else if (audioPlayer) audioPlayer.volume = next;
+          const pct = Math.round(next * 100);
+          this.speak(`Volume ${pct}%`);
+          return `Volume set to ${pct}%`;
+        }
+
+        case 'volumeSet': {
+          const pct = Math.max(0, Math.min(100, cmd.val));
+          const vol = pct / 100;
+          if (typeof setVolume === 'function') setVolume(vol);
+          else if (audioPlayer) audioPlayer.volume = vol;
+          this.speak(`Volume ${pct}%`);
+          return `Volume set to ${pct}%`;
+        }
+
+        case 'mute': {
+          if (typeof setVolume === 'function') setVolume(0);
+          else if (audioPlayer) audioPlayer.volume = 0;
+          this.speak('Muted');
+          return 'Muted';
+        }
+
+        case 'unmute': {
+          if (typeof setVolume === 'function') setVolume(0.8);
+          else if (audioPlayer) audioPlayer.volume = 0.8;
+          this.speak('Unmuted');
+          return 'Unmuted';
+        }
+
+        case 'shuffle':
+          if (!isShuffle) toggleShuffle();
+          this.speak('Shuffle turned on');
+          return 'Shuffle on';
+
+        case 'shuffleOff':
+          if (isShuffle) toggleShuffle();
+          this.speak('Shuffle turned off');
+          return 'Shuffle off';
+
+        case 'repeat':
+          if (!isRepeat) toggleRepeat();
+          this.speak('Repeat is on');
+          return 'Repeat on';
+
+        case 'repeatOff':
+          if (isRepeat) toggleRepeat();
+          this.speak('Repeat is off');
+          return 'Repeat off';
+
+        case 'speedSet':
+          if (audioPlayer) audioPlayer.playbackRate = cmd.speed;
+          this.speak(`Speed set to ${cmd.speed}x`);
+          return `Playback speed ${cmd.speed}x`;
+
+        case 'speedUp':
+          if (audioPlayer) {
+            audioPlayer.playbackRate = Math.min(2.0, (audioPlayer.playbackRate || 1.0) + 0.25);
+            const r = audioPlayer.playbackRate;
+            this.speak(`Speed ${r}x`);
+            return `Playback speed ${r}x`;
+          }
+          return 'Speed 1x';
+
+        case 'speedDown':
+          if (audioPlayer) {
+            audioPlayer.playbackRate = Math.max(0.5, (audioPlayer.playbackRate || 1.0) - 0.25);
+            const r = audioPlayer.playbackRate;
+            this.speak(`Speed ${r}x`);
+            return `Playback speed ${r}x`;
+          }
+          return 'Speed 1x';
+
+        case 'lyricsShow':
+          $('#sfpLyricsBtn')?.click();
+          this.speak('Showing synced lyrics');
+          return 'Lyrics opened';
+
+        case 'lyricsHide':
+          $('#sfpLyricsOverlayClose')?.click();
+          this.speak('Hiding lyrics');
+          return 'Lyrics closed';
+
+        case 'queueShow':
+          $('#queueToggleBtn')?.click();
+          this.speak('Opening queue');
+          return 'Queue opened';
+
+        case 'queueHide':
+          $('#queueCloseBtn')?.click();
+          this.speak('Closing queue');
+          return 'Queue closed';
+
+        case 'eqShow':
+          $('#eqBtn')?.click();
+          this.speak('Opening 10-band sound equalizer');
+          return 'Equalizer opened';
+
+        case 'bassBoost': {
+          const presetBtn = document.querySelector('[data-preset="bass-boost"]') || document.querySelector('[data-preset="bass"]');
+          if (presetBtn) presetBtn.click();
+          this.speak('Bass boost activated');
+          return 'Bass boost applied';
+        }
+
+        case 'sleepTimer':
+          if (typeof SleepTimerManager !== 'undefined' && SleepTimerManager.setDuration) {
+            SleepTimerManager.setDuration(cmd.mins);
+            this.speak(`Sleep timer set for ${cmd.mins} minutes`);
+            return `Sleep timer: ${cmd.mins} minutes`;
+          }
+          return 'Sleep timer not available';
+
+        case 'sleepTimerCancel':
+          if (typeof SleepTimerManager !== 'undefined' && SleepTimerManager.cancel) {
+            SleepTimerManager.cancel();
+            this.speak('Sleep timer cancelled');
+            return 'Sleep timer cancelled';
+          }
+          return 'Timer cancelled';
+
+        case 'playerShow':
+          SpotifyMobileController.openFullscreen();
+          return 'Player opened';
+
+        case 'playerHide':
+          SpotifyMobileController.closeFullscreen();
+          return 'Player minimized';
+
+        case 'likeTrack':
+          if (currentSong) {
+            if (!isLiked(currentSong.id)) toggleLike(currentSong);
+            updateLikeBtn();
+            SpotifyMobileController.updateLike();
+            this.speak(`Saved ${currentSong.title} to your liked songs`);
+            return `Saved “${currentSong.title}” to Liked Songs`;
+          }
+          return 'Nothing is playing';
+
+        case 'unlikeTrack':
+          if (currentSong) {
+            if (isLiked(currentSong.id)) toggleLike(currentSong);
+            updateLikeBtn();
+            SpotifyMobileController.updateLike();
+            this.speak('Removed from liked songs');
+            return 'Removed from Liked Songs';
+          }
+          return 'Nothing is playing';
+
+        case 'downloadAudio':
+          if (currentSong) {
+            if (typeof downloadSong === 'function') downloadSong(currentSong);
+            else $('#downloadBtn')?.click();
+            this.speak(`Downloading ${currentSong.title}`);
+            return `Downloading “${currentSong.title}”`;
+          }
+          return 'Nothing to download';
+
+        case 'downloadVideo':
+          if (currentSong) {
+            if (typeof downloadSong === 'function') downloadSong(currentSong, 'video');
+            this.speak(`Downloading video for ${currentSong.title}`);
+            return `Downloading video for “${currentSong.title}”`;
+          }
+          return 'Nothing to download';
 
         case 'liked':
-          // Empty check first: "shuffle my liked songs" with nothing liked must
-          // not leave shuffle flipped on as its only visible effect. No toast
-          // here — handle() already toasts whatever we return, and playLikedSongs
-          // is never reached, so its own empty-toast can't fire either.
-          if (!likedSongs.length) { return 'No liked songs yet'; }
+          if (!likedSongs.length) {
+            this.speak('You do not have any liked songs yet');
+            return 'No liked songs yet';
+          }
           if (cmd.shuffle && !isShuffle) toggleShuffle();
           playLikedSongs();
+          this.speak('Playing your liked songs');
           return 'Playing your liked songs';
 
         case 'similar': {
@@ -9336,49 +9638,106 @@
           const artist = SuggestionEngine.cleanArtist(currentSong.channel || '');
           const seed = artist || String(currentSong.title || '').slice(0, 60);
           if (!seed) return 'Nothing is playing';
+          this.speak('Finding tracks like this one');
           return await this.searchAndPlay(seed + ' similar songs mix', 'Songs like this one');
         }
 
         case 'addToPlaylist':
           if (!currentSong) return 'Nothing is playing';
           openAddToPlaylist(currentSong);
+          this.speak('Select a playlist');
           return 'Pick a playlist';
 
         case 'nowPlaying':
-          return currentSong ? 'Now playing: ' + currentSong.title : 'Nothing is playing';
+          if (currentSong) {
+            const artistName = currentSong.channel || 'artist';
+            const rep = `Now playing ${currentSong.title} by ${artistName}`;
+            this.speak(rep);
+            return rep;
+          }
+          this.speak('Nothing is playing right now');
+          return 'Nothing is playing';
 
-        case 'mood': return await this.searchAndPlay(cmd.arg, 'Playing ' + cmd.label);
-        case 'search': return await this.searchAndPlay(cmd.arg, 'Playing “' + cmd.arg + '”');
+        case 'timeRemaining':
+          if (audioPlayer && audioPlayer.duration) {
+            const left = Math.max(0, audioPlayer.duration - audioPlayer.currentTime);
+            const m = Math.floor(left / 60);
+            const s = Math.floor(left % 60);
+            const reply = `${m} minutes and ${s} seconds remaining`;
+            this.speak(reply);
+            return reply;
+          }
+          return 'Duration not available';
 
-        case 'lookup':
+        case 'navHome':
+          navigateTo('home');
+          this.speak('Home');
+          return 'Home';
+
+        case 'navSearch':
+          navigateTo('search');
+          this.speak('Search');
+          return 'Search';
+
+        case 'navLibrary':
+          navigateTo('library');
+          this.speak('Your Library');
+          return 'Your Library';
+
+        case 'navMood':
+          navigateTo('mood');
+          this.speak('Smart Flow');
+          return 'Mood Flow';
+
+        case 'help': {
+          const h = 'You can ask me to play any song or artist, like Kesariya or Arijit Singh. You can say pause, next, volume up, show lyrics, open queue, sleep timer, or shuffle.';
+          this.speak(h);
+          RubyVoiceUI.open();
+          return h;
+        }
+
+        case 'aboutRuby': {
+          const ab = "I am Ruby, your personal AI music assistant in MusicFlow. I'm always listening and ready to play your music!";
+          this.speak(ab);
+          return ab;
+        }
+
+        case 'mood': {
+          this.speak(`Playing ${cmd.label}`);
+          return await this.searchAndPlay(cmd.arg, 'Playing ' + cmd.label);
+        }
+
+        case 'search': {
+          this.speak(`Playing ${cmd.arg}`);
+          return await this.searchAndPlay(cmd.arg, 'Playing “' + cmd.arg + '”');
+        }
+
+        case 'lookup': {
           this.runSearchUI(cmd.arg);
           await doSearch(cmd.arg);
+          this.speak(`Here are the results for ${cmd.arg}`);
           return 'Results for “' + cmd.arg + '”';
+        }
 
         default:
+          this.speak('Sorry, I did not catch that. Try saying play Kesariya');
           return cmd.text ? 'Sorry, I cannot do “' + cmd.text + '”' : 'Did not catch that';
       }
     },
 
-    // Drives the search box exactly the way a click on a genre tile does, so
-    // voice and touch leave the UI in the same state.
     runSearchUI(query) {
       if (searchInput) searchInput.value = query;
       if (searchClear) searchClear.classList.add('visible');
-      SuggestionEngine.close();     // the dropdown has no business covering results
+      SuggestionEngine.close();
       navigateTo('search');
     },
 
     async searchAndPlay(query, label) {
       this.runSearchUI(query);
       await doSearch(query);
-      // doSearch assigns searchResults before it renders, so this reads the list
-      // the user is now looking at rather than firing a second request.
       if (searchResults && searchResults.length) {
-        // A spoken request gets the official release, not whatever YouTube
-        // ranked first. The queue keeps the whole list in its original order, so
-        // the grid on screen and the queue still line up.
-        playAllResults(VoicePick.best(searchResults, query));
+        const best = VoicePick.best(searchResults, query);
+        playAllResults(best);
         return label;
       }
       return 'No results for that';
@@ -9387,18 +9746,15 @@
     onError(e) {
       const code = (e && e.error) || 'unknown';
       if (code === 'not-allowed' || code === 'service-not-allowed') {
-        // A denied permission never recovers on its own, and onEnd would restart
-        // us straight back into the same refusal. Disable for the page, say why.
         this.disabled = true;
         this.closeMic();
-        this.paint('error', 'Microphone blocked', 'Allow mic access in your browser settings');
+        this.paint('error', 'Microphone blocked', 'Allow mic access in settings');
+        RubyVoiceUI.setResponse('Microphone blocked — allow access in settings');
         this.autoHide();
         toast('🎙 Microphone blocked — allow access to use voice');
         return;
       }
-      if (code === 'no-speech' || code === 'aborted') return;   // onEnd decides whether to retry
-      // Armed and silent: a transient recognizer error is not news. Popping a
-      // card on screen while nobody is even talking to us is worse than useless.
+      if (code === 'no-speech' || code === 'aborted') return;
       if (this.mode === 'wake') return;
       this.paint('error', code === 'network' ? 'Voice needs a connection' : 'Did not catch that', '');
     },
@@ -9406,13 +9762,7 @@
     onEnd() {
       this.sessionOpen = false;
       if (this.mode === 'off' || this.disabled) { this.paintButton(); return; }
-      // Even a continuous session ends — on long silence, on a network blip, on
-      // the browser deciding it has had enough — so staying open means
-      // restarting. The budget is what stops a recognizer that dies instantly
-      // from restarting forever and pinning the CPU.
       if (this.restarts >= VOICE_MAX_RESTARTS) {
-        // Always-on then retries slowly instead of giving up: one bad minute
-        // must not quietly end "always listening" for the rest of the day.
         if (this.always) {
           this.restarts = 0;
           this.mode = 'wake';
@@ -9431,9 +9781,6 @@
       this.clearTimer('restartTimer');
       this.restartTimer = setTimeout(() => {
         this.restartTimer = null;
-        // Re-checked inside the callback: a stop between arming this timer and
-        // it firing must not reopen the mic. openMic() itself is a no-op if a
-        // session somehow got opened in the meantime.
         if (this.mode === 'off' || this.disabled) return;
         if (!this.openMic() && !this.always) this.stop('Mic unavailable');
       }, ms);
@@ -9443,45 +9790,142 @@
       this.clearTimer('idleTimer');
       this.idleTimer = setTimeout(() => {
         this.idleTimer = null;
-        // Always-on: the command window closes, the wake phrase still works, and
-        // there is nothing worth saying about it.
         this.standDown(this.always ? '' : 'Stopped listening');
       }, VOICE_IDLE_MS);
     },
 
     clearTimer(name) { if (this[name]) { clearTimeout(this[name]); this[name] = null; } },
 
-    // Two visibly different states. Armed has to be quieter than awake: it is on
-    // all day, and it also has to be louder than nothing, or "always listening"
-    // and "off" look identical and nobody can tell whether it works.
     paintButton() {
-      if (!this.btn) return;
-      this.btn.classList.toggle('armed', this.mode === 'wake');
-      this.btn.classList.toggle('active', this.mode === 'command');
+      const isArmed = this.mode === 'wake';
+      const isActive = this.mode === 'command';
+      if (this.btn) {
+        this.btn.classList.toggle('armed', isArmed);
+        this.btn.classList.toggle('active', isActive);
+      }
+      if (this.mobileBtn) {
+        this.mobileBtn.classList.toggle('armed', isArmed);
+        this.mobileBtn.classList.toggle('active', isActive);
+      }
     },
 
     paint(state, stateText, heard) {
-      if (!this.hud) return;
-      this.clearTimer('hudTimer');
-      this.hud.style.display = '';
-      this.hud.dataset.state = state;
-      // textContent, never innerHTML: this string is whatever the mic heard.
-      if (this.stateEl) this.stateEl.textContent = stateText;
-      if (this.heardEl && heard !== undefined) this.heardEl.textContent = heard;
+      if (this.hud) {
+        this.clearTimer('hudTimer');
+        this.hud.style.display = '';
+        this.hud.dataset.state = state;
+        if (this.stateEl) this.stateEl.textContent = stateText;
+        if (this.heardEl && heard !== undefined) this.heardEl.textContent = heard;
+      }
+      RubyVoiceUI.setTranscript(heard || stateText);
+      RubyVoiceUI.setResponse(stateText);
+      RubyVoiceUI.setListening(state === 'listening');
     },
 
     autoHide() {
-      // No clearTimer here: every caller paints first, and paint() cancels the
-      // pending hide. One owner, so a stale timer can't outlive the HUD it was
-      // scheduled for.
       this.hudTimer = setTimeout(() => { this.hudTimer = null; this.hide(); }, VOICE_HUD_MS);
     },
 
     hide() {
-      // No clearTimer: paint() is the only thing that cancels a pending hide, and
-      // a timer that fires against an already-hidden HUD is a no-op.
       if (this.hud) this.hud.style.display = 'none';
     },
+  };
+
+  /* ================================================================
+     RUBY VOICE UI CONTROLLER (Interactive Glassmorphic Bottom Sheet)
+     ================================================================ */
+  const RubyVoiceUI = {
+    inited: false,
+    modal: null,
+    transcriptEl: null,
+    responseEl: null,
+    orb: null,
+    alwaysToggle: null,
+
+    init() {
+      if (this.inited) return;
+      this.inited = true;
+      this.modal = $('#rubyVoiceModal');
+      this.transcriptEl = $('#rubyLiveTranscript');
+      this.responseEl = $('#rubyAiResponse');
+      this.orb = $('#rubyOrb');
+      this.alwaysToggle = $('#rubyAlwaysOnToggle');
+
+      $('#rubyCloseBtn')?.addEventListener('click', () => this.close());
+      this.modal?.addEventListener('click', (e) => {
+        if (e.target === this.modal) this.close();
+      });
+
+      $('#rubyManualMicBtn')?.addEventListener('click', () => {
+        VoiceAssistant.start();
+      });
+
+      this.orb?.addEventListener('click', () => {
+        VoiceAssistant.start();
+      });
+
+      if (this.alwaysToggle) {
+        this.alwaysToggle.checked = VoiceAssistant.always;
+        this.alwaysToggle.addEventListener('change', (e) => {
+          VoiceAssistant.setAlways(e.target.checked);
+          if (e.target.checked) {
+            VoiceAssistant.arm();
+            toast('💎 Ruby always-on listening enabled');
+          } else {
+            VoiceAssistant.closeMic();
+            toast('Ruby voice switched off');
+          }
+        });
+      }
+
+      $$('.ruby-chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const cmdText = btn.dataset.cmd;
+          if (cmdText) {
+            this.setTranscript('“' + cmdText + '”');
+            VoiceAssistant.handle(cmdText);
+          }
+        });
+      });
+    },
+
+    open() {
+      if (!this.inited) this.init();
+      if (!this.modal) return;
+      this.modal.style.display = 'flex';
+      requestAnimationFrame(() => {
+        this.modal.classList.add('active');
+        this.modal.setAttribute('aria-hidden', 'false');
+      });
+      VoiceChime.wake();
+      this.setListening(true);
+      this.setTranscript('Listening for command…');
+      this.setResponse('Say “Play Kesariya”, “Volume 80%”, or “Show lyrics”');
+    },
+
+    close() {
+      if (!this.modal) return;
+      this.modal.classList.remove('active');
+      this.modal.setAttribute('aria-hidden', 'true');
+      setTimeout(() => {
+        if (this.modal) this.modal.style.display = 'none';
+      }, 350);
+    },
+
+    setTranscript(text) {
+      if (this.transcriptEl) this.transcriptEl.textContent = text;
+    },
+
+    setResponse(text) {
+      if (this.responseEl) this.responseEl.textContent = text;
+    },
+
+    setListening(isListening) {
+      const sheet = this.modal ? this.modal.querySelector('.ruby-voice-sheet') : null;
+      if (sheet) sheet.classList.toggle('listening', isListening);
+      const sub = $('#rubySubtitle');
+      if (sub) sub.textContent = isListening ? 'Listening… Speak now' : 'Always Listening • Say “Hey Ruby”';
+    }
   };
 
   /* ================================================================
@@ -9574,17 +10018,75 @@
       }
 
       // Action pills
-      // Lyrics button handled by SyncedLyricsManager directly in overlay
+      $('#sfpLyricsBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const overlay = $('#sfpLyricsOverlay');
+        if (overlay) overlay.classList.toggle('active');
+      });
 
       $('#sfpEqBtn')?.addEventListener('click', () => {
         this.closeFullscreen();
         $('#eqBtn')?.click();
       });
 
+      $('#sfpQueueBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.closeFullscreen();
+        $('#queueToggleBtn')?.click();
+      });
+
       $('#sfpSleepBtn')?.addEventListener('click', () => {
         this.closeFullscreen();
         $('#sleepTimerBtn')?.click();
       });
+
+      $('#sfpRubyBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.closeFullscreen();
+        RubyVoiceUI.open();
+        VoiceAssistant.start();
+      });
+
+      $('#sfpDlBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentSong) {
+          if (typeof downloadSong === 'function') downloadSong(currentSong);
+          else $('#downloadBtn')?.click();
+        }
+      });
+
+      // Swipe down on fullscreen player to collapse
+      const sfpModal = $('#spotifyFullscreenPlayer');
+      if (sfpModal) {
+        let touchStartY = 0;
+        let touchCurY = 0;
+        let isTouching = false;
+        sfpModal.addEventListener('touchstart', (e) => {
+          if (e.target.closest('#sfpScrubber') || e.target.closest('#sfpLyricsScroll')) return;
+          touchStartY = e.touches[0].clientY;
+          touchCurY = touchStartY;
+          isTouching = true;
+        }, { passive: true });
+
+        sfpModal.addEventListener('touchmove', (e) => {
+          if (!isTouching) return;
+          touchCurY = e.touches[0].clientY;
+          const diff = touchCurY - touchStartY;
+          if (diff > 0) {
+            sfpModal.style.transform = `translateY(${diff}px)`;
+          }
+        }, { passive: true });
+
+        sfpModal.addEventListener('touchend', () => {
+          if (!isTouching) return;
+          isTouching = false;
+          const diff = touchCurY - touchStartY;
+          if (diff > 120) {
+            this.closeFullscreen();
+          }
+          sfpModal.style.transform = '';
+        });
+      }
     },
 
     openFullscreen() {

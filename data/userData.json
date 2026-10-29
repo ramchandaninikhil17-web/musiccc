@@ -1,7 +1,31 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-10-29T11:52:18.151Z",
+  "lastSaved": "2026-10-29T13:49:49.208Z",
   "history": [
+    {
+      "song": {
+        "id": "AJtDXIazrMo",
+        "title": "Ellie Goulding - Love Me Like You Do (Official Video)",
+        "channel": "Ellie Goulding",
+        "duration": 250,
+        "thumbnail": "https://i.ytimg.com/vi/AJtDXIazrMo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAsfKGOpZz9W7dNt4ZpT_80KdGTDw",
+        "views": 2411909317
+      },
+      "playedAt": "2026-10-29T13:48:42.875Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "UPJYO3v0",
+        "title": "Ishq de Fanniyar - Female",
+        "channel": "Jyotica Tangri, Shaarib Toshi, Kumaar",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+        "isCloud": true
+      },
+      "playedAt": "2026-10-29T12:43:26.566Z",
+      "listenedSec": 0
+    },
     {
       "song": {
         "id": "gwX71Dmc",
@@ -9,10 +33,12 @@
         "channel": "Karan Aujla, Jay Trak",
         "duration": 210,
         "thumbnail": "https://c.saavncdn.com/178/Wavy-Punjabi-2024-20250523044332-500x500.jpg",
-        "isCloud": true
+        "isCloud": true,
+        "streamUrl": "https://aac.saavncdn.com/178/dzMdLqrVheSFu3MN5XGIgBYFrSRf4pDq9RkmanFYOzq_320.mp4"
       },
       "playedAt": "2026-10-29T11:51:38.112Z",
-      "listenedSec": 0
+      "listenedSec": 26,
+      "counted": true
     },
     {
       "song": {
@@ -3161,32 +3187,6 @@
       },
       "playedAt": "2026-09-05T16:45:23.375Z",
       "listenedSec": 12
-    },
-    {
-      "song": {
-        "id": "bgGH0wcjUOA",
-        "title": "Dhanda Nyoliwala - Tension (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 194,
-        "thumbnail": "https://i.ytimg.com/vi/bgGH0wcjUOA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA-rtTe15Z3GcYwSRrjD4Z-0kye2Q",
-        "views": 62177354
-      },
-      "playedAt": "2026-09-05T15:31:14.920Z",
-      "listenedSec": 199,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "1OAjeECW90E",
-        "title": "Dhanda Nyoliwala - Russian Bandana (Music Video) | Deepesh Goyal | VYRL Haryanvi",
-        "channel": "VYRL Haryanvi",
-        "duration": 203,
-        "thumbnail": "https://i.ytimg.com/vi/1OAjeECW90E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBEvHYGIL-TiGTC4GkcNBCXNcX2KQ",
-        "views": 458776251
-      },
-      "playedAt": "2026-09-05T14:55:59.177Z",
-      "listenedSec": 209,
-      "counted": true
     }
   ],
   "searchHistory": [],
@@ -3746,84 +3746,84 @@
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "qcEf8GY8",
-      "title": "Apna Bana Le",
-      "channel": "Amitabh Bhattacharya, Sachin-Jigar, Arijit Singh",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "TFTnJzWRTJ8",
+      "title": "Naal Nachna | Dhurandhar | Ranveer Singh, Sara Arjun, Shashwat Sachdev, Afsana Khan, Reble, Irshad",
+      "channel": "Saregama Music and 2 more",
+      "duration": 126,
+      "thumbnail": "https://i.ytimg.com/vi/TFTnJzWRTJ8/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLAu-LN-xxUYdIas4dWyliMQ6A7nvQ",
+      "views": 102098443
     },
     {
-      "id": "UPJYO3v0",
-      "title": "Ishq de Fanniyar - Female",
-      "channel": "Jyotica Tangri, Shaarib Toshi, Kumaar",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "sQ74S7cZ3Kg",
+      "title": "Ramayana: Judi Jodi (Song) | Namit M, Nitesh T | Ranbir K, Sai P | AR Rahman, Shreya G, Kumar V",
+      "channel": "T-Series and World Of Ramayana",
+      "duration": 156,
+      "thumbnail": "https://i.ytimg.com/vi/sQ74S7cZ3Kg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAoIJrJBSg4BBSXGtbM3R9xySvc3Q",
+      "views": 375263
     },
     {
-      "id": "kHS4uHli",
-      "title": "Vaaroon",
-      "channel": "Anand Bhaskar",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "vJQMhj6WYZA",
+      "title": "Barbaadiyan (Full Video)| Shiddat |Sunny K,Radhika M |Sachet T,Nikhita G, Madhubanti B|Sachin -Jigar",
+      "channel": "T-Series",
+      "duration": 242,
+      "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
+      "views": 210995575
     },
     {
-      "id": "RPY7kBp3",
-      "title": "Lae Dooba",
-      "channel": "Manoj Muntashir, Rochak Kohli, Sunidhi Chauhan",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "n2dVFdqMYGA",
+      "title": "Sahiba (Official Music Video) : Aditya Rikhari, Ankita Chhetri | T-Series",
+      "channel": "T-Series",
+      "duration": 184,
+      "thumbnail": "https://i.ytimg.com/vi/n2dVFdqMYGA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjHSYXox1RX8Z-IgSuu9Pdqe_ljQ",
+      "views": 401694799
     },
     {
-      "id": "BtmajL_i",
-      "title": "Vaaroon Trending Version",
-      "channel": "Ginny Diwan, Anand Bhaskar, Romy",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/037/Vaaroon-Trending-Version-Hindi-2025-20250709213623-500x500.jpg",
-      "isCloud": true
+      "id": "FGKceyR1WYg",
+      "title": "NAINA (Official Video): Neeti Mohan | Preet Sirohi | Neer Katesra | T-Series",
+      "channel": "T-Series",
+      "duration": 159,
+      "thumbnail": "https://i.ytimg.com/vi/FGKceyR1WYg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAWfGIjeP2h3-rZcqeStcFnHYd6tA",
+      "views": 325862
     },
     {
-      "id": "VkKO4wT4",
-      "title": "Jugraafiya Trending Version",
-      "channel": "Amitabh Bhattacharya, Ajay-Atul, Udit Narayan",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/022/Jugraafiya-Trending-Version-Hindi-2025-20250618165955-500x500.jpg",
-      "isCloud": true
+      "id": "LedDxbUCBVE",
+      "title": "Mixtape 2024 | T-Series Mixtape songs | Armaan Malik, Neha kakkar, Jubin, Shirley Setia...",
+      "channel": "MusicBench",
+      "duration": 1436,
+      "thumbnail": "https://i.ytimg.com/vi/LedDxbUCBVE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBcoTzAP&rs=AOn4CLCQSGwMvhaLrqFnGnNIbsyczV_06A",
+      "views": 4512730
     },
     {
-      "id": "7o2bZnQk",
-      "title": "Vaaroon Trending Version",
-      "channel": "Ginny Diwan, Anand Bhaskar, Romy",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/835/1-Min-Insta-Viral-Mix-Hindi-2026-20260512190618-500x500.jpg",
-      "isCloud": true
+      "id": "oMesPehN_Do",
+      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+      "channel": "T-Series",
+      "duration": 268,
+      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP2fr86VttexE6AnKdeYVbit0-3w",
+      "views": 92316147
     },
     {
-      "id": "bl6OTcVp",
-      "title": "Jugraafiya",
-      "channel": "Udit Narayan, Shreya Ghoshal",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "dR9B_gPxjkk",
+      "title": "Kiliye Kiliye - Video Song | Lokah Chapter 1: Chandra | Kalyani Priyadarshan | Naslen | Dominic Arun",
+      "channel": "Saregama Malayalam",
+      "duration": 125,
+      "thumbnail": "https://i.ytimg.com/vi/dR9B_gPxjkk/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLAw0FtElLnyaicOWHM4i1gKc6DTeg",
+      "views": 79168583
     },
     {
-      "id": "kXvA3QYv",
-      "title": "Teri Ore (Trending Version)",
-      "channel": "Shreya Ghoshal",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/609/Teri-Ore-Trending-Version-Hindi-2025-20250815162404-500x500.jpg",
-      "isCloud": true
+      "id": "7KXVzkxM0-g",
+      "title": "Bheegi Bheegi Raaton Mein | The Paradise | Nani | Raghav Juyal | Lata Mangeshkar, Kishore Kumar",
+      "channel": "Saregama Music",
+      "duration": 58,
+      "thumbnail": "https://i.ytimg.com/vi/7KXVzkxM0-g/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLCHtGCEHuzFUpSmOgyMMzgvRVZFmw",
+      "views": 19718
     },
     {
-      "id": "ILnuUlkk",
-      "title": "Tu Hi Disda",
-      "channel": "Kumaar, Pritam, Arijit Singh",
-      "duration": 210,
-      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
-      "isCloud": true
+      "id": "nJZcbidTutE",
+      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
+      "channel": "T-Series",
+      "duration": 248,
+      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
+      "views": 393525149
     }
   ],
   "likes": [
@@ -4202,7 +4202,7 @@
   "daily_listening_diary": {
     "2026-10-29": {
       "date": "2026-10-29",
-      "minutes": 0,
+      "minutes": 230,
       "tracks": [
         {
           "id": "gwX71Dmc",
