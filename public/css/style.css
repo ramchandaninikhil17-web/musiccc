@@ -5106,3 +5106,777 @@ body.is-scrubbing-progress {
   border-radius: 20px;
 }
 
+/* ================================================================
+   SPOTIFY MOBILE BOTTOM NAVIGATION & FLOATING MINI PLAYER
+   ================================================================ */
+.spotify-bottom-nav {
+  display: none;
+}
+
+.spotify-fullscreen-player {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Spotify Bottom Navigation Bar */
+  .spotify-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(11, 14, 20, 0.98);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    z-index: 400;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .sbn-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.55);
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 6px 12px;
+    border-radius: 8px;
+    transition: color 0.2s ease, transform 0.15s ease;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .sbn-btn svg {
+    width: 22px;
+    height: 22px;
+    transition: transform 0.2s ease;
+  }
+
+  .sbn-btn.active {
+    color: #10b981;
+  }
+
+  .sbn-btn.active svg {
+    transform: scale(1.1);
+    stroke: #10b981;
+  }
+
+  /* Transform Now Playing Bar into Spotify Floating Pill Mini-Player */
+  .now-playing-bar {
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 8px !important;
+    right: 8px !important;
+    height: 56px !important;
+    background: rgba(18, 24, 38, 0.96) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+    padding: 0 8px !important;
+    z-index: 399 !important;
+    overflow: hidden;
+  }
+
+  .now-playing-inner {
+    height: 100% !important;
+    padding: 0 4px !important;
+    gap: 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .np-track-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+    cursor: pointer;
+  }
+
+  .np-thumbnail-wrap {
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .np-details {
+    margin-left: 8px !important;
+    overflow: hidden;
+  }
+
+  .np-title {
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .np-channel {
+    font-size: 11px !important;
+    color: rgba(255, 255, 255, 0.6) !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .np-controls {
+    flex: 0 0 auto !important;
+    margin: 0 !important;
+  }
+
+  .np-buttons {
+    gap: 4px !important;
+  }
+
+  .np-play-btn {
+    width: 36px !important;
+    height: 36px !important;
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-radius: 50% !important;
+  }
+
+  .np-progress-wrap {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2.5px;
+    padding: 0 !important;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .np-time {
+    display: none !important;
+  }
+
+  .np-progress-bar {
+    height: 100% !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  .np-progress-track {
+    height: 100% !important;
+    border-radius: 0 !important;
+  }
+
+  .np-progress-fill {
+    background: #10b981 !important;
+  }
+
+  .np-progress-thumb {
+    display: none !important;
+  }
+
+  /* Page content padding so bottom nav & mini-player don't hide items */
+  .page-content {
+    padding-bottom: 150px !important;
+  }
+
+  /* Spotify Full Screen Player Modal */
+  .spotify-fullscreen-player {
+    display: flex;
+    flex-direction: column;
+    position: fixed;
+    inset: 0;
+    background: linear-gradient(180deg, #182234 0%, #0c1017 100%);
+    z-index: 1000;
+    padding: 16px 24px;
+    padding-top: calc(16px + env(safe-area-inset-top, 0px));
+    padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+    transform: translateY(100%);
+    transition: transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1);
+    overflow: hidden;
+  }
+
+  .spotify-fullscreen-player.active {
+    transform: translateY(0);
+  }
+
+  .sfp-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 48px;
+    margin-bottom: 16px;
+  }
+
+  .sfp-collapse-btn, .sfp-menu-btn {
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 50%;
+  }
+
+  .sfp-collapse-btn svg, .sfp-menu-btn svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .sfp-header-title {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+  }
+
+  .sfp-subtitle {
+    font-size: 10px;
+    letter-spacing: 1.5px;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .sfp-title {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    max-width: 220px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sfp-artwork-container {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1;
+    max-height: 40vh;
+    margin: 0 auto 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sfp-art-glow {
+    position: absolute;
+    inset: -10px;
+    background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+    filter: blur(30px);
+    border-radius: 24px;
+    pointer-events: none;
+  }
+
+  .sfp-artwork {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+  }
+
+  .sfp-track-details {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+  }
+
+  .sfp-track-meta {
+    flex: 1;
+    min-width: 0;
+    padding-right: 16px;
+  }
+
+  .sfp-track-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sfp-track-artist {
+    font-size: 13.5px;
+    color: rgba(255, 255, 255, 0.65);
+    margin-top: 4px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sfp-like-btn {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 8px;
+  }
+
+  .sfp-like-btn svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sfp-progress-container {
+    margin-bottom: 16px;
+  }
+
+  .sfp-scrubber {
+    height: 20px;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    touch-action: none;
+  }
+
+  .sfp-scrubber-track {
+    width: 100%;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px;
+    position: relative;
+  }
+
+  .sfp-scrubber-fill {
+    height: 100%;
+    background: #fff;
+    border-radius: 2px;
+    width: 0%;
+  }
+
+  .sfp-scrubber-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0%;
+    width: 12px;
+    height: 12px;
+    background: #fff;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+
+  .sfp-time-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    margin-top: 4px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .sfp-controls-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding: 0 8px;
+  }
+
+  .sfp-btn {
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .sfp-btn svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .sfp-skip-btn svg {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sfp-play-btn {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: #fff;
+    color: #000;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(255, 255, 255, 0.25);
+    transition: transform 0.15s ease;
+  }
+
+  .sfp-play-btn svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .sfp-bottom-actions {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    gap: 8px;
+    margin-top: auto;
+  }
+
+  .sfp-action-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 20px;
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 14px;
+    cursor: pointer;
+  }
+}
+
+/* Default desktop: mobile header hidden */
+.mobile-brand-header {
+  display: none;
+}
+
+/* ================================================================
+   NATIVE ANDROID APK MOBILE EXPERIENCE OVERRIDES
+   ================================================================ */
+@media (max-width: 768px) {
+  /* Remove desktop-only elements that crowd mobile screen */
+  .apple-floating-orb,
+  .dynamic-island-header,
+  .mobile-menu-btn,
+  .sidebar,
+  .sidebar-overlay,
+  #pipBtnTop,
+  #focusModeBtn,
+  #voiceBtn,
+  #themeToggleBtn {
+    display: none !important;
+  }
+
+  /* Immersive clean top bar */
+  .top-bar {
+    position: sticky !important;
+    top: 0 !important;
+    height: 52px !important;
+    padding: 0 14px !important;
+    background: rgba(11, 14, 20, 0.98) !important;
+    backdrop-filter: blur(20px) !important;
+    -webkit-backdrop-filter: blur(20px) !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07) !important;
+    z-index: 100 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  /* Mobile Brand Header (shows on Home, Library, Moods) */
+  .mobile-brand-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  .mobile-brand-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .mobile-brand-icon {
+    font-size: 20px !important;
+  }
+
+  .mobile-brand-title {
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%) !important;
+    -webkit-background-clip: text !important;
+    -webkit-text-fill-color: transparent !important;
+    letter-spacing: -0.3px !important;
+  }
+
+  .mobile-brand-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .mobile-header-btn {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: rgba(255, 255, 255, 0.08) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    color: #f1f5f9 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    transition: background 0.2s, transform 0.1s !important;
+  }
+
+  .mobile-header-btn:active {
+    background: rgba(255, 255, 255, 0.2) !important;
+    transform: scale(0.95) !important;
+  }
+
+  .mobile-header-btn svg {
+    width: 17px !important;
+    height: 17px !important;
+  }
+
+  /* Search bar on mobile: only show when active page is search */
+  body:not([data-active-page="search"]) .search-bar-wrap,
+  body:not([data-active-page="search"]) .top-bar-actions {
+    display: none !important;
+  }
+
+  body[data-active-page="search"] .mobile-brand-header {
+    display: none !important;
+  }
+
+  body[data-active-page="search"] .search-bar-wrap {
+    display: block !important;
+    flex: 1 !important;
+    margin: 0 !important;
+  }
+
+  body[data-active-page="search"] .top-bar-actions {
+    display: none !important;
+  }
+
+  .search-bar {
+    height: 40px !important;
+    background: rgba(255, 255, 255, 0.07) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 20px !important;
+  }
+
+  /* Compact Home Header and Hero Card (No excessive vertical height) */
+  .home-greeting {
+    margin-bottom: 8px !important;
+    padding: 0 2px !important;
+  }
+  .home-greeting h1 {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+    margin-bottom: 2px !important;
+    letter-spacing: -0.3px !important;
+  }
+  .home-greeting p {
+    font-size: 13px !important;
+    color: var(--text-secondary) !important;
+    margin: 0 !important;
+  }
+
+  .home-hero-card {
+    padding: 12px 14px !important;
+    margin-bottom: 14px !important;
+    border-radius: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    min-height: auto !important;
+    box-shadow: 0 6px 20px rgba(99, 102, 241, 0.15) !important;
+  }
+  .hero-badge {
+    padding: 2px 8px !important;
+    font-size: 10px !important;
+    margin-bottom: 4px !important;
+    letter-spacing: 0.5px !important;
+  }
+  .hero-content {
+    max-width: 76% !important;
+  }
+  .hero-content h2 {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    margin-bottom: 4px !important;
+    letter-spacing: -0.2px !important;
+  }
+  .hero-content p {
+    display: none !important; /* Hide long paragraph on mobile to save vertical space */
+  }
+  .hero-play-btn {
+    padding: 6px 14px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    gap: 6px !important;
+    border-radius: 20px !important;
+  }
+  .hero-play-btn svg {
+    width: 12px !important;
+    height: 12px !important;
+  }
+  .hero-visual {
+    position: relative !important;
+    width: 44px !important;
+    height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .hero-disc {
+    width: 40px !important;
+    height: 40px !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border-radius: 50% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  .hero-disc-icon {
+    font-size: 18px !important;
+  }
+  .hero-glow-circle {
+    display: none !important;
+  }
+
+  /* Library Quick Cards */
+  .library-cards-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    gap: 10px !important;
+    margin-bottom: 16px !important;
+  }
+  .library-card {
+    padding: 14px 16px !important;
+    border-radius: 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  .downloaded-card {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.16) 100%) !important;
+    border: 1px solid rgba(16, 185, 129, 0.35) !important;
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.15) !important;
+    cursor: pointer !important;
+  }
+  .downloaded-card .lib-card-icon {
+    width: 44px !important;
+    height: 44px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    font-size: 20px !important;
+    flex-shrink: 0 !important;
+  }
+  .downloaded-card .lib-card-info h3 {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+    margin-bottom: 2px !important;
+  }
+  .downloaded-card .lib-card-info p {
+    font-size: 12px !important;
+    color: rgba(255, 255, 255, 0.7) !important;
+    margin: 0 !important;
+  }
+  .downloaded-card .lib-play-btn {
+    margin-left: auto !important;
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 50% !important;
+    background: #10b981 !important;
+    border: none !important;
+    color: #fff !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4) !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* Safe Layer Stacking: Page Content -> BottomNav (400) -> MiniPlayer (450) -> DownloadBar (500) -> Toast (600) */
+  .main-area {
+    margin-left: 0 !important;
+    padding-bottom: 160px !important;
+  }
+
+  .page-content {
+    padding: 12px 14px 160px 14px !important;
+  }
+
+  /* Mobile bottom navigation */
+  .spotify-bottom-nav {
+    display: flex !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    height: 60px !important;
+    background: rgba(11, 14, 20, 0.98) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+    z-index: 400 !important;
+  }
+
+  /* Spotify Floating Mini Player (Cleanly above bottom nav) */
+  .now-playing-bar {
+    display: block !important;
+    position: fixed !important;
+    bottom: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 8px !important;
+    right: 8px !important;
+    height: 56px !important;
+    background: rgba(18, 24, 38, 0.97) !important;
+    backdrop-filter: blur(24px) !important;
+    -webkit-backdrop-filter: blur(24px) !important;
+    border: 1px solid rgba(255, 255, 255, 0.12) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7) !important;
+    z-index: 450 !important;
+    overflow: hidden;
+  }
+
+  /* Floating Download Progress Bar (Cleanly above mini player) */
+  .download-bar {
+    position: fixed !important;
+    bottom: calc(126px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 10px !important;
+    right: 10px !important;
+    z-index: 500 !important;
+    background: rgba(18, 24, 38, 0.97) !important;
+    backdrop-filter: blur(20px) !important;
+    border: 1px solid rgba(99, 102, 241, 0.4) !important;
+    border-radius: 12px !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6) !important;
+  }
+
+  /* Full Screen Player Modal (Spotify Style) */
+  .spotify-fullscreen-player {
+    display: flex !important;
+    z-index: 2000 !important;
+  }
+
+  /* Toast notification above all bars */
+  .toast-container {
+    position: fixed !important;
+    bottom: calc(136px + env(safe-area-inset-bottom, 0px)) !important;
+    left: 14px !important;
+    right: 14px !important;
+    z-index: 600 !important;
+  }
+}
+
+
+

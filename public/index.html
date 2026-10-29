@@ -77,6 +77,22 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
         </button>
 
+        <!-- Mobile Brand Header (Active on mobile for Home, Library, Moods) -->
+        <div class="mobile-brand-header" id="mobileBrandHeader">
+          <div class="mobile-brand-left">
+            <span class="mobile-brand-icon">🎵</span>
+            <span class="mobile-brand-title" id="mobilePageTitle">MusicFlow</span>
+          </div>
+          <div class="mobile-brand-right">
+            <button class="mobile-header-btn" id="mobileSearchQuickBtn" type="button" title="Search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </button>
+            <button class="mobile-header-btn" id="mobileSettingsQuickBtn" type="button" title="Settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+
         <!-- Apple Dynamic Island Floating Header Capsule -->
         <div class="dynamic-island-header" id="dynamicIslandHeader" title="Apple Dynamic Island — Quick Player Controls">
           <div class="di-minimized-pill" id="diMinimizedPill">
@@ -377,16 +393,31 @@
             <input type="file" id="localFileInput" multiple accept="audio/*" style="display:none;" />
           </div>
 
-          <!-- Liked Songs -->
-          <div class="library-card liked-card" id="likedSongsCard">
-            <div class="lib-card-icon">❤️</div>
-            <div class="lib-card-info">
-              <h3>Liked Songs</h3>
-              <p id="likedCount">0 songs</p>
+          <!-- Quick Access Cards (Liked & Downloaded) -->
+          <div class="library-cards-row">
+            <!-- Liked Songs -->
+            <div class="library-card liked-card" id="likedSongsCard">
+              <div class="lib-card-icon">❤️</div>
+              <div class="lib-card-info">
+                <h3>Liked Songs</h3>
+                <p id="likedCount">0 songs</p>
+              </div>
+              <button class="lib-play-btn" id="playLikedBtn" title="Play Liked Songs">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
             </div>
-            <button class="lib-play-btn" id="playLikedBtn" title="Play Liked Songs">
-              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-            </button>
+
+            <!-- Downloaded Songs (Offline) -->
+            <div class="library-card downloaded-card" id="downloadedSongsCard">
+              <div class="lib-card-icon">⬇️</div>
+              <div class="lib-card-info">
+                <h3>Downloaded Songs</h3>
+                <p id="downloadedCount">0 songs • Ready for offline playback</p>
+              </div>
+              <button class="lib-play-btn" id="playDownloadedBtn" title="Play Downloaded Songs">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+            </div>
           </div>
 
           <!-- Custom Playlists Section -->
@@ -435,6 +466,21 @@
               <button class="text-btn" id="hideLikedListBtn">Close</button>
             </div>
             <div class="results-grid" id="likedResultsGrid"></div>
+          </div>
+
+          <!-- Downloaded Songs List Section (Offline Storage) -->
+          <div class="home-section" id="downloadedSongsSection" style="display:none;">
+            <div class="section-header">
+              <h2>⬇️ Downloaded Songs (Offline)</h2>
+              <div class="section-header-actions">
+                <button class="play-all-btn" id="playAllDownloadedBtn" title="Play all downloaded tracks offline">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="hideDownloadedListBtn">Close</button>
+              </div>
+            </div>
+            <div class="results-grid" id="downloadedGrid"></div>
           </div>
 
           <!-- Active Playlist Songs Section -->
@@ -792,6 +838,108 @@
         <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
       </button>
 
+    </div>
+  </div>
+
+  <!-- ============ SPOTIFY MOBILE BOTTOM NAVIGATION ============ -->
+  <nav class="spotify-bottom-nav" id="spotifyBottomNav" aria-label="Mobile Navigation">
+    <button class="sbn-btn active" data-page="home" id="sbnHome" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="sbn-btn" data-page="search" id="sbnSearch" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search</span>
+    </button>
+    <button class="sbn-btn" data-page="library" id="sbnLibrary" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Your Library</span>
+    </button>
+    <button class="sbn-btn" data-page="mood" id="sbnMood" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      <span>Moods</span>
+    </button>
+  </nav>
+
+  <!-- ============ SPOTIFY FULL SCREEN PLAYER MODAL ============ -->
+  <div class="spotify-fullscreen-player" id="spotifyFullscreenPlayer" aria-hidden="true">
+    <div class="sfp-header">
+      <button class="sfp-collapse-btn" id="sfpCollapseBtn" type="button" title="Collapse player">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sfp-header-title">
+        <span class="sfp-subtitle">PLAYING FROM YOUTUBE</span>
+        <span class="sfp-title" id="sfpHeaderTitle">MusicFlow Player</span>
+      </div>
+      <button class="sfp-menu-btn" id="sfpMenuBtn" type="button" title="More options">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>
+    </div>
+
+    <div class="sfp-artwork-container">
+      <div class="sfp-art-glow" id="sfpArtGlow"></div>
+      <img class="sfp-artwork" id="sfpArtwork" src="/icons/icon-512.png" alt="Album Artwork" />
+    </div>
+
+    <div class="sfp-track-details">
+      <div class="sfp-track-meta">
+        <div class="sfp-track-title" id="sfpTitle">Not Playing</div>
+        <div class="sfp-track-artist" id="sfpArtist">—</div>
+      </div>
+      <button class="sfp-like-btn" id="sfpLikeBtn" type="button" title="Save to Liked Songs">
+        <svg class="heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <svg class="heart-filled" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <!-- Progress Scrubber -->
+    <div class="sfp-progress-container">
+      <div class="sfp-scrubber" id="sfpScrubber">
+        <div class="sfp-scrubber-track">
+          <div class="sfp-scrubber-fill" id="sfpScrubberFill"></div>
+          <div class="sfp-scrubber-thumb" id="sfpScrubberThumb"></div>
+        </div>
+      </div>
+      <div class="sfp-time-row">
+        <span class="sfp-time" id="sfpCurrentTime">0:00</span>
+        <span class="sfp-time" id="sfpDuration">0:00</span>
+      </div>
+    </div>
+
+    <!-- Big Center Player Controls -->
+    <div class="sfp-controls-row">
+      <button class="sfp-btn" id="sfpShuffleBtn" type="button" title="Shuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      <button class="sfp-btn sfp-skip-btn" id="sfpPrevBtn" type="button" title="Previous">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"/></svg>
+      </button>
+      <button class="sfp-play-btn" id="sfpPlayPauseBtn" type="button" title="Play">
+        <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button class="sfp-btn sfp-skip-btn" id="sfpNextBtn" type="button" title="Next">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+      </button>
+      <button class="sfp-btn" id="sfpRepeatBtn" type="button" title="Repeat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </button>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="sfp-bottom-actions">
+      <button class="sfp-action-pill" id="sfpLyricsBtn" type="button">
+        <span>🎤</span>
+        <span>Lyrics</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpEqBtn" type="button">
+        <span>🎚️</span>
+        <span>Equalizer</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpSleepBtn" type="button">
+        <span>🌙</span>
+        <span>Sleep</span>
+      </button>
     </div>
   </div>
 

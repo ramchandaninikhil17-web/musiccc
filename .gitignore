@@ -3,9 +3,20 @@ node_modules/
 
 # Binaries & Downloads
 yt-dlp.exe
+yt-dlp.exe.*
 yt-dlp
 ffmpeg.exe
+ffmpeg.exe.*
 ffmpeg
+/MusicFlow.apk
+
+# Android / Gradle Build Files & Caches
+.gradle/
+**/build/
+local.properties
+.cxx/
+.externalNativeBuild/
+captures/
 
 # App Cache & User Data
 MusicFlowAppData/

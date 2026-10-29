@@ -1,7 +1,743 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-09-29T16:35:11.931Z",
+  "lastSaved": "2026-10-21T12:37:32.984Z",
   "history": [
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-21T12:37:32.464Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "p5EeJ9bHAOI",
+        "title": "Bade Achhe Lagte Hai Song with lyrics | बड़े अच्छे लगते है गाने | Balika Badhu | Sachin | Rajni",
+        "channel": "Saregama Music",
+        "duration": 338,
+        "thumbnail": "https://i.ytimg.com/vi/p5EeJ9bHAOI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCquMJdWY7acx081Iv9AYYQ0C0YOA",
+        "views": 21225650
+      },
+      "playedAt": "2026-10-21T12:37:29.462Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "ZBiaUvvFAFk",
+        "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+        "channel": "T-Series",
+        "duration": 362,
+        "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+        "views": 3031606
+      },
+      "playedAt": "2026-10-21T12:31:27.658Z",
+      "listenedSec": 361,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "f-9IaGAlgEA",
+        "title": "AARI AARI (Full Video) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev | Bombay Rockers",
+        "channel": "T-Series and 2 more",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/f-9IaGAlgEA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_d47sE7Oaulolez8wRAHWtjyaRw",
+        "views": 20233856
+      },
+      "playedAt": "2026-10-21T12:28:44.280Z",
+      "listenedSec": 168,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "f-9IaGAlgEA",
+        "title": "AARI AARI (Full Video) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev | Bombay Rockers",
+        "channel": "T-Series and 2 more",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/f-9IaGAlgEA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_d47sE7Oaulolez8wRAHWtjyaRw",
+        "views": 20233856
+      },
+      "playedAt": "2026-10-19T14:51:22.908Z",
+      "listenedSec": 146,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "8qCVXCFREkQ",
+        "title": "Ishq Jalakar - Karvaan | Dhurandhar | Ranveer Singh, Shashwat Sachdev, Aditya Dhar",
+        "channel": "Saregama Music",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/8qCVXCFREkQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC8p_6Y2aAABTby16zqfnISXk04gw",
+        "views": 143542592
+      },
+      "playedAt": "2026-10-19T14:48:36.265Z",
+      "listenedSec": 166,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-19T14:42:37.926Z",
+      "listenedSec": 358,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-19T14:38:43.311Z",
+      "listenedSec": 234,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "p5EeJ9bHAOI",
+        "title": "Bade Achhe Lagte Hai Song with lyrics | बड़े अच्छे लगते है गाने | Balika Badhu | Sachin | Rajni",
+        "channel": "Saregama Music",
+        "duration": 338,
+        "thumbnail": "https://i.ytimg.com/vi/p5EeJ9bHAOI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCquMJdWY7acx081Iv9AYYQ0C0YOA",
+        "views": 21225650
+      },
+      "playedAt": "2026-10-19T13:59:56.123Z",
+      "listenedSec": 338,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "ZBiaUvvFAFk",
+        "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+        "channel": "T-Series",
+        "duration": 362,
+        "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+        "views": 3031606
+      },
+      "playedAt": "2026-10-19T13:59:53.136Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "p5EeJ9bHAOI",
+        "title": "Bade Achhe Lagte Hai Song with lyrics | बड़े अच्छे लगते है गाने | Balika Badhu | Sachin | Rajni",
+        "channel": "Saregama Music",
+        "duration": 338,
+        "thumbnail": "https://i.ytimg.com/vi/p5EeJ9bHAOI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCquMJdWY7acx081Iv9AYYQ0C0YOA",
+        "views": 21225650
+      },
+      "playedAt": "2026-10-19T13:59:46.939Z",
+      "listenedSec": 6
+    },
+    {
+      "song": {
+        "id": "ZBiaUvvFAFk",
+        "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+        "channel": "T-Series",
+        "duration": 362,
+        "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+        "views": 3031606
+      },
+      "playedAt": "2026-10-19T13:53:57.065Z",
+      "listenedSec": 349,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "cl0a3i2wFcc",
+        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
+        "channel": "Diljit Dosanjh",
+        "duration": 224,
+        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC7o6WvP_IlOi_I2PBJ4NWHR3BGHg",
+        "views": 371634330
+      },
+      "playedAt": "2026-10-19T13:50:16.287Z",
+      "listenedSec": 218,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "cl0a3i2wFcc",
+        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
+        "channel": "Diljit Dosanjh",
+        "duration": 224,
+        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC7o6WvP_IlOi_I2PBJ4NWHR3BGHg",
+        "views": 371634330
+      },
+      "playedAt": "2026-10-12T18:27:03.209Z",
+      "listenedSec": 455,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 387422932
+      },
+      "playedAt": "2026-10-12T18:24:17.857Z",
+      "listenedSec": 165,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-12T18:18:20.654Z",
+      "listenedSec": 357,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-12T18:14:26.891Z",
+      "listenedSec": 233,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "ZBiaUvvFAFk",
+        "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+        "channel": "T-Series",
+        "duration": 362,
+        "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+        "views": 3031606
+      },
+      "playedAt": "2026-10-12T18:08:25.005Z",
+      "listenedSec": 361,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "mUm4m07GXZ0",
+        "title": "JAWAN TITLE THEME BGM ENGLISH VERSION | RAJAKUMARI #jawan",
+        "channel": "Rajan Joshi",
+        "duration": 115,
+        "thumbnail": "https://i.ytimg.com/vi/mUm4m07GXZ0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDchR6ovw3dr1h6bQxM6zzdLOkeQ",
+        "views": 2647022
+      },
+      "playedAt": "2026-10-12T18:06:26.008Z",
+      "listenedSec": 118,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "p5EeJ9bHAOI",
+        "title": "Bade Achhe Lagte Hai Song with lyrics | बड़े अच्छे लगते है गाने | Balika Badhu | Sachin | Rajni",
+        "channel": "Saregama Music",
+        "duration": 338,
+        "thumbnail": "https://i.ytimg.com/vi/p5EeJ9bHAOI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCquMJdWY7acx081Iv9AYYQ0C0YOA",
+        "views": 21225650
+      },
+      "playedAt": "2026-10-12T18:00:42.771Z",
+      "listenedSec": 343,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "Lf4vdiKLhNE",
+        "title": "Bade Acche Lagte Hain (Title Song) Shreya Ghoshal - Lyrics - Hindi Song",
+        "channel": "AKS Music4U",
+        "duration": 285,
+        "thumbnail": "https://i.ytimg.com/vi/Lf4vdiKLhNE/hqdefault.jpg?sqp=-oaymwEgCOADEI4CSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLDJ0JwL9zp-cs8FfRMrPDh2DMQyYA",
+        "views": 11325234
+      },
+      "playedAt": "2026-10-12T17:57:57.228Z",
+      "listenedSec": 165,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "ZBiaUvvFAFk",
+        "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+        "channel": "T-Series",
+        "duration": 362,
+        "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+        "views": 3031606
+      },
+      "playedAt": "2026-10-12T17:44:27.431Z",
+      "listenedSec": 618,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "mUm4m07GXZ0",
+        "title": "JAWAN TITLE THEME BGM ENGLISH VERSION | RAJAKUMARI #jawan",
+        "channel": "Rajan Joshi",
+        "duration": 115,
+        "thumbnail": "https://i.ytimg.com/vi/mUm4m07GXZ0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDchR6ovw3dr1h6bQxM6zzdLOkeQ",
+        "views": 2647022
+      },
+      "playedAt": "2026-10-12T17:43:24.869Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "mUm4m07GXZ0",
+        "title": "JAWAN TITLE THEME BGM ENGLISH VERSION | RAJAKUMARI #jawan",
+        "channel": "Rajan Joshi",
+        "duration": 115,
+        "thumbnail": "https://i.ytimg.com/vi/mUm4m07GXZ0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDchR6ovw3dr1h6bQxM6zzdLOkeQ",
+        "views": 2647022
+      },
+      "playedAt": "2026-10-10T17:07:12.851Z",
+      "listenedSec": 84,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "AQEc4BwX6dk",
+        "title": "JAWAN: Zinda Banda (Hindi): Shah Rukh Khan |Atlee |Anirudh |Nayanthara |Vijay Sethupathi |Deepika",
+        "channel": "T-Series",
+        "duration": 226,
+        "thumbnail": "https://i.ytimg.com/vi/AQEc4BwX6dk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLClIYetFdepVyz0GxpWr7aqiuEKVg",
+        "views": 115133896
+      },
+      "playedAt": "2026-10-10T17:03:19.597Z",
+      "listenedSec": 233,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "EiScA8DlzLA",
+        "title": "JAWAN TITLE TRACK (Audio): Shah Rukh Khan | Nayanthara | Atlee | Anirudh | Raja Kumari",
+        "channel": "T-Series",
+        "duration": 189,
+        "thumbnail": "https://i.ytimg.com/vi/EiScA8DlzLA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDKxRXLGp3XiBJi9wj137KyiDvpfw",
+        "views": 18881821
+      },
+      "playedAt": "2026-10-10T17:00:06.747Z",
+      "listenedSec": 192,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "8qCVXCFREkQ",
+        "title": "Ishq Jalakar - Karvaan | Dhurandhar | Ranveer Singh, Shashwat Sachdev, Aditya Dhar",
+        "channel": "Saregama Music",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/8qCVXCFREkQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC8p_6Y2aAABTby16zqfnISXk04gw",
+        "views": 143542592
+      },
+      "playedAt": "2026-10-10T16:50:38.120Z",
+      "listenedSec": 225,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-10T16:28:33.933Z",
+      "listenedSec": 337,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-10T16:28:32.375Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "U2SVCCENLjE",
+        "title": "Prateek Kuhad - Co2 (Official Audio)",
+        "channel": "Prateek Kuhad",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/U2SVCCENLjE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBgoEzAP&rs=AOn4CLD_M1_ryJnDb7T_k_vEStehkV6pmA",
+        "views": 57405612
+      },
+      "playedAt": "2026-10-10T16:28:14.414Z",
+      "listenedSec": 7
+    },
+    {
+      "song": {
+        "id": "U2SVCCENLjE",
+        "title": "Prateek Kuhad - Co2 (Official Audio)",
+        "channel": "Prateek Kuhad",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/U2SVCCENLjE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBgoEzAP&rs=AOn4CLD_M1_ryJnDb7T_k_vEStehkV6pmA",
+        "views": 57405612
+      },
+      "playedAt": "2026-10-10T16:25:10.163Z",
+      "listenedSec": 184,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "U2SVCCENLjE",
+        "title": "Prateek Kuhad - Co2 (Official Audio)",
+        "channel": "Prateek Kuhad",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/U2SVCCENLjE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBgoEzAP&rs=AOn4CLD_M1_ryJnDb7T_k_vEStehkV6pmA",
+        "views": 57405612
+      },
+      "playedAt": "2026-10-09T19:17:24.816Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "rrCYMsV7A-c",
+        "title": "Prateek Kuhad - Co2 (Lyrics)",
+        "channel": "HIGH VIBES",
+        "duration": 195,
+        "thumbnail": "https://i.ytimg.com/vi/rrCYMsV7A-c/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA_MnxlUs-OMhCbK8ez2f8t-ZlNJQ",
+        "views": 29775089
+      },
+      "playedAt": "2026-10-09T19:17:22.138Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "U2SVCCENLjE",
+        "title": "Prateek Kuhad - Co2 (Official Audio)",
+        "channel": "Prateek Kuhad",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/U2SVCCENLjE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBgoEzAP&rs=AOn4CLD_M1_ryJnDb7T_k_vEStehkV6pmA",
+        "views": 57405612
+      },
+      "playedAt": "2026-10-09T19:16:49.861Z",
+      "listenedSec": 32,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "KNXYonYD59w",
+        "title": "ANIMAL: HUA MAIN (Lyrical Video) | Ranbir Kapoor,Rashmika M | Sandeep V | Raghav,Manoj M | Bhushan K",
+        "channel": "T-Series",
+        "duration": 298,
+        "thumbnail": "https://i.ytimg.com/vi/KNXYonYD59w/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC2GcLfccUmZWkn4GfGm1fzmdJwsg",
+        "views": 48126779
+      },
+      "playedAt": "2026-10-09T19:05:18.484Z",
+      "listenedSec": 17
+    },
+    {
+      "song": {
+        "id": "KNXYonYD59w",
+        "title": "ANIMAL: HUA MAIN (Lyrical Video) | Ranbir Kapoor,Rashmika M | Sandeep V | Raghav,Manoj M | Bhushan K",
+        "channel": "T-Series",
+        "duration": 298,
+        "thumbnail": "https://i.ytimg.com/vi/KNXYonYD59w/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC2GcLfccUmZWkn4GfGm1fzmdJwsg",
+        "views": 48126779
+      },
+      "playedAt": "2026-10-08T11:50:55.728Z",
+      "listenedSec": 276,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "mUm4m07GXZ0",
+        "title": "JAWAN TITLE THEME BGM ENGLISH VERSION | RAJAKUMARI #jawan",
+        "channel": "Rajan Joshi",
+        "duration": 115,
+        "thumbnail": "https://i.ytimg.com/vi/mUm4m07GXZ0/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBDchR6ovw3dr1h6bQxM6zzdLOkeQ",
+        "views": 2647022
+      },
+      "playedAt": "2026-10-07T17:48:59.818Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "AQEc4BwX6dk",
+        "title": "JAWAN: Zinda Banda (Hindi): Shah Rukh Khan |Atlee |Anirudh |Nayanthara |Vijay Sethupathi |Deepika",
+        "channel": "T-Series",
+        "duration": 226,
+        "thumbnail": "https://i.ytimg.com/vi/AQEc4BwX6dk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLClIYetFdepVyz0GxpWr7aqiuEKVg",
+        "views": 115133896
+      },
+      "playedAt": "2026-10-07T17:29:02.357Z",
+      "listenedSec": 222,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "EiScA8DlzLA",
+        "title": "JAWAN TITLE TRACK (Audio): Shah Rukh Khan | Nayanthara | Atlee | Anirudh | Raja Kumari",
+        "channel": "T-Series",
+        "duration": 189,
+        "thumbnail": "https://i.ytimg.com/vi/EiScA8DlzLA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDKxRXLGp3XiBJi9wj137KyiDvpfw",
+        "views": 18881821
+      },
+      "playedAt": "2026-10-07T17:25:52.370Z",
+      "listenedSec": 189,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "8qCVXCFREkQ",
+        "title": "Ishq Jalakar - Karvaan | Dhurandhar | Ranveer Singh, Shashwat Sachdev, Aditya Dhar",
+        "channel": "Saregama Music",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/8qCVXCFREkQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC8p_6Y2aAABTby16zqfnISXk04gw",
+        "views": 143542592
+      },
+      "playedAt": "2026-10-07T17:22:17.673Z",
+      "listenedSec": 151,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-07T17:22:16.444Z",
+      "listenedSec": 1
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-07T17:22:13.008Z",
+      "listenedSec": 3
+    },
+    {
+      "song": {
+        "id": "EiScA8DlzLA",
+        "title": "JAWAN TITLE TRACK (Audio): Shah Rukh Khan | Nayanthara | Atlee | Anirudh | Raja Kumari",
+        "channel": "T-Series",
+        "duration": 189,
+        "thumbnail": "https://i.ytimg.com/vi/EiScA8DlzLA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDKxRXLGp3XiBJi9wj137KyiDvpfw",
+        "views": 18881821
+      },
+      "playedAt": "2026-10-07T17:22:07.391Z",
+      "listenedSec": 5
+    },
+    {
+      "song": {
+        "id": "EiScA8DlzLA",
+        "title": "JAWAN TITLE TRACK (Audio): Shah Rukh Khan | Nayanthara | Atlee | Anirudh | Raja Kumari",
+        "channel": "T-Series",
+        "duration": 189,
+        "thumbnail": "https://i.ytimg.com/vi/EiScA8DlzLA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDKxRXLGp3XiBJi9wj137KyiDvpfw",
+        "views": 18881821
+      },
+      "playedAt": "2026-10-07T17:20:42.100Z",
+      "listenedSec": 49,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "8qCVXCFREkQ",
+        "title": "Ishq Jalakar - Karvaan | Dhurandhar | Ranveer Singh, Shashwat Sachdev, Aditya Dhar",
+        "channel": "Saregama Music",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/8qCVXCFREkQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC8p_6Y2aAABTby16zqfnISXk04gw",
+        "views": 143542592
+      },
+      "playedAt": "2026-10-07T17:20:09.542Z",
+      "listenedSec": 20,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-07T17:20:06.842Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-07T17:20:04.726Z",
+      "listenedSec": 2
+    },
+    {
+      "song": {
+        "id": "8qCVXCFREkQ",
+        "title": "Ishq Jalakar - Karvaan | Dhurandhar | Ranveer Singh, Shashwat Sachdev, Aditya Dhar",
+        "channel": "Saregama Music",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/8qCVXCFREkQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC8p_6Y2aAABTby16zqfnISXk04gw",
+        "views": 143542592
+      },
+      "playedAt": "2026-10-07T17:18:46.229Z",
+      "listenedSec": 66,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "IAONd2d_PDU",
+        "title": "Jaan Se Guzarte Hain (Lyrical) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev,Khan Saab",
+        "channel": "T-Series and 2 more",
+        "duration": 353,
+        "thumbnail": "https://i.ytimg.com/vi/IAONd2d_PDU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnp7p_a1J061fWJh57RGVPsYR3Tw",
+        "views": 65850886
+      },
+      "playedAt": "2026-10-07T17:12:18.660Z",
+      "listenedSec": 362,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-07T17:10:26.245Z",
+      "listenedSec": 112,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-07T17:09:41.633Z",
+      "listenedSec": 33,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-05T16:58:37.366Z",
+      "listenedSec": 217,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 402171082
+      },
+      "playedAt": "2026-10-05T16:40:32.155Z",
+      "listenedSec": 62,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 402171082
+      },
+      "playedAt": "2026-10-05T13:25:19.406Z",
+      "listenedSec": 27,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 402171082
+      },
+      "playedAt": "2026-10-01T08:40:52.082Z",
+      "listenedSec": 15
+    },
+    {
+      "song": {
+        "id": "32DLasxoOiM",
+        "title": "Java Programming Full Tutorial in One Video (2024) | Java full course",
+        "channel": "CoDing SeeKho ",
+        "duration": 66861,
+        "thumbnail": "https://i.ytimg.com/vi/32DLasxoOiM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAirLCmYa0NaNKPDw5PoNpWC5IsNA",
+        "views": 2395338
+      },
+      "playedAt": "2026-10-01T08:40:18.527Z",
+      "listenedSec": 22,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "XTp5jaRU3Ws",
+        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
+        "channel": "Karan Aujla",
+        "duration": 161,
+        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
+        "views": 402171082
+      },
+      "playedAt": "2026-10-01T07:27:38.650Z",
+      "listenedSec": 12
+    },
+    {
+      "song": {
+        "id": "VcFEtvtCAc4",
+        "title": "Silence your phones. Avengers: Doomsday arrives in cinemas everywhere December 18.",
+        "channel": "IndiaMarvel",
+        "duration": 31,
+        "thumbnail": "https://i.ytimg.com/vi_webp/VcFEtvtCAc4/maxresdefault.webp",
+        "views": 175406,
+        "isDirectLink": true
+      },
+      "playedAt": "2026-10-01T07:27:15.662Z",
+      "listenedSec": 16
+    },
     {
       "song": {
         "id": "VcFEtvtCAc4",
@@ -2455,748 +3191,9 @@
       "playedAt": "2026-09-05T13:00:17.304Z",
       "listenedSec": 159,
       "counted": true
-    },
-    {
-      "song": {
-        "id": "O9xX4hM5NAo",
-        "title": "Old Hindi Songs Mashup | Bollywood Retro Medley | Siddharth Slathia",
-        "channel": "Siddharth Slathia",
-        "duration": 498,
-        "thumbnail": "https://i.ytimg.com/vi/O9xX4hM5NAo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBWk0H8Q33nd41s6yA4LcLOnzClLw",
-        "views": 15036746
-      },
-      "playedAt": "2026-09-05T13:00:05.726Z",
-      "listenedSec": 18
-    },
-    {
-      "song": {
-        "id": "O9xX4hM5NAo",
-        "title": "Old Hindi Songs Mashup | Bollywood Retro Medley | Siddharth Slathia",
-        "channel": "Siddharth Slathia",
-        "duration": 498,
-        "thumbnail": "https://i.ytimg.com/vi/O9xX4hM5NAo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBWk0H8Q33nd41s6yA4LcLOnzClLw",
-        "views": 15036746
-      },
-      "playedAt": "2026-09-05T12:59:57.981Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "O9xX4hM5NAo",
-        "title": "Old Hindi Songs Mashup | Bollywood Retro Medley | Siddharth Slathia",
-        "channel": "Siddharth Slathia",
-        "duration": 498,
-        "thumbnail": "https://i.ytimg.com/vi/O9xX4hM5NAo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBWk0H8Q33nd41s6yA4LcLOnzClLw",
-        "views": 15036746
-      },
-      "playedAt": "2026-09-03T15:54:28.666Z",
-      "listenedSec": 279,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "Jw4wLVnFJ-E",
-        "title": "Khwaab Ho Tum Ya Koi | Teen Deviyan | Dev Anand | Romantic Old Hindi Songs | Kishore Kumar",
-        "channel": "Shemaroo Filmi Gaane",
-        "duration": 369,
-        "thumbnail": "https://i.ytimg.com/vi/Jw4wLVnFJ-E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC5Y0oSMPQp82ird-islYwabx4qeQ",
-        "views": 45028602
-      },
-      "playedAt": "2026-09-03T15:47:27.812Z",
-      "listenedSec": 48,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "2bwGVDl9sTA",
-        "title": "Itna Na Mujhse Tu Pyaar Badha ❤️ | Timeless Retro Love Song | Soulful Cover",
-        "channel": "Purani Yaadein Music",
-        "duration": 275,
-        "thumbnail": "https://i.ytimg.com/vi/2bwGVDl9sTA/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLCWdYllVhBr3TBxg3x4ET9EBGvpzA",
-        "views": 3016376
-      },
-      "playedAt": "2026-09-03T15:42:47.243Z",
-      "listenedSec": 280,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cUoKV_HEtTI",
-        "title": "Aapke Pyaar Mein Hum (Love Song❤️) Raaz | Dino Morea & Malini Sharma | Bipasha Basu | Alka Yagnik",
-        "channel": "Hot Hits Hindi",
-        "duration": 328,
-        "thumbnail": "https://i.ytimg.com/vi/cUoKV_HEtTI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBH_Tx7Kh4bBNVCn0clgn1jOFd-xw",
-        "views": 18261425
-      },
-      "playedAt": "2026-09-03T15:37:02.978Z",
-      "listenedSec": 331,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "__ZvXBf1rmw",
-        "title": "वजह तुम हो पूरा वीडियो गाना | हेट स्टोरी 3 के गाने | ज़रीन खान, करण सिंह ग्रोवर | टी-सीरीज",
-        "channel": "T-Series",
-        "duration": 277,
-        "thumbnail": "https://i.ytimg.com/vi/__ZvXBf1rmw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCy2Q_0kce4_tF16-tzOie_lB2QXg",
-        "views": 627686740
-      },
-      "playedAt": "2026-09-03T15:36:44.305Z",
-      "listenedSec": 18
-    },
-    {
-      "song": {
-        "id": "5gwy0gcjIkI",
-        "title": "तेरे संग यारा - रुस्तम | अक्षय कुमार और इलियाना डी'क्रूज़ | आतिफ असलम | आरको | रोमांटिक लव सांग",
-        "channel": "Zee Music Company",
-        "duration": 141,
-        "thumbnail": "https://i.ytimg.com/vi/5gwy0gcjIkI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC0wnMwdnGLPVnYeK5Briq-da9jUQ",
-        "views": 423463048
-      },
-      "playedAt": "2026-09-03T15:34:17.556Z",
-      "listenedSec": 146,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "bn8gP5N8hqM",
-        "title": "The Weeknd - Cry For Me (Official Music Video)",
-        "channel": "The Weeknd",
-        "duration": 246,
-        "thumbnail": "https://i.ytimg.com/vi/bn8gP5N8hqM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBBL5yaSjdL_gDesh9cSwMiKg0KbA",
-        "views": 64356816
-      },
-      "playedAt": "2026-09-03T15:33:07.907Z",
-      "listenedSec": 7
-    },
-    {
-      "song": {
-        "id": "-mgGnx1p3b8",
-        "title": "Diljit Dosanjh: Lalkaara (Video) Feat. Sultaan | GHOST | Intense, Raj Ranjodh",
-        "channel": "Diljit Dosanjh",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/-mgGnx1p3b8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBk98HOlI6-FDRRNKw6htVWyaY0ZQ",
-        "views": 226850580
-      },
-      "playedAt": "2026-09-03T15:30:11.340Z",
-      "listenedSec": 167,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "P4UnrmPFPA4",
-        "title": "Naal Nachna (From \"Dhurandhar\")",
-        "channel": "Shashwat Sachdev",
-        "duration": 156,
-        "thumbnail": "https://i.ytimg.com/vi/P4UnrmPFPA4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCiu761RIV3sv9-U2vp2o6RO8RLVA",
-        "views": 75990144
-      },
-      "playedAt": "2026-09-03T15:27:29.174Z",
-      "listenedSec": 162,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "5X3vxcAO2W8",
-        "title": "To Brazil | @VengaboysChannel |  Warm-up Routine | Akshay Jain Choreography |",
-        "channel": "AJ DanceFit ",
-        "duration": 187,
-        "thumbnail": "https://i.ytimg.com/vi/5X3vxcAO2W8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLANW97eOFXfU-O-sb87VS-3nPBuVA",
-        "views": 33776476
-      },
-      "playedAt": "2026-09-03T15:26:36.212Z",
-      "listenedSec": 52,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "N_KpjLhJa1k",
-        "title": "HIGH HEELS TE NACHCHE Video Song | KI & KA | Meet Bros ft. Jaz Dhami | Yo Yo Honey Singh | T-Series",
-        "channel": "T-Series",
-        "duration": 177,
-        "thumbnail": "https://i.ytimg.com/vi/N_KpjLhJa1k/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLByaf1CLJzfZc5H4DsxEGXqP5iVIw",
-        "views": 313909591
-      },
-      "playedAt": "2026-09-03T15:26:28.848Z",
-      "listenedSec": 7
-    },
-    {
-      "song": {
-        "id": "Ezsb5afVXQQ",
-        "title": "Ud-daa Punjab - Full Video | Udta Punjab | Vishal Dadlani & Amit Trivedi | Shahid Kapoor",
-        "channel": "Zee Music Company",
-        "duration": 242,
-        "thumbnail": "https://i.ytimg.com/vi/Ezsb5afVXQQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAvpSLfgI-T4BKVGuahEu3uUGNzIQ",
-        "views": 144664210
-      },
-      "playedAt": "2026-09-03T15:26:15.570Z",
-      "listenedSec": 13
-    },
-    {
-      "song": {
-        "id": "IkKV4AYxedM",
-        "title": "KRISHNA Mahabharat Trance | The War of Dharma Begins",
-        "channel": "Anant Sharanam",
-        "duration": 244,
-        "thumbnail": "https://i.ytimg.com/vi/IkKV4AYxedM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBnKwvIOSnfHAGrOwqPKyMm3LlMRg",
-        "views": 1012814
-      },
-      "playedAt": "2026-09-03T15:25:28.772Z",
-      "listenedSec": 46,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cl0a3i2wFcc",
-        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
-        "channel": "Diljit Dosanjh",
-        "duration": 224,
-        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBrlgMD1SJPZgy8Y0GohBMwg4sf-g",
-        "views": 374012667
-      },
-      "playedAt": "2026-09-03T15:21:39.124Z",
-      "listenedSec": 229,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "PEhhfijaKxA",
-        "title": "It's the Time to Disco - 8K/4K Music Video | Shahrukh, Saif, Preity | Shankar Ehsaan Loy",
-        "channel": "Sony Music India",
-        "duration": 321,
-        "thumbnail": "https://i.ytimg.com/vi/PEhhfijaKxA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBF9yXNK6ZYCiZWdmRPqlmREb9aZA",
-        "views": 1450115
-      },
-      "playedAt": "2026-09-03T15:21:24.771Z",
-      "listenedSec": 14
-    },
-    {
-      "song": {
-        "id": "cWMxCE2HTag",
-        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-        "channel": "Karan Aujla",
-        "duration": 171,
-        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-        "views": 494887594
-      },
-      "playedAt": "2026-09-03T15:20:56.857Z",
-      "listenedSec": 12
-    },
-    {
-      "song": {
-        "id": "6Pbr7tva",
-        "title": "Lalkara",
-        "channel": "Diljit Dosanjh, Intense",
-        "duration": 210,
-        "thumbnail": "https://c.saavncdn.com/276/Ghost-English-2023-20231028142825-500x500.jpg",
-        "isCloud": true,
-        "streamUrl": "https://aac.saavncdn.com/276/UWKrsGclGqbcKNmqjwNDKY3BrsF35LfWFxmPAauSq_320.mp4"
-      },
-      "playedAt": "2026-09-03T15:20:45.426Z",
-      "listenedSec": 1
-    },
-    {
-      "song": {
-        "id": "E7ergOnpO1Q",
-        "title": "Dhanda Nyoliwala - Not Guilty (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/E7ergOnpO1Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzurf5gm0QULqz7CS8kjXL-3FQ6A",
-        "views": 132475723
-      },
-      "playedAt": "2026-09-03T15:17:34.291Z",
-      "listenedSec": 191,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "_ijaEtNzZgw",
-        "title": "Maruti (Official Video) Dhanda Nyoliwala | Miki Malang | Ron Likhari",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 263,
-        "thumbnail": "https://i.ytimg.com/vi/_ijaEtNzZgw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP_tHTYCHI8muSLkdHt_86j8E33A",
-        "views": 68553802
-      },
-      "playedAt": "2026-09-03T15:13:05.236Z",
-      "listenedSec": 269,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "1OAjeECW90E",
-        "title": "Dhanda Nyoliwala - Russian Bandana (Music Video) | Deepesh Goyal | VYRL Haryanvi",
-        "channel": "VYRL Haryanvi",
-        "duration": 203,
-        "thumbnail": "https://i.ytimg.com/vi/1OAjeECW90E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBEvHYGIL-TiGTC4GkcNBCXNcX2KQ",
-        "views": 454320370
-      },
-      "playedAt": "2026-09-03T14:57:15.518Z",
-      "listenedSec": 208,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "aFWDOFg7X2A",
-        "title": "On Top (Full Video) Karan Aujla | Yeah Proof | New Punjabi Songs 2022",
-        "channel": "Karan Aujla",
-        "duration": 187,
-        "thumbnail": "https://i.ytimg.com/vi/aFWDOFg7X2A/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDkWHmcoTHtZqsuRXtP9MzOrJIfcQ",
-        "views": 190531101
-      },
-      "playedAt": "2026-09-03T14:53:52.044Z",
-      "listenedSec": 192,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "AJtDXIazrMo",
-        "title": "Ellie Goulding - Love Me Like You Do (Official Video)",
-        "channel": "Ellie Goulding",
-        "duration": 250,
-        "thumbnail": "https://i.ytimg.com/vi/AJtDXIazrMo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAsfKGOpZz9W7dNt4ZpT_80KdGTDw",
-        "views": 2411909317
-      },
-      "playedAt": "2026-09-03T14:50:56.965Z",
-      "listenedSec": 166,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "K9R7KcaettM",
-        "title": "I REALLY DO (MUSIC VIDEO) KARAN AUJLA| IKKY | Aveera | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 194,
-        "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-        "views": 97702196
-      },
-      "playedAt": "2026-09-03T14:11:59.668Z",
-      "listenedSec": 8
-    },
-    {
-      "song": {
-        "id": "cWMxCE2HTag",
-        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-        "channel": "Karan Aujla",
-        "duration": 171,
-        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-        "views": 494862736
-      },
-      "playedAt": "2026-09-03T14:08:53.844Z",
-      "listenedSec": 177,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "n_FCrCQ6-bA",
-        "title": "295 (Official Audio) | Sidhu Moose Wala | The Kidd | Moosetape",
-        "channel": "Sidhu Moose Wala",
-        "duration": 273,
-        "thumbnail": "https://i.ytimg.com/vi/n_FCrCQ6-bA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBRMueham9v9CwwuRP5zrzaxA7U-Q",
-        "views": 863813059
-      },
-      "playedAt": "2026-09-03T14:04:06.854Z",
-      "listenedSec": 277,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 284034521
-      },
-      "playedAt": "2026-09-03T14:03:55.711Z",
-      "listenedSec": 19
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 284034521
-      },
-      "playedAt": "2026-09-02T07:00:58.503Z",
-      "listenedSec": 10
-    },
-    {
-      "song": {
-        "id": "YaEG2aWJnZ8",
-        "title": "Sia - Unstoppable (Official Video - Live from the Nostalgic For The Present Tour)",
-        "channel": "Sia",
-        "duration": 227,
-        "thumbnail": "https://i.ytimg.com/vi/YaEG2aWJnZ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAs9lEcnc-UuXYVpwJ-DAJ79pmOTw",
-        "views": 862810347
-      },
-      "playedAt": "2026-09-02T06:56:33.668Z",
-      "listenedSec": 244,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "SG9Tm8WX7Eg",
-        "title": "Wavy - Karan Aujla (Lyrics/English Meaning)",
-        "channel": "Punjabi Bars",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/SG9Tm8WX7Eg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCyOsuRP3J5cWB0tt4ZG87aioXV1Q",
-        "views": 2168581
-      },
-      "playedAt": "2026-09-02T06:55:43.716Z",
-      "listenedSec": 28,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "XTp5jaRU3Ws",
-        "title": "WAVY (OFFICIAL VIDEO) KARAN AUJLA | LATEST PUNJABI SONGS 2024",
-        "channel": "Karan Aujla",
-        "duration": 161,
-        "thumbnail": "https://i.ytimg.com/vi/XTp5jaRU3Ws/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCJsXU-rvRM5mKKo0sPKHFRHE5D6g",
-        "views": 391202786
-      },
-      "playedAt": "2026-09-02T06:52:54.802Z",
-      "listenedSec": 168,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cWMxCE2HTag",
-        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-        "channel": "Karan Aujla",
-        "duration": 171,
-        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-        "views": 494368636
-      },
-      "playedAt": "2026-09-02T06:52:38.265Z",
-      "listenedSec": 14
-    },
-    {
-      "song": {
-        "id": "cWMxCE2HTag",
-        "title": "SOFTLY (Official Music Video) KARAN AUJLA | IKKY | LATEST PUNJABI SONGS 2023",
-        "channel": "Karan Aujla",
-        "duration": 171,
-        "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-        "views": 494368636
-      },
-      "playedAt": "2026-09-01T18:02:49.303Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "bgGH0wcjUOA",
-        "title": "Dhanda Nyoliwala - Tension (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 194,
-        "thumbnail": "https://i.ytimg.com/vi/bgGH0wcjUOA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLA-rtTe15Z3GcYwSRrjD4Z-0kye2Q",
-        "views": 60375260
-      },
-      "playedAt": "2026-09-01T18:02:01.550Z",
-      "listenedSec": 45,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "1OAjeECW90E",
-        "title": "Dhanda Nyoliwala - Russian Bandana (Music Video) | Deepesh Goyal | VYRL Haryanvi",
-        "channel": "VYRL Haryanvi",
-        "duration": 203,
-        "thumbnail": "https://i.ytimg.com/vi/1OAjeECW90E/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBEvHYGIL-TiGTC4GkcNBCXNcX2KQ",
-        "views": 454320370
-      },
-      "playedAt": "2026-09-01T17:58:33.547Z",
-      "listenedSec": 207,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "6Pbr7tva",
-        "title": "Lalkara",
-        "channel": "Diljit Dosanjh, Intense",
-        "duration": 210,
-        "thumbnail": "https://c.saavncdn.com/276/Ghost-English-2023-20231028142825-500x500.jpg",
-        "isCloud": true,
-        "streamUrl": "https://aac.saavncdn.com/276/IRAOLRBMPh0bQGp8pv0pIeNBX3oc9Fwd5_320.mp4"
-      },
-      "playedAt": "2026-09-01T17:58:29.896Z",
-      "listenedSec": 1
-    },
-    {
-      "song": {
-        "id": "E7ergOnpO1Q",
-        "title": "Dhanda Nyoliwala - Not Guilty (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/E7ergOnpO1Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzurf5gm0QULqz7CS8kjXL-3FQ6A",
-        "views": 132475723
-      },
-      "playedAt": "2026-09-01T17:55:18.799Z",
-      "listenedSec": 191,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "_ijaEtNzZgw",
-        "title": "Maruti (Official Video) Dhanda Nyoliwala | Miki Malang | Ron Likhari",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 263,
-        "thumbnail": "https://i.ytimg.com/vi/_ijaEtNzZgw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP_tHTYCHI8muSLkdHt_86j8E33A",
-        "views": 68553802
-      },
-      "playedAt": "2026-09-01T17:50:50.722Z",
-      "listenedSec": 268,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "N_KpjLhJa1k",
-        "title": "HIGH HEELS TE NACHCHE Video Song | KI & KA | Meet Bros ft. Jaz Dhami | Yo Yo Honey Singh | T-Series",
-        "channel": "T-Series",
-        "duration": 177,
-        "thumbnail": "https://i.ytimg.com/vi/N_KpjLhJa1k/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBFOFIkN_R_6Sx0LP5MTCAsJwdhtA",
-        "views": 313481860
-      },
-      "playedAt": "2026-09-01T17:50:21.408Z",
-      "listenedSec": 7
-    },
-    {
-      "song": {
-        "id": "N_KpjLhJa1k",
-        "title": "HIGH HEELS TE NACHCHE Video Song | KI & KA | Meet Bros ft. Jaz Dhami | Yo Yo Honey Singh | T-Series",
-        "channel": "T-Series",
-        "duration": 177,
-        "thumbnail": "https://i.ytimg.com/vi/N_KpjLhJa1k/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBFOFIkN_R_6Sx0LP5MTCAsJwdhtA",
-        "views": 313481860
-      },
-      "playedAt": "2026-08-31T13:57:21.964Z",
-      "listenedSec": 118,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "v7K4vGYL9zI",
-        "title": "Padmaavat: Khalibali - Ranveer Singh | Deepika Padukone | Shahid Kapoor | Shivam Pathak",
-        "channel": "T-Series",
-        "duration": 204,
-        "thumbnail": "https://i.ytimg.com/vi/v7K4vGYL9zI/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLAAfRxvsHjwD7qJNlqa-hI7Dh-UQQ",
-        "views": 486736599
-      },
-      "playedAt": "2026-08-31T13:54:04.779Z",
-      "listenedSec": 197,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "caySD0OJJvk",
-        "title": "Lyrical | Ghungroo Full Song | WAR | Hrithik, Vaani, Arijit Singh, Shilpa | Vishal & Shekhar, Kumaar",
-        "channel": "YRF",
-        "duration": 300,
-        "thumbnail": "https://i.ytimg.com/vi/caySD0OJJvk/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLAQQiemo5EkC35uooj8S87aH1743Q",
-        "views": 175933767
-      },
-      "playedAt": "2026-08-31T13:48:58.520Z",
-      "listenedSec": 306,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "zC3UbTf4qrM",
-        "title": "Afghan Jalebi (Ya Baba) FULL VIDEO Song | Phantom | Saif Ali Khan Katrina Kaif Pritam Asrar T-Series",
-        "channel": "T-Series",
-        "duration": 206,
-        "thumbnail": "https://i.ytimg.com/vi/zC3UbTf4qrM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLAUOUiHZB8uyyS7FIckb4dZIBOFJQ",
-        "views": 679384808
-      },
-      "playedAt": "2026-08-31T13:45:09.651Z",
-      "listenedSec": 217,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cl0a3i2wFcc",
-        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
-        "channel": "Diljit Dosanjh",
-        "duration": 224,
-        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLDP7c3mAx1goefAwMLm12K7P4dpjg",
-        "views": 373343900
-      },
-      "playedAt": "2026-08-31T13:41:17.179Z",
-      "listenedSec": 232,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 286376260
-      },
-      "playedAt": "2026-08-31T13:40:57.774Z",
-      "listenedSec": 19
-    },
-    {
-      "song": {
-        "id": "vsWxs1tuwDk",
-        "title": "Winning Speech (Music Video) Karan Aujla | Mxrci | Latest Punjabi Songs 2024",
-        "channel": "Karan Aujla",
-        "duration": 238,
-        "thumbnail": "https://i.ytimg.com/vi/vsWxs1tuwDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD_B_8vzn-564LfUybs3oHbKfw9IQ",
-        "views": 286376260
-      },
-      "playedAt": "2026-08-31T09:33:42.677Z",
-      "listenedSec": 217,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "k85UB5b6pJU",
-        "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-        "channel": "Karan Aujla",
-        "duration": 211,
-        "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
-        "views": 188791175
-      },
-      "playedAt": "2026-08-31T09:30:05.366Z",
-      "listenedSec": 217,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 282458335
-      },
-      "playedAt": "2026-08-31T09:27:23.861Z",
-      "listenedSec": 161,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "Myw7_Zy_MeU",
-        "title": "Gehra Hua (From \"Dhurandhar\") · Arijit Singh · Shashwat Sachdev · Irshad Kamil · Armaan Khan",
-        "channel": "Release · Topic",
-        "duration": 363,
-        "thumbnail": "https://i.ytimg.com/vi/Myw7_Zy_MeU/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgBzgWAAtAFigIMCAAQARhjIGMoYzAP&rs=AOn4CLCxAlwf2li4sgccy4FORRyrM7e4DA",
-        "views": 6997749
-      },
-      "playedAt": "2026-08-31T09:21:05.241Z",
-      "listenedSec": 370,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "OIovU_Oav4g",
-        "title": "Hawaiian Hula Hula Dance For Kids | Luau | School Program Dance Performance for Kids",
-        "channel": "Oliver’s Melody Club - Interactive Classroom Songs",
-        "duration": 126,
-        "thumbnail": "https://i.ytimg.com/vi/OIovU_Oav4g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjixWsPyqCpaL5Wpo86MxQQi_6uQ",
-        "views": 2254092
-      },
-      "playedAt": "2026-08-31T09:20:49.553Z",
-      "listenedSec": 1
-    },
-    {
-      "song": {
-        "id": "OIovU_Oav4g",
-        "title": "Hawaiian Hula Hula Dance For Kids | Luau | School Program Dance Performance for Kids",
-        "channel": "Oliver’s Melody Club - Interactive Classroom Songs",
-        "duration": 126,
-        "thumbnail": "https://i.ytimg.com/vi/OIovU_Oav4g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjixWsPyqCpaL5Wpo86MxQQi_6uQ",
-        "views": 2254092
-      },
-      "playedAt": "2026-08-31T09:20:22.644Z",
-      "listenedSec": 21,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cYOB941gyXI",
-        "title": "Hawayein - Lyrical Video | Jab Harry Met Sejal | Shah Rukh Khan, Anushka | Arijit Singh | Pritam",
-        "channel": "Sony Music India",
-        "duration": 292,
-        "thumbnail": "https://i.ytimg.com/vi/cYOB941gyXI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDmU8ccPrIJoYbq7nqdnCh2HprIVA",
-        "views": 599932964
-      },
-      "playedAt": "2026-08-31T09:02:58.009Z",
-      "listenedSec": 298,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "LIEiEwpEhWM",
-        "title": "Arz Kiya Hai  -  Anuv Jain  | Aise tu lagay ki gulaab hai 🌹, aur waise hum toh tere hi gulaam hain 💫",
-        "channel": "Music hype",
-        "duration": 291,
-        "thumbnail": "https://i.ytimg.com/vi/LIEiEwpEhWM/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDzVhT_byuCqRKCPt1tbj373hWa9Q",
-        "views": 22787876
-      },
-      "playedAt": "2026-08-31T08:59:34.610Z",
-      "listenedSec": 203,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "cl0a3i2wFcc",
-        "title": "Diljit Dosanjh - G.O.A.T. (Official Music Video)",
-        "channel": "Diljit Dosanjh",
-        "duration": 224,
-        "thumbnail": "https://i.ytimg.com/vi/cl0a3i2wFcc/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC7o6WvP_IlOi_I2PBJ4NWHR3BGHg",
-        "views": 371634330
-      },
-      "playedAt": "2026-08-31T08:55:41.039Z",
-      "listenedSec": 233,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "W0--lTnDEgQ",
-        "title": "Karan Aujla 2025 Top All Songs  New Punjabi Songs   Karan Aujla Jukebox",
-        "channel": "The Singh Vlog (Balli Singh)",
-        "duration": 1741,
-        "thumbnail": "https://i.ytimg.com/vi/W0--lTnDEgQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhGIFIoZTAP&rs=AOn4CLBhe7EPQXOq6R4LtJxILCjhtIHrMQ",
-        "views": 3033441
-      },
-      "playedAt": "2026-08-31T08:49:39.262Z",
-      "listenedSec": 361,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "5GCfYLguTIs",
-        "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-        "channel": "Karan Aujla",
-        "duration": 162,
-        "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-        "views": 282423018
-      },
-      "playedAt": "2026-08-31T08:49:22.214Z",
-      "listenedSec": 17
-    },
-    {
-      "song": {
-        "id": "2kjolTLZ_Mg",
-        "title": "The Weeknd - São Paulo (Official Music Video)",
-        "channel": "The Weeknd",
-        "duration": 210,
-        "thumbnail": "https://i.ytimg.com/vi/2kjolTLZ_Mg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCHrzP8j_xwjXwPUnTzsfBq46KQRw",
-        "views": 65227869
-      },
-      "playedAt": "2026-08-31T08:49:06.747Z",
-      "listenedSec": 15
     }
   ],
-  "searchHistory": [
-    "https://youtu.be/VcFEtvtCAc4",
-    "https://youtu.be/NQ6gWHMvna8"
-  ],
+  "searchHistory": [],
   "playlists": [
     {
       "id": "pl_1786029815971",
@@ -3749,64 +3746,24 @@
   ],
   "volume": 1,
   "quality": "high",
-  "repeat": "all",
+  "repeat": "off",
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "bJcTM4ns9KM",
-      "title": "BEQADRA (Official Video): FAHEEM ABDULLAH | SHANYA KASHYAP | HYDER DAR | NAJIULLAH",
+      "id": "k85UB5b6pJU",
+      "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
+      "channel": "Karan Aujla",
+      "duration": 211,
+      "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
+      "views": 194107294
+    },
+    {
+      "id": "oMesPehN_Do",
+      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
       "channel": "T-Series",
-      "duration": 191,
-      "thumbnail": "https://i.ytimg.com/vi/bJcTM4ns9KM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDQkUNrRpazsXzUIx8TRqE0f1XZTA",
-      "views": 44309
-    },
-    {
-      "id": "vJQMhj6WYZA",
-      "title": "Barbaadiyan (Full Video)| Shiddat |Sunny K,Radhika M |Sachet T,Nikhita G, Madhubanti B|Sachin -Jigar",
-      "channel": "T-Series",
-      "duration": 242,
-      "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
-      "views": 209154883
-    },
-    {
-      "id": "_nKa-4xg07o",
-      "title": "Udd Chale (Music Video): Last Minute India | Shubham Dipta | Divija Gambhir | T-Series",
-      "channel": "T-Series",
-      "duration": 272,
-      "thumbnail": "https://i.ytimg.com/vi/_nKa-4xg07o/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAA803ykZLZg7o-dV1kn28srx24qQ",
-      "views": 65147
-    },
-    {
-      "id": "W0--lTnDEgQ",
-      "title": "Karan Aujla 2025 Top All Songs  New Punjabi Songs   Karan Aujla Jukebox",
-      "channel": "The Singh Vlog (Balli Singh)",
-      "duration": 1741,
-      "thumbnail": "https://i.ytimg.com/vi/W0--lTnDEgQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhGIFIoZTAP&rs=AOn4CLBhe7EPQXOq6R4LtJxILCjhtIHrMQ",
-      "views": 3313506
-    },
-    {
-      "id": "-YlmnPh-6rE",
-      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
-      "channel": "Rehaan Records",
-      "duration": 189,
-      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
-      "views": 375820970
-    },
-    {
-      "id": "qe4agjXLbtM",
-      "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
-      "channel": "Rytham Riyasat",
-      "duration": 1275,
-      "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLAsKPFoa1l30Uj7VZwTs3hqmQyAxQ",
-      "views": 4423385
-    },
-    {
-      "id": "H4IRWXePhnU",
-      "title": "Karan aujla new song ||Karan  aujla  all song ||karan aujla punjabi song #karanaujla ",
-      "channel": "punjabi boys",
-      "duration": 1580,
-      "thumbnail": "https://i.ytimg.com/vi/H4IRWXePhnU/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCo5g9KwNc-bIokZWVuOlnCYAzZPw",
-      "views": 2146843
+      "duration": 268,
+      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLC0tzB3EXxBkep8aJ283HA__OOFUQ",
+      "views": 91342681
     },
     {
       "id": "K9R7KcaettM",
@@ -3814,63 +3771,15 @@
       "channel": "Karan Aujla",
       "duration": 194,
       "thumbnail": "https://i.ytimg.com/vi/K9R7KcaettM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBX7vBrUQa43TdL2RI2p57cKQz1Kw",
-      "views": 101894661
+      "views": 105475600
     },
     {
-      "id": "5GCfYLguTIs",
-      "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
-      "channel": "Karan Aujla",
-      "duration": 162,
-      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
-      "views": 307112054
-    },
-    {
-      "id": "nJZcbidTutE",
-      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
-      "channel": "T-Series",
-      "duration": 248,
-      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
-      "views": 387735098
-    },
-    {
-      "id": "k85UB5b6pJU",
-      "title": "Admirin' You (Official Video) Karan Aujla | Ikky | Making Memories | Latest Punjabi Songs 2023",
-      "channel": "Karan Aujla",
-      "duration": 211,
-      "thumbnail": "https://i.ytimg.com/vi/k85UB5b6pJU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLB492DPLUD63p4D8F1lWYANSQKhpQ",
-      "views": 192034772
-    },
-    {
-      "id": "zbj5-l8h72M",
-      "title": "Trending karan aujla songs | non stop karan aujla songs | RockMusicnb🤟 |",
-      "channel": "RockMusicnb🤟",
-      "duration": 1150,
-      "thumbnail": "https://i.ytimg.com/vi/zbj5-l8h72M/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhyIEwoMDAP&rs=AOn4CLBRbMf38Q7cP8PGe_X5cdN_qq5G-A",
-      "views": 1167495
-    },
-    {
-      "id": "J9FfYvKTOn0",
-      "title": "Songs 🩷🎵  to vibe at ✨️🙌#karanaujla#drivesongs # nightsongs ",
-      "channel": "𝑻𝒉𝒆 𝑬𝒅𝒊𝒕 𝑯𝒖𝒃\n",
-      "duration": 918,
-      "thumbnail": "https://i.ytimg.com/vi/J9FfYvKTOn0/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDITkO-DxFir6hF888Gj5cLj_PIUA",
-      "views": 3739925
-    },
-    {
-      "id": "PaRtmWgVUys",
-      "title": "T-Series Station🎧: Arijit Singh Hits | Non-Stop All-Time Superhit Collection | Best of Arijit Singh",
-      "channel": "T-Series",
-      "duration": 0,
-      "thumbnail": "https://i.ytimg.com/vi/PaRtmWgVUys/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCgr4bv4T7mN_nxLAKlUtCdTVZUog",
-      "views": 23508707
-    },
-    {
-      "id": "MKRaMcToV5U",
-      "title": "Karan Aujla 2025 Top All Songs New Punjabi Songs Karan Aujla Jukebox",
-      "channel": "Satte wala",
-      "duration": 1778,
-      "thumbnail": "https://i.ytimg.com/vi/MKRaMcToV5U/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhmIGYoZjAP&rs=AOn4CLCtsJt_AqvRHL67yK98Sr9RQUVyQA",
-      "views": 659989
+      "id": "1r69kzqaGSc",
+      "title": "AUJLA SZN 1 | KARAN AUJLA (FULL EP)",
+      "channel": "Badfella music 🎵 ",
+      "duration": 1059,
+      "thumbnail": "https://i.ytimg.com/vi/1r69kzqaGSc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjI3MeaSHIBy9WKOFWw6qQZvaJbg",
+      "views": 577341
     },
     {
       "id": "cWMxCE2HTag",
@@ -3878,10 +3787,138 @@
       "channel": "Karan Aujla",
       "duration": 171,
       "thumbnail": "https://i.ytimg.com/vi/cWMxCE2HTag/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDAmmxoV3Kiaeb8CslaL5CWowbcMA",
-      "views": 501464189
+      "views": 506577977
+    },
+    {
+      "id": "rfV8gjIDrHQ",
+      "title": "🔥 Karan Aujla – Best Songs Playlist 2026 | All Time Biggest Hits | Punjabi Hits #karanaujla ",
+      "channel": "Only_Music_Official",
+      "duration": 1642,
+      "thumbnail": "https://i.ytimg.com/vi/rfV8gjIDrHQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAhO0E16hfekuiCcjD_Ttvbe5aB0g",
+      "views": 461
+    },
+    {
+      "id": "zbj5-l8h72M",
+      "title": "Trending karan aujla songs | non stop karan aujla songs | RockMusicnb🤟 |",
+      "channel": "RockMusicnb🤟",
+      "duration": 1150,
+      "thumbnail": "https://i.ytimg.com/vi/zbj5-l8h72M/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhyIEwoMDAP&rs=AOn4CLBRbMf38Q7cP8PGe_X5cdN_qq5G-A",
+      "views": 1242613
+    },
+    {
+      "id": "5GCfYLguTIs",
+      "title": "BOYFRIEND(MUSIC VIDEO) KARAN AUJLA| SUNANDA | IKKY | Latest Punjabi Songs 2025",
+      "channel": "Karan Aujla",
+      "duration": 162,
+      "thumbnail": "https://i.ytimg.com/vi/5GCfYLguTIs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBeT5RiTFxGSpfcDWmIXAkUdpK2vA",
+      "views": 323476228
+    },
+    {
+      "id": "hoHo8h2JOgY",
+      "title": "@ARRahman - Hosanna Best Video | Ekk Deewana Tha | Amy Jackson | Prateik Babbar | Leon | Suzanne",
+      "channel": "Sony Music India",
+      "duration": 317,
+      "thumbnail": "https://i.ytimg.com/vi/hoHo8h2JOgY/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLAbpsrKP8yj3O3zsN-ACkX5ydnRRg",
+      "views": 69293423
+    },
+    {
+      "id": "3j7bhOvW6jw",
+      "title": "LOW FADE (Music Video) KARAN AUJLA",
+      "channel": "Karan Aujla",
+      "duration": 179,
+      "thumbnail": "https://i.ytimg.com/vi/3j7bhOvW6jw/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhXIGUoZTAP&rs=AOn4CLDuYbNaDIL2aL1Mn_bItLvHKzQuBw",
+      "views": 72493245
+    },
+    {
+      "id": "-YlmnPh-6rE",
+      "title": "For A Reason (Official Video) Karan Aujla | Tania  | Ikky | Latest Punjabi Songs 2025",
+      "channel": "Rehaan Records",
+      "duration": 189,
+      "thumbnail": "https://i.ytimg.com/vi/-YlmnPh-6rE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCNxUXvhpbbjkUHProBxAR2Sv2Tmg",
+      "views": 386278381
+    },
+    {
+      "id": "W0--lTnDEgQ",
+      "title": "Karan Aujla 2025 Top All Songs  New Punjabi Songs   Karan Aujla Jukebox",
+      "channel": "The Singh Vlog (Balli Singh)",
+      "duration": 1741,
+      "thumbnail": "https://i.ytimg.com/vi/W0--lTnDEgQ/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhGIFIoZTAP&rs=AOn4CLBhe7EPQXOq6R4LtJxILCjhtIHrMQ",
+      "views": 3474451
+    },
+    {
+      "id": "H4IRWXePhnU",
+      "title": "Karan aujla new song ||Karan  aujla  all song ||karan aujla punjabi song #karanaujla ",
+      "channel": "punjabi boys",
+      "duration": 1580,
+      "thumbnail": "https://i.ytimg.com/vi/H4IRWXePhnU/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCo5g9KwNc-bIokZWVuOlnCYAzZPw",
+      "views": 2264525
+    },
+    {
+      "id": "vJQMhj6WYZA",
+      "title": "Barbaadiyan (Full Video)| Shiddat |Sunny K,Radhika M |Sachet T,Nikhita G, Madhubanti B|Sachin -Jigar",
+      "channel": "T-Series",
+      "duration": 242,
+      "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
+      "views": 210509908
+    },
+    {
+      "id": "qe4agjXLbtM",
+      "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
+      "channel": "Rytham Riyasat",
+      "duration": 1275,
+      "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLAsKPFoa1l30Uj7VZwTs3hqmQyAxQ",
+      "views": 4459085
+    },
+    {
+      "id": "7mTDBsdfw88",
+      "title": "\"Safarnama\" Video Song | Tamasha | Ranbir Kapoor, Deepika Padukone | T-Series",
+      "channel": "T-Series",
+      "duration": 142,
+      "thumbnail": "https://i.ytimg.com/vi/7mTDBsdfw88/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLDRxfz7sEuuOoH0c6kg64-sdo4K7w",
+      "views": 29757299
+    },
+    {
+      "id": "7eKJFnvYfOE",
+      "title": "Chann | Udta Teer | Ayushmann Khurrana, Sara Ali Khan | Sachin-Jigar, Arijit Singh, Amitabh B.",
+      "channel": "Sony Music India and 4 more",
+      "duration": 190,
+      "thumbnail": "https://i.ytimg.com/vi/7eKJFnvYfOE/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC8xg=&rs=AOn4CLCe0EqdqLXYPw8eCilipGafLCbmWQ",
+      "views": 4084324
+    },
+    {
+      "id": "J9FfYvKTOn0",
+      "title": "Songs 🩷🎵  to vibe at ✨️🙌#karanaujla#drivesongs # nightsongs ",
+      "channel": "𝑻𝒉𝒆 𝑬𝒅𝒊𝒕 𝑯𝒖𝒃\n",
+      "duration": 918,
+      "thumbnail": "https://i.ytimg.com/vi/J9FfYvKTOn0/hqdefault.jpg?sqp=-oaymwEcCOADEI4CSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDITkO-DxFir6hF888Gj5cLj_PIUA",
+      "views": 3969396
     }
   ],
   "likes": [
+    {
+      "id": "f-9IaGAlgEA",
+      "title": "AARI AARI (Full Video) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev | Bombay Rockers",
+      "channel": "T-Series and 2 more",
+      "duration": 164,
+      "thumbnail": "https://i.ytimg.com/vi/f-9IaGAlgEA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_d47sE7Oaulolez8wRAHWtjyaRw",
+      "views": 20233856
+    },
+    {
+      "id": "ZBiaUvvFAFk",
+      "title": "Agar Tum Saath Ho (Full Song Lyrics): Ranbir Kapoor | Deepika | Tamasha | Arijit Singh, A.R. Rahman",
+      "channel": "T-Series",
+      "duration": 362,
+      "thumbnail": "https://i.ytimg.com/vi/ZBiaUvvFAFk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBqWb_IjNWT2GeiP7PgR3dAz5zffA&usqp=CBQ",
+      "views": 3031606
+    },
+    {
+      "id": "p5EeJ9bHAOI",
+      "title": "Bade Achhe Lagte Hai Song with lyrics | बड़े अच्छे लगते है गाने | Balika Badhu | Sachin | Rajni",
+      "channel": "Saregama Music",
+      "duration": 338,
+      "thumbnail": "https://i.ytimg.com/vi/p5EeJ9bHAOI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCquMJdWY7acx081Iv9AYYQ0C0YOA",
+      "views": 21225650
+    },
     {
       "id": "YyepU5ztLf4",
       "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
@@ -4017,7 +4054,7 @@
     "lL0ULDPCqIA": 1,
     "BSJa1UytM8w": 1,
     "g6fnFALEseI": 1,
-    "YyepU5ztLf4": 3,
+    "YyepU5ztLf4": 8,
     "1lrFsXkT_rM": 1,
     "xHMG8ihIbT4": 2,
     "7wtfhZwyrcc": 1,
@@ -4026,7 +4063,7 @@
     "16jA-6hiSUo": 3,
     "TO-_3tck2tg": 1,
     "CeFQO9MQNqs": 1,
-    "XTp5jaRU3Ws": 13,
+    "XTp5jaRU3Ws": 16,
     "cWMxCE2HTag": 2,
     "5EpyN_6dqyk": 1,
     "GG1_DsScm6U": 2,
@@ -4039,7 +4076,7 @@
     "vsWxs1tuwDk": 2,
     "f1r0XZLNlGQ": 3,
     "b4hrUSBP4nc": 1,
-    "cl0a3i2wFcc": 6,
+    "cl0a3i2wFcc": 8,
     "DxsDekHDKXo": 1,
     "W0--lTnDEgQ": 2,
     "LIEiEwpEhWM": 1,
@@ -4073,16 +4110,16 @@
     "mzIuhFx5W1o": 1,
     "NgvjhLLY1zs": 1,
     "Q5MtXJ3DbcU": 1,
-    "KNXYonYD59w": 3,
+    "KNXYonYD59w": 4,
     "P7yRYiBiV3g": 1,
     "dCmp56tSSmA": 4,
     "4lx3Ixi3jY0": 1,
     "IbBT5VZ3Lpg": 1,
     "RpC85RO0okA": 1,
-    "mUm4m07GXZ0": 3,
+    "mUm4m07GXZ0": 6,
     "m3OtL4peEWU": 1,
-    "AQEc4BwX6dk": 4,
-    "EiScA8DlzLA": 3,
+    "AQEc4BwX6dk": 6,
+    "EiScA8DlzLA": 6,
     "VAdGW7QDJiU": 1,
     "YQ-qToZUybM": 1,
     "Ezsb5afVXQQ": 1,
@@ -4094,8 +4131,8 @@
     "7fsme4Nn6yw": 1,
     "VdyBtGaspss": 1,
     "F2m4HPLvj-4": 1,
-    "8qCVXCFREkQ": 1,
-    "IAONd2d_PDU": 1,
+    "8qCVXCFREkQ": 6,
+    "IAONd2d_PDU": 5,
     "jo3p7O8n6is": 1,
     "aT4N7jn2Eww": 1,
     "TFTnJzWRTJ8": 1,
@@ -4117,7 +4154,13 @@
     "5tpBbrtu7yU": 2,
     "h5U7FQhhwKM": 1,
     "mLMmlWC6AUg": 1,
-    "VcFEtvtCAc4": 1
+    "VcFEtvtCAc4": 1,
+    "32DLasxoOiM": 1,
+    "U2SVCCENLjE": 3,
+    "ZBiaUvvFAFk": 4,
+    "Lf4vdiKLhNE": 1,
+    "p5EeJ9bHAOI": 2,
+    "f-9IaGAlgEA": 2
   },
   "eqState": {
     "gains": [
@@ -4219,6 +4262,6 @@
       "timestamp": 1788454723146
     }
   ],
-  "audioOutputDeviceId": "default",
-  "audioOutputDeviceLabel": "💻 System Default Output"
+  "audioOutputDeviceId": "communications",
+  "audioOutputDeviceLabel": "🎧 Communications - Headphones (M-101) (Bluetooth)"
 }

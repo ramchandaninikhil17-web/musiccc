@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/mf_bg">
+
+    <!-- WebView fills the entire screen -->
+    <android.webkit.WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
+    <!-- Subtle Floating Server Settings Button (visible while webView is active) -->
+    <ImageButton
+        android:id="@+id/serverFab"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="36dp"
+        android:layout_marginEnd="16dp"
+        android:background="@drawable/bg_fab"
+        android:src="@drawable/ic_settings"
+        android:tint="#818CF8"
+        android:alpha="0.75"
+        android:contentDescription="Server Connection Settings"
+        android:elevation="6dp" />
+
+    <!-- Offline / Server Connection Hub Overlay -->
+    <ScrollView
+        android:id="@+id/offlineView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true"
+        android:background="@color/mf_bg"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:paddingStart="24dp"
+            android:paddingTop="48dp"
+            android:paddingEnd="24dp"
+            android:paddingBottom="48dp">
+
+            <!-- MusicFlow Logo / Network Icon -->
+            <ImageView
+                android:layout_width="64dp"
+                android:layout_height="64dp"
+                android:src="@drawable/ic_offline"
+                android:contentDescription="Server Status"
+                android:layout_marginBottom="16dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/offline_title"
+                android:textColor="@color/mf_text_primary"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:gravity="center"
+                android:layout_marginBottom="8dp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/offline_message"
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="13sp"
+                android:gravity="center"
+                android:layout_marginBottom="24dp" />
+
+            <!-- Server Input Card -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/bg_input"
+                android:padding="16dp"
+                android:layout_marginBottom="16dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Server Address (URL or IP:Port)"
+                    android:textColor="@color/mf_text_secondary"
+                    android:textSize="12sp"
+                    android:layout_marginBottom="6dp" />
+
+                <EditText
+                    android:id="@+id/serverUrlInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:hint="@string/server_url_hint"
+                    android:textColor="@color/mf_text_primary"
+                    android:textColorHint="#4B5563"
+                    android:textSize="14sp"
+                    android:background="@null"
+                    android:singleLine="true"
+                    android:inputType="textUri"
+                    android:paddingStart="4dp"
+                    android:paddingEnd="4dp" />
+            </LinearLayout>
+
+            <!-- Connect & Retry Buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center"
+                android:layout_marginBottom="24dp">
+
+                <Button
+                    android:id="@+id/connectButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/connect"
+                    android:textColor="@color/mf_text_primary"
+                    android:backgroundTint="@color/mf_accent"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:layout_marginEnd="8dp" />
+
+                <Button
+                    android:id="@+id/retryButton"
+                    android:layout_width="0dp"
+                    android:layout_height="48dp"
+                    android:layout_weight="1"
+                    android:text="@string/retry"
+                    android:textColor="@color/mf_text_primary"
+                    android:backgroundTint="#212C42"
+                    android:textAllCaps="false"
+                    android:textSize="15sp"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+
+            <!-- Status Indicator -->
+            <TextView
+                android:id="@+id/connectionStatusText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="#34D399"
+                android:textSize="13sp"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp" />
+
+            <!-- Presets Label -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/quick_presets"
+                android:textColor="@color/mf_text_secondary"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Preset Buttons -->
+            <Button
+                android:id="@+id/btnPresetWifi"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="@string/preset_wifi"
+                android:textColor="@color/mf_text_primary"
+                android:background="@drawable/bg_chip"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnPresetUsb"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="@string/preset_usb"
+                android:textColor="@color/mf_text_primary"
+                android:background="@drawable/bg_chip"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnPresetEmulator"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="@string/preset_emulator"
+                android:textColor="@color/mf_text_primary"
+                android:background="@drawable/bg_chip"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:layout_marginBottom="8dp" />
+
+            <Button
+                android:id="@+id/btnPresetCloud"
+                android:layout_width="match_parent"
+                android:layout_height="42dp"
+                android:text="@string/preset_cloud"
+                android:textColor="@color/mf_text_primary"
+                android:background="@drawable/bg_chip"
+                android:textAllCaps="false"
+                android:textSize="13sp"
+                android:layout_marginBottom="16dp" />
+
+        </LinearLayout>
+    </ScrollView>
+</FrameLayout>

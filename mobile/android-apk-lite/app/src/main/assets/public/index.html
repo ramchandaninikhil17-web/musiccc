@@ -1,0 +1,1817 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MusicFlow — High-Performance Cloud Music Player</title>
+  <meta name="description" content="MusicFlow is a beautiful, ultra-fast music player that streams high-quality audio with zero setup, Apple floating orb, and Picture-in-Picture productivity mode." />
+  <meta name="theme-color" content="#6366f1" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="icon" type="image/png" href="/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/style.css?v=3.1" />
+</head>
+<body>
+  <!-- Animated Background -->
+  <div class="bg-animation" id="bgAnimation"></div>
+
+  <!-- Main Layout -->
+  <div class="app-layout">
+
+    <!-- ============ SIDEBAR NAV ============ -->
+    <nav class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="logo">
+          <span class="logo-icon">🎵</span>
+          <span class="logo-text">MusicFlow</span>
+        </div>
+      </div>
+
+      <ul class="nav-links">
+        <li><a href="#home" class="nav-link active" data-page="home" id="navHome">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          <span>Home</span>
+        </a></li>
+        <li><a href="#search" class="nav-link" data-page="search" id="navSearch">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+          <span>Search</span>
+        </a></li>
+        <li><a href="#library" class="nav-link" data-page="library" id="navLibrary">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+          <span>Library</span>
+        </a></li>
+        <li><a href="#mood" class="nav-link" data-page="mood" id="navMood">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+          <span>🎭 Mood Flow</span>
+        </a></li>
+        <li><a href="#profile" class="nav-link" data-page="profile" id="navProfile">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          <span>Your Stats</span>
+        </a></li>
+        <li><a href="#focus" class="nav-link" id="navFocus">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>🧠 Focus Flow</span>
+        </a></li>
+      </ul>
+
+      <div class="sidebar-bottom">
+        <button class="sidebar-btn" id="settingsBtn" title="Settings">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span>Settings</span>
+        </button>
+      </div>
+    </nav>
+
+    <!-- ============ MAIN AREA ============ -->
+    <div class="main-area">
+
+      <!-- Top bar (search + actions) -->
+      <header class="top-bar" id="topBar">
+        <button class="mobile-menu-btn" id="mobileMenuBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+
+        <!-- Mobile Brand Header (Active on mobile for Home, Library, Moods) -->
+        <div class="mobile-brand-header" id="mobileBrandHeader">
+          <div class="mobile-brand-left">
+            <span class="mobile-brand-icon">🎵</span>
+            <span class="mobile-brand-title" id="mobilePageTitle">MusicFlow</span>
+          </div>
+          <div class="mobile-brand-right">
+            <button class="mobile-header-btn" id="mobileSearchQuickBtn" type="button" title="Search">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            </button>
+            <button class="mobile-header-btn" id="mobileSettingsQuickBtn" type="button" title="Settings">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Apple Dynamic Island Floating Header Capsule -->
+        <div class="dynamic-island-header" id="dynamicIslandHeader" title="Apple Dynamic Island — Quick Player Controls">
+          <div class="di-minimized-pill" id="diMinimizedPill">
+            <div class="di-art-wrap">
+              <img class="di-art-thumb" id="diArtThumb" src="/icons/icon-192.png" alt="" />
+              <div class="di-soundwaves" id="diSoundwaves"><span></span><span></span><span></span></div>
+            </div>
+            <div class="di-text-marquee">
+              <span class="di-title" id="diTitle">MusicFlow Player</span>
+              <span class="di-artist" id="diArtist">Ready to Play</span>
+            </div>
+            <div class="di-actions">
+              <button class="di-action-btn" id="diPlayPauseBtn" title="Play/Pause">
+                <svg class="di-play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <svg class="di-pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              </button>
+              <button class="di-action-btn" id="diNextBtn" title="Next Track">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg>
+              </button>
+              <button class="di-action-btn" id="diEqBtn" title="10-Band Equalizer">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="search-bar-wrap" id="searchBarWrap">
+          <div class="search-bar">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+            <input type="text" id="searchInput" class="search-input" placeholder="Search songs, artists, lyrics, or paste YouTube link..." autocomplete="off" role="combobox" aria-autocomplete="list" aria-controls="searchSuggestions" aria-expanded="false" />
+            <button class="search-mode-pill" id="lyricsModeBtn" title="Toggle Search by Lyrics Mode (Find Song from Lyrics)" type="button" aria-pressed="false">
+              <span class="smp-icon">🎤</span>
+              <span class="smp-label">Lyrics</span>
+            </button>
+            <button class="search-clear" id="searchClear" title="Clear">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+            <div class="search-loading" id="searchLoading"><div class="spinner"></div></div>
+          </div>
+          <!-- Search Suggestions Dropdown -->
+          <div class="search-suggestions" id="searchSuggestions" role="listbox" aria-label="Search suggestions"></div>
+        </div>
+
+        <div class="top-bar-actions">
+          <!-- Play or Download from YouTube Link Button -->
+          <button class="top-btn" id="ytLinkBtn" title="Play or Download from YouTube Link (Key: L)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          </button>
+          <!-- Voice assistant. VoiceAssistant.init() hides this outright when the
+               browser has no SpeechRecognition, so it can never be a button that
+               does nothing. It is a switch for always-on listening: once the
+               first tap has granted microphone access, the mic re-arms itself on
+               every load and waits for the wake phrase. -->
+          <button class="top-btn voice-btn" id="voiceBtn" aria-label="Always-on voice control" title="Always listening — say &quot;Hey My Ruby, play Syaara&quot;. Tap to switch off.">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+          </button>
+          <!-- Always-On-Top PiP Mini Player Button -->
+          <button class="top-btn" id="pipBtnTop" title="Always-On-Top Mini Player for Work (Key: P)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+          </button>
+          <!-- Focus / Pomodoro Mode Button -->
+          <button class="top-btn" id="focusModeBtn" title="Pomodoro Focus & Deep Work (Key: F)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </button>
+          <button class="top-btn" id="themeToggleBtn" title="Toggle theme">
+            <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+            <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          </button>
+          <button class="top-btn queue-toggle-btn" id="queueToggleBtn" title="Queue">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+            <span class="queue-badge" id="queueBadge">0</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="page-content" id="pageContent">
+
+        <!-- ===== HOME PAGE ===== -->
+        <section class="page" id="pageHome">
+          <div class="home-greeting" id="homeGreeting">
+            <h1>Good Evening</h1>
+            <p>What would you like to listen to?</p>
+          </div>
+
+          <!-- Personalized Endless Radio Banner -->
+          <div class="home-hero-card" id="personalizedRadioHero">
+            <div class="hero-content">
+              <div class="hero-badge">✨ Smart Flow</div>
+              <h2>Your Personalized Mix</h2>
+              <p>Endless dynamic playlist adapted in real-time from your favorite tracks & artists.</p>
+              <button class="hero-play-btn" id="startRadioBtn">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                <span>Play Personalized Mix</span>
+              </button>
+            </div>
+            <div class="hero-visual">
+              <div class="hero-glow-circle"></div>
+              <div class="hero-disc"><span class="hero-disc-icon">🎵</span></div>
+            </div>
+          </div>
+
+          <!-- Recommended For You Section -->
+          <div class="home-section" id="recommendedSection">
+            <div class="section-header">
+              <h2>✨ Recommended For You</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="playAllRecBtn" title="Play all recommendations">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="refreshRecBtn">🔄 Refresh</button>
+              </div>
+            </div>
+            <div class="results-grid" id="recommendedGrid"></div>
+          </div>
+
+          <!-- Based on Recent Vibe Section (Dynamic) -->
+          <div class="home-section" id="tasteSection" style="display:none;">
+            <div class="section-header">
+              <h2 id="tasteSectionTitle">🔥 More Like What You Love</h2>
+            </div>
+            <div class="horizontal-scroll" id="tasteGrid"></div>
+          </div>
+
+          <!-- Recently Played -->
+          <div class="home-section" id="recentlyPlayedSection" style="display:none;">
+            <div class="section-header">
+              <h2>🎧 Recently Played</h2>
+            </div>
+            <div class="horizontal-scroll" id="recentlyPlayedGrid"></div>
+          </div>
+
+          <!-- Quick-access search history. Hidden until there is history, so a
+               fresh install never shows an empty row. -->
+          <div class="home-section" id="homeHistorySection" style="display:none;">
+            <div class="section-header">
+              <h2>🕐 Jump Back In</h2>
+              <button class="text-btn" id="clearHomeHistory">Clear</button>
+            </div>
+            <div class="search-history-tags" id="homeHistoryTags"></div>
+          </div>
+
+          <!-- Quick Picks / Made For You -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>🎯 Quick Picks</h2>
+            </div>
+            <div class="quick-tags" id="quickTags">
+              <button class="tag" data-query="trending songs 2024">🔥 Trending</button>
+              <button class="tag" data-query="Arijit Singh best songs">Arijit Singh</button>
+              <button class="tag" data-query="lo-fi hip hop beats study">Lo-Fi Beats</button>
+              <button class="tag" data-query="top bollywood songs 2024">Bollywood Hits</button>
+              <button class="tag" data-query="EDM party music 2024">EDM Party</button>
+              <button class="tag" data-query="classical piano relaxing">Classical Piano</button>
+              <button class="tag" data-query="K-pop hits 2024">K-Pop</button>
+              <button class="tag" data-query="90s rock hits">90s Rock</button>
+            </div>
+          </div>
+
+          <!-- Browse. Four ways in, one section: Mood / Genre / Activity /
+               Language used to be four stacked grids of eight cards, which meant
+               32 tiles of scrolling before the page ended. The tabs keep every
+               card reachable in one tap without the wall of tiles. All four grids
+               stay in the DOM (only the active panel is shown) so nothing has to
+               be re-rendered when switching. -->
+          <div class="home-section" id="browseSection">
+            <div class="section-header">
+              <h2>🧭 Browse</h2>
+              <div class="browse-tabs" id="browseTabs" role="tablist" aria-label="Browse by">
+                <button class="browse-tab active" type="button" role="tab" aria-selected="true" data-browse="mood">Mood</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="genre">Genre</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="activity">Activity</button>
+                <button class="browse-tab" type="button" role="tab" aria-selected="false" data-browse="language">Language</button>
+              </div>
+            </div>
+
+            <div class="browse-panel" data-browse-panel="mood" role="tabpanel">
+              <div class="genre-grid" id="moodGrid">
+                <div class="genre-card" data-query="happy upbeat songs" style="--gc1:#f97316;--gc2:#eab308;"><span>😊</span><p>Happy</p></div>
+                <div class="genre-card" data-query="sad emotional songs" style="--gc1:#6366f1;--gc2:#8b5cf6;"><span>😢</span><p>Sad</p></div>
+                <div class="genre-card" data-query="romantic love songs" style="--gc1:#ec4899;--gc2:#f43f5e;"><span>❤️</span><p>Romantic</p></div>
+                <div class="genre-card" data-query="chill relaxing music" style="--gc1:#06b6d4;--gc2:#3b82f6;"><span>😌</span><p>Chill</p></div>
+                <div class="genre-card" data-query="energetic workout music" style="--gc1:#ef4444;--gc2:#f97316;"><span>💪</span><p>Energetic</p></div>
+                <div class="genre-card" data-query="focus study concentration music" style="--gc1:#10b981;--gc2:#14b8a6;"><span>🧠</span><p>Focus</p></div>
+                <div class="genre-card" data-query="party dance music" style="--gc1:#d946ef;--gc2:#a855f7;"><span>🎉</span><p>Party</p></div>
+                <div class="genre-card" data-query="sleep ambient calm music" style="--gc1:#1e3a5f;--gc2:#312e81;"><span>🌙</span><p>Sleep</p></div>
+              </div>
+            </div>
+
+            <div class="browse-panel" data-browse-panel="genre" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="genreGrid">
+                <div class="genre-card" data-query="pop music hits 2024" style="--gc1:#ec4899;--gc2:#8b5cf6;"><span>🎤</span><p>Pop</p></div>
+                <div class="genre-card" data-query="hip hop rap music 2024" style="--gc1:#f59e0b;--gc2:#ef4444;"><span>🎧</span><p>Hip Hop</p></div>
+                <div class="genre-card" data-query="rock music greatest hits" style="--gc1:#dc2626;--gc2:#991b1b;"><span>🎸</span><p>Rock</p></div>
+                <div class="genre-card" data-query="electronic dance music" style="--gc1:#7c3aed;--gc2:#2563eb;"><span>🎹</span><p>Electronic</p></div>
+                <div class="genre-card" data-query="R&B soul music" style="--gc1:#be185d;--gc2:#7c2d12;"><span>🎷</span><p>R&B / Soul</p></div>
+                <div class="genre-card" data-query="jazz smooth music" style="--gc1:#92400e;--gc2:#78350f;"><span>🎺</span><p>Jazz</p></div>
+                <div class="genre-card" data-query="classical music masterpieces" style="--gc1:#1e40af;--gc2:#1e3a5f;"><span>🎻</span><p>Classical</p></div>
+                <div class="genre-card" data-query="country music hits" style="--gc1:#b45309;--gc2:#a16207;"><span>🤠</span><p>Country</p></div>
+              </div>
+            </div>
+
+            <div class="browse-panel" data-browse-panel="activity" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="activityGrid">
+                <div class="genre-card" data-query="gym workout motivation songs" style="--gc1:#f43f5e;--gc2:#b91c1c;"><span>🏋️</span><p>Workout</p></div>
+                <div class="genre-card" data-query="study music no lyrics deep focus" style="--gc1:#0ea5e9;--gc2:#4f46e5;"><span>📚</span><p>Study</p></div>
+                <div class="genre-card" data-query="road trip driving songs playlist" style="--gc1:#f59e0b;--gc2:#ea580c;"><span>🚗</span><p>Driving</p></div>
+                <div class="genre-card" data-query="coding programming focus beats" style="--gc1:#22c55e;--gc2:#0f766e;"><span>💻</span><p>Coding</p></div>
+                <div class="genre-card" data-query="feel good cooking kitchen songs" style="--gc1:#fb923c;--gc2:#e11d48;"><span>🍳</span><p>Cooking</p></div>
+                <div class="genre-card" data-query="gaming background music mix" style="--gc1:#8b5cf6;--gc2:#4338ca;"><span>🎮</span><p>Gaming</p></div>
+                <div class="genre-card" data-query="yoga meditation calm instrumental" style="--gc1:#14b8a6;--gc2:#0d9488;"><span>🧘</span><p>Yoga</p></div>
+                <div class="genre-card" data-query="morning commute upbeat songs" style="--gc1:#eab308;--gc2:#65a30d;"><span>🚉</span><p>Commute</p></div>
+              </div>
+            </div>
+
+            <div class="browse-panel" data-browse-panel="language" role="tabpanel" style="display:none;">
+              <div class="genre-grid" id="langGrid">
+                <div class="genre-card" data-query="hindi songs latest 2024" style="--gc1:#f97316;--gc2:#dc2626;"><span>🇮🇳</span><p>Hindi</p></div>
+                <div class="genre-card" data-query="english pop songs 2024" style="--gc1:#3b82f6;--gc2:#6366f1;"><span>🇺🇸</span><p>English</p></div>
+                <div class="genre-card" data-query="punjabi songs latest" style="--gc1:#eab308;--gc2:#f97316;"><span>🎵</span><p>Punjabi</p></div>
+                <div class="genre-card" data-query="tamil songs hits 2024" style="--gc1:#10b981;--gc2:#059669;"><span>🎵</span><p>Tamil</p></div>
+                <div class="genre-card" data-query="korean k-pop music" style="--gc1:#ec4899;--gc2:#d946ef;"><span>🇰🇷</span><p>Korean</p></div>
+                <div class="genre-card" data-query="spanish latin music reggaeton" style="--gc1:#ef4444;--gc2:#b91c1c;"><span>🇪🇸</span><p>Spanish</p></div>
+                <div class="genre-card" data-query="telugu songs latest hits" style="--gc1:#8b5cf6;--gc2:#6d28d9;"><span>🎵</span><p>Telugu</p></div>
+                <div class="genre-card" data-query="japanese anime music" style="--gc1:#f43f5e;--gc2:#e11d48;"><span>🇯🇵</span><p>Japanese</p></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== SEARCH PAGE ===== -->
+        <section class="page" id="pageSearch" style="display:none;">
+          <div class="search-history-section" id="searchHistorySection">
+            <div class="section-header">
+              <h2>🕐 Recent Searches</h2>
+              <button class="text-btn" id="clearSearchHistory">Clear</button>
+            </div>
+            <div class="search-history-tags" id="searchHistoryTags"></div>
+          </div>
+
+          <!-- Lyrics Search Hero Banner -->
+          <div class="lyrics-search-banner" id="lyricsSearchBanner">
+            <div class="lsb-left">
+              <div class="lsb-tag">✨ 100% ACCURATE LYRICS FINDER</div>
+              <h3>Know the lyrics but forgot the song?</h3>
+              <p>Type any words, chorus line, or sentence you remember to find the exact song and play it instantly.</p>
+            </div>
+            <div class="lsb-actions">
+              <button class="lsb-btn" id="lsbActivateBtn" type="button">
+                <span>🎤 Search by Lyrics</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="results-header" id="resultsHeader" style="display:none;">
+            <h2 class="results-title" id="resultsTitle">Results</h2>
+            <button class="play-all-btn" id="playAllBtn">
+              <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              Play All
+            </button>
+          </div>
+          <div class="results-grid" id="resultsGrid"></div>
+        </section>
+
+        <!-- ===== LIBRARY PAGE ===== -->
+        <section class="page" id="pageLibrary" style="display:none;">
+          <div class="library-header-row">
+            <h1 class="page-title" style="margin-bottom:0;">Your Library</h1>
+            <div style="display:flex; gap:10px;">
+              <button class="pill-action-btn" id="localImportBtn" title="Drag & drop or import local MP3/FLAC files">
+                <span>📁 Import Local Music</span>
+              </button>
+              <button class="pill-action-btn" id="batchImportBtn" title="Import multiple songs from text">
+                <span>✨ Batch Import Songs</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Library filter. With a few dozen playlists and a long liked list
+               there was no way to find anything without scrolling. -->
+          <div class="library-filter-wrap">
+            <svg class="lf-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
+            <input type="text" id="libraryFilterInput" class="library-filter-input" placeholder="Filter your library — playlists, liked songs, local files" aria-label="Filter library" />
+            <button class="lf-clear" id="libraryFilterClear" title="Clear filter" style="display:none;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+            </button>
+          </div>
+          <p class="library-filter-status" id="libraryFilterStatus" style="display:none;"></p>
+
+          <!-- Local Music Drag & Drop Area -->
+          <div class="local-dropzone-card" id="localDropzone" title="Drag & drop audio files here (.mp3, .flac, .wav, .m4a)">
+            <div class="dropzone-icon">🎵</div>
+            <div class="dropzone-text">
+              <strong>Drag & Drop Local Music Files Here</strong>
+              <p>Supports MP3, FLAC, WAV, AAC, M4A — Plays 100% offline in high fidelity</p>
+            </div>
+            <input type="file" id="localFileInput" multiple accept="audio/*" style="display:none;" />
+          </div>
+
+          <!-- Quick Access Cards (Liked & Downloaded) -->
+          <div class="library-cards-row">
+            <!-- Liked Songs -->
+            <div class="library-card liked-card" id="likedSongsCard">
+              <div class="lib-card-icon">❤️</div>
+              <div class="lib-card-info">
+                <h3>Liked Songs</h3>
+                <p id="likedCount">0 songs</p>
+              </div>
+              <button class="lib-play-btn" id="playLikedBtn" title="Play Liked Songs">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+            </div>
+
+            <!-- Downloaded Songs (Offline) -->
+            <div class="library-card downloaded-card" id="downloadedSongsCard">
+              <div class="lib-card-icon">⬇️</div>
+              <div class="lib-card-info">
+                <h3>Downloaded Songs</h3>
+                <p id="downloadedCount">0 songs • Ready for offline playback</p>
+              </div>
+              <button class="lib-play-btn" id="playDownloadedBtn" title="Play Downloaded Songs">
+                <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Custom Playlists Section -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>📁 Playlists</h2>
+              <div class="section-header-actions">
+                <button class="text-btn ai-smart-nav-btn" id="libraryAiSmartBtn">✨ AI Smart Playlist</button>
+                <button class="text-btn" id="createPlaylistBtn">+ New Playlist</button>
+              </div>
+            </div>
+            <div class="playlists-grid" id="playlistGrid"></div>
+          </div>
+
+          <!-- Library filter results. Spans playlists, liked songs, local files
+               and the contents of every playlist. -->
+          <div class="home-section" id="libraryFilterSection" style="display:none;">
+            <div class="section-header">
+              <h2>🔎 Matching Songs</h2>
+              <span class="playlist-count" id="libraryFilterCount">0 songs</span>
+            </div>
+            <div class="results-grid" id="libraryFilterGrid"></div>
+          </div>
+
+          <!-- Local Files. Imported tracks used to be pushed into the queue and
+               nowhere else, so after a reload they were in storage but had no
+               entry point in the UI at all. -->
+          <div class="home-section" id="localSongsSection" style="display:none;">
+            <div class="section-header">
+              <h2>💾 Local Files</h2>
+              <span class="playlist-count" id="localSongsCount">0 songs</span>
+              <div class="playlist-header-actions">
+                <button class="play-all-btn" id="playLocalBtn" title="Play all local files">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Play All
+                </button>
+              </div>
+            </div>
+            <div class="results-grid" id="localSongsGrid"></div>
+          </div>
+
+          <!-- Liked Songs List Section -->
+          <div class="home-section" id="likedSongsListSection" style="display:none;">
+            <div class="section-header">
+              <h2>❤️ Liked Songs</h2>
+              <button class="text-btn" id="hideLikedListBtn">Close</button>
+            </div>
+            <div class="results-grid" id="likedResultsGrid"></div>
+          </div>
+
+          <!-- Downloaded Songs List Section (Offline Storage) -->
+          <div class="home-section" id="downloadedSongsSection" style="display:none;">
+            <div class="section-header">
+              <h2>⬇️ Downloaded Songs (Offline)</h2>
+              <div class="section-header-actions">
+                <button class="play-all-btn" id="playAllDownloadedBtn" title="Play all downloaded tracks offline">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="hideDownloadedListBtn">Close</button>
+              </div>
+            </div>
+            <div class="results-grid" id="downloadedGrid"></div>
+          </div>
+
+          <!-- Active Playlist Songs Section -->
+          <div class="home-section" id="activePlaylistSection" style="display:none;">
+            <div class="section-header">
+              <h2 id="activePlaylistTitle">Playlist</h2>
+              <span class="playlist-count" id="activePlaylistCount">0 songs</span>
+              <div class="playlist-header-actions">
+                <button class="play-all-btn" id="playPlaylistBtn" title="Play this playlist">
+                  <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                  Play All
+                </button>
+                <button class="pill-action-btn" id="downloadPlaylistBtn" title="Download every track as one zip file">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download All
+                </button>
+                <button class="pill-action-btn" id="playlistBatchAddBtn" title="Paste a list of songs to add to this playlist">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  Add Songs
+                </button>
+                <button class="text-btn danger" id="deletePlaylistBtn" title="Delete this playlist">Delete</button>
+                <button class="text-btn" id="hidePlaylistBtn">Close</button>
+              </div>
+            </div>
+            <div class="results-grid" id="activePlaylistGrid"></div>
+          </div>
+        </section>
+
+        <!-- ===== PROFILE PAGE ===== -->
+        <section class="page" id="pageProfile" style="display:none;">
+          <h1 class="page-title">Your Profile</h1>
+
+          <!-- Stats Cards -->
+          <div class="stats-grid">
+            <div class="stat-card"><div class="stat-number" id="statTotalPlayed">0</div><div class="stat-label">Songs Played</div></div>
+            <div class="stat-card"><div class="stat-number" id="statMinutes">0</div><div class="stat-label">Minutes Listened</div></div>
+            <div class="stat-card"><div class="stat-number" id="statLiked">0</div><div class="stat-label">Liked Songs</div></div>
+            <div class="stat-card"><div class="stat-number" id="statPlaylists">0</div><div class="stat-label">Playlists</div></div>
+          </div>
+
+          <!-- Top Songs -->
+          <div class="home-section">
+            <div class="section-header"><h2>🏆 Top Songs</h2></div>
+            <div class="top-list" id="topSongsList"><p class="empty-msg">Play some songs to see your top tracks!</p></div>
+          </div>
+
+          <!-- Top Artists -->
+          <div class="home-section">
+            <div class="section-header"><h2>🌟 Top Artists</h2></div>
+            <div class="top-list" id="topArtistsList"><p class="empty-msg">Listen to music to see your top artists!</p></div>
+          </div>
+
+          <!-- Listening History -->
+          <div class="home-section">
+            <div class="section-header">
+              <h2>📜 Listening History</h2>
+              <button class="text-btn" id="clearHistoryBtn">Clear History</button>
+            </div>
+            <div class="history-list" id="historyList"><p class="empty-msg">No listening history yet.</p></div>
+          </div>
+        </section>
+
+        <!-- ===== AI PLAYLIST STUDIO & MOOD FLOW PAGE ===== -->
+        <section class="page" id="pageMood" style="display:none;">
+          <div class="home-greeting">
+            <h1>✨ AI Playlist Studio & Custom DJ</h1>
+            <p>Tell me what you want to hear — custom choice, vibe, scene, or artists — and get a full playable playlist in seconds.</p>
+          </div>
+
+          <!-- Custom Choice Hero Card -->
+          <div class="ai-custom-playlist-card" id="aiCustomPlaylistCard">
+            <div class="ai-card-glow"></div>
+            
+            <div class="ai-prompt-wrap">
+              <label for="aiCustomPrompt" class="ai-prompt-label">
+                <span class="ai-sparkle-icon">✨</span>
+                <span>Describe your dream playlist (Custom Choice)</span>
+              </label>
+              <div class="ai-input-box">
+                <textarea id="aiCustomPrompt" class="ai-prompt-input" rows="2" placeholder="e.g. Late night romantic Hindi acoustic songs, 90s rock ballads for road trip, High energy gym phonk workout..."></textarea>
+                <button type="button" class="ai-clear-prompt-btn" id="aiClearPromptBtn" title="Clear input" style="display:none;">&times;</button>
+              </div>
+            </div>
+
+            <!-- Quick Inspiration Pills -->
+            <div class="ai-inspiration-row">
+              <span class="ai-inspire-label">Quick Ideas:</span>
+              <div class="ai-inspire-chips" id="aiInspireChips">
+                <button type="button" class="ai-chip" data-prompt="Late night relaxing lo-fi beats with rain">🌙 Late Night Lo-Fi</button>
+                <button type="button" class="ai-chip" data-prompt="Heart-touching romantic Bollywood acoustic hits">❤️ Bollywood Romance</button>
+                <button type="button" class="ai-chip" data-prompt="Gym workout high energy phonk and beast mode beats">🔥 Beast Mode Phonk</button>
+                <button type="button" class="ai-chip" data-prompt="90s and 2000s nostalgic retro rock ballads">🚗 90s Retro Roadtrip</button>
+                <button type="button" class="ai-chip" data-prompt="High tempo Punjabi party dance hits">⚡ Punjabi Fire</button>
+                <button type="button" class="ai-chip" data-prompt="Calm acoustic guitar indie coffee shop morning">☕ Acoustic Coffee</button>
+                <button type="button" class="ai-chip" data-prompt="Deep focus instrumental study and coding beats">🧠 Deep Focus</button>
+                <button type="button" class="ai-chip" data-prompt="Club dance EDM festival bangers 2024">🎉 Festival EDM</button>
+              </div>
+            </div>
+
+            <!-- Custom Controls Row: Track Count, Language, Energy -->
+            <div class="ai-controls-grid">
+              <div class="ai-control-group">
+                <label class="ai-control-label">Track Count</label>
+                <div class="ai-pill-selector" id="aiCountSelector">
+                  <button type="button" class="ai-pill-opt active" data-count="15">15 Songs</button>
+                  <button type="button" class="ai-pill-opt" data-count="25">25 Songs</button>
+                  <button type="button" class="ai-pill-opt" data-count="40">40 Songs</button>
+                </div>
+              </div>
+
+              <div class="ai-control-group">
+                <label class="ai-control-label" for="aiLanguageSelect">Language / Region</label>
+                <select class="ai-select" id="aiLanguageSelect">
+                  <option value="all">🌍 All / Multi-Language</option>
+                  <option value="hindi">🇮🇳 Hindi / Bollywood</option>
+                  <option value="punjabi">🔥 Punjabi</option>
+                  <option value="english">🇺🇸 English / Global Pop</option>
+                  <option value="kpop">🇰🇷 K-Pop</option>
+                  <option value="spanish">🇪🇸 Spanish / Latin</option>
+                  <option value="instrumental">🎹 Lo-Fi / Instrumental</option>
+                </select>
+              </div>
+
+              <div class="ai-control-group">
+                <label class="ai-control-label">Energy Vibe</label>
+                <div class="ai-pill-selector" id="aiEnergySelector">
+                  <button type="button" class="ai-pill-opt" data-energy="1">🌙 Mellow</button>
+                  <button type="button" class="ai-pill-opt active" data-energy="2">☀️ Balanced</button>
+                  <button type="button" class="ai-pill-opt" data-energy="3">⚡ Upbeat</button>
+                  <button type="button" class="ai-pill-opt" data-energy="4">🔥 Hype</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Generate Action Row -->
+            <div class="ai-action-row">
+              <button type="button" class="ai-generate-main-btn" id="aiGenerateBtn">
+                <span class="ai-btn-icon">⚡</span>
+                <span class="ai-btn-text">Generate Full Playlist</span>
+              </button>
+              <button type="button" class="ai-surprise-btn" id="aiSurpriseBtn" title="Fill with random creative choice">
+                🎲 Surprise Me
+              </button>
+            </div>
+
+            <!-- Generating Loader -->
+            <div class="ai-generating-loader" id="aiGeneratingLoader" style="display:none;">
+              <div class="ai-loader-spinner"></div>
+              <div class="ai-loader-text">
+                <h4 id="aiLoaderStatus">Crafting your playlist...</h4>
+                <p id="aiLoaderSubtext">Searching top tracks and curating the vibe sequence</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Smart Playlist Results Section -->
+          <div class="home-section ai-results-section" id="moodResultsSection" style="display:none;">
+            <div class="ai-results-header-card">
+              <div class="ai-res-meta">
+                <span class="ai-res-badge" id="aiResBadge">✨ AI Curated Mix</span>
+                <div class="ai-title-row">
+                  <span class="ai-res-emoji" id="aiResEmoji">✨</span>
+                  <h2 id="moodResultsTitle">Your Custom Mix</h2>
+                </div>
+                <p class="ai-res-desc" id="aiResDesc">15 tracks generated from your custom choice</p>
+              </div>
+              <div class="ai-res-actions">
+                <button class="ai-res-play-btn" id="playAllMoodBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:16px;height:16px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="ai-res-save-btn" id="saveMoodPlaylistBtn">
+                  💾 Save to Library
+                </button>
+                <button class="ai-res-regen-btn" id="regenMoodBtn" title="Regenerate with fresh tracks">
+                  🎲 Regenerate
+                </button>
+              </div>
+            </div>
+            <div class="results-grid" id="moodResultsGrid"></div>
+          </div>
+
+          <!-- Quick Mood Launch Cards -->
+          <div class="home-section" style="margin-top:35px;">
+            <div class="section-header">
+              <h2>🎭 Quick Vibe Categories</h2>
+              <small style="color:var(--text-secondary);font-size:13px;">Instant one-click smart generation</small>
+            </div>
+            <div class="mood-quick-grid" id="moodQuickGrid">
+              <button class="mood-quick-card" data-mood="happy" style="--mq1:#f97316;--mq2:#eab308;"><span class="mqc-emoji">😊</span><span class="mqc-label">Happy & Upbeat</span></button>
+              <button class="mood-quick-card" data-mood="sad" style="--mq1:#6366f1;--mq2:#8b5cf6;"><span class="mqc-emoji">😢</span><span class="mqc-label">Sad & Emotional</span></button>
+              <button class="mood-quick-card" data-mood="romantic" style="--mq1:#ec4899;--mq2:#f43f5e;"><span class="mqc-emoji">❤️</span><span class="mqc-label">Romantic</span></button>
+              <button class="mood-quick-card" data-mood="chill" style="--mq1:#06b6d4;--mq2:#3b82f6;"><span class="mqc-emoji">😌</span><span class="mqc-label">Chill & Relaxed</span></button>
+              <button class="mood-quick-card" data-mood="energetic" style="--mq1:#ef4444;--mq2:#f97316;"><span class="mqc-emoji">💪</span><span class="mqc-label">Energetic & Hyped</span></button>
+              <button class="mood-quick-card" data-mood="focus" style="--mq1:#10b981;--mq2:#14b8a6;"><span class="mqc-emoji">🧠</span><span class="mqc-label">Deep Focus</span></button>
+              <button class="mood-quick-card" data-mood="party" style="--mq1:#d946ef;--mq2:#a855f7;"><span class="mqc-emoji">🎉</span><span class="mqc-label">Party & Dance</span></button>
+              <button class="mood-quick-card" data-mood="sleep" style="--mq1:#1e3a5f;--mq2:#312e81;"><span class="mqc-emoji">🌙</span><span class="mqc-label">Zen & Sleep</span></button>
+              <button class="mood-quick-card" data-mood="nostalgia" style="--mq1:#92400e;--mq2:#78350f;"><span class="mqc-emoji">🕰️</span><span class="mqc-label">Nostalgic</span></button>
+            </div>
+          </div>
+
+          <!-- Advanced Mood Questionnaire Button -->
+          <div class="mood-advanced-launch">
+            <button class="mood-advanced-btn" id="openMoodQuestionnaireBtn">
+              <span>📋 Step-by-Step Vibe Questionnaire</span>
+              <small>Guided 4-step wizard for mood, activity, and genre combinations</small>
+            </button>
+          </div>
+
+          <!-- Saved Mood Presets -->
+          <div class="home-section" id="savedMoodPresetsSection" style="display:none;">
+            <div class="section-header">
+              <h2>⚡ Your Saved Mood Presets</h2>
+            </div>
+            <div class="mood-presets-list" id="savedMoodPresetsList"></div>
+          </div>
+        </section>
+
+      </main>
+    </div>
+
+    <!-- Queue Sidebar -->
+    <aside class="queue-sidebar" id="queueSidebar">
+      <div class="queue-header">
+        <h3>Up Next</h3>
+        <div class="queue-actions">
+          <button class="queue-clear-btn" id="queueClearBtn">Clear</button>
+          <button class="queue-close-btn" id="queueCloseBtn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+          </button>
+        </div>
+      </div>
+      <div class="queue-list" id="queueList">
+        <div class="queue-empty" id="queueEmpty"><p>Queue is empty</p><p class="queue-hint">Search and add songs</p></div>
+      </div>
+    </aside>
+
+  </div>
+
+  <!-- ============ DOWNLOAD PROGRESS BAR ============ -->
+  <div class="download-bar" id="downloadBar" style="display:none;">
+    <div class="download-bar-inner">
+      <div class="download-bar-icon">
+        <svg class="dl-bar-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <div class="dl-bar-spinner"></div>
+      </div>
+      <div class="dl-bar-info">
+        <span class="dl-bar-title" id="dlBarTitle">Downloading...</span>
+        <span class="dl-bar-meta" id="dlBarMeta"></span>
+      </div>
+      <span class="dl-bar-pct" id="dlBarPct">0%</span>
+      <button class="dl-bar-close" id="dlBarClose" title="Dismiss">&times;</button>
+    </div>
+    <div class="dl-bar-track">
+      <div class="dl-bar-fill" id="dlBarFill"></div>
+      <div class="dl-bar-glow" id="dlBarGlow"></div>
+    </div>
+  </div>
+
+  <!-- ============ NOW PLAYING BAR ============ -->
+  <div class="now-playing-bar" id="nowPlayingBar">
+    <div class="now-playing-inner">
+
+      <!-- Track Info -->
+      <div class="np-track-info" id="npTrackInfo">
+        <div class="np-thumbnail-wrap" id="npThumbWrap">
+          <img class="np-thumbnail" id="npThumbnail" src="" alt="" />
+          <div class="np-thumbnail-overlay">
+            <div class="np-equalizer"><span></span><span></span><span></span><span></span></div>
+          </div>
+        </div>
+        <div class="np-details">
+          <div class="np-title" id="npTitle">Not Playing</div>
+          <div class="np-channel" id="npChannel">—</div>
+        </div>
+        <button class="np-like-btn" id="npLikeBtn" title="Like">
+          <svg class="heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <svg class="heart-filled" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <button class="np-dislike-btn" id="npDislikeBtn" title="Not interested (J)" aria-label="Not interested">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10 15v4a3 3 0 0 0 3 3l4-9V2H5.72a2 2 0 0 0-2 1.7l-1.38 9a2 2 0 0 0 2 2.3zm7-13h2.67A2.31 2.31 0 0 1 22 4v7a2.31 2.31 0 0 1-2.33 2H17"/></svg>
+        </button>
+      </div>
+
+      <!-- Controls -->
+      <div class="np-controls">
+        <div class="np-buttons">
+          <button class="np-btn" id="shuffleBtn" title="Shuffle"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg></button>
+          <button class="np-btn" id="prevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button class="np-btn np-play-btn" id="playPauseBtn" title="Play">
+            <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+          </button>
+          <button class="np-btn" id="nextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg></button>
+          <button class="np-btn" id="repeatBtn" title="Repeat"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg></button>
+        </div>
+        <div class="np-progress-wrap">
+          <span class="np-time" id="npCurrentTime">0:00</span>
+          <div class="np-progress-bar" id="npProgressBar">
+            <div class="np-progress-track">
+              <div class="np-progress-fill" id="npProgressFill"></div>
+              <div class="np-progress-thumb" id="npProgressThumb"></div>
+            </div>
+          </div>
+          <span class="np-time" id="npDuration">0:00</span>
+        </div>
+      </div>
+
+      <!-- Right Controls -->
+      <div class="np-right-controls">
+        <!-- Always-On-Top PiP Mini Player Button -->
+        <button class="np-btn" id="pipBtn" title="Always-On-Top Mini Player for Work (Key: P)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+        </button>
+        <button class="np-btn" id="npFocusBtn" title="Pomodoro Focus & Study Mode (Key: F)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        </button>
+        <button class="np-btn" id="lyricsBtn" title="Lyrics">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        </button>
+        <button class="np-btn" id="eqBtn" title="10-Band Equalizer & Bass Boost">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/></svg>
+        </button>
+        <button class="np-btn" id="sleepTimerBtn" title="Sleep Timer">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 15 15"/></svg>
+          <span class="sleep-badge" id="sleepBadge" style="display:none;"></span>
+        </button>
+        <button class="np-btn" id="shareBtn" title="Share">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+        <button class="np-btn" id="downloadBtn" title="Download MP3">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="np-btn" id="qualityBtn" title="Audio Quality">
+          <span class="quality-label" id="qualityLabel">HQ</span>
+        </button>
+        <button class="np-btn" id="muteBtn" title="Mute">
+          <svg class="vol-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+          <svg class="vol-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
+        </button>
+        <div class="np-volume-bar" id="npVolumeBar">
+          <div class="np-volume-track">
+            <div class="np-volume-fill" id="npVolumeFill"></div>
+            <div class="np-volume-thumb" id="npVolumeThumb"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Mobile overflow. On phones the whole .np-right-controls block plus
+           shuffle, repeat and the like button are display:none, which left
+           Lyrics, Sleep Timer, Share, Download, Mute, Volume, Shuffle, Repeat
+           and Like with no entry point at all. This button is the phone-only
+           way in. -->
+      <button class="np-btn np-more-btn" id="npMoreBtn" title="More controls" aria-label="More controls" aria-expanded="false">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============ SPOTIFY MOBILE BOTTOM NAVIGATION ============ -->
+  <nav class="spotify-bottom-nav" id="spotifyBottomNav" aria-label="Mobile Navigation">
+    <button class="sbn-btn active" data-page="home" id="sbnHome" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="sbn-btn" data-page="search" id="sbnSearch" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <span>Search</span>
+    </button>
+    <button class="sbn-btn" data-page="library" id="sbnLibrary" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+      <span>Your Library</span>
+    </button>
+    <button class="sbn-btn" data-page="mood" id="sbnMood" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
+      <span>Moods</span>
+    </button>
+  </nav>
+
+  <!-- ============ SPOTIFY FULL SCREEN PLAYER MODAL ============ -->
+  <div class="spotify-fullscreen-player" id="spotifyFullscreenPlayer" aria-hidden="true">
+    <div class="sfp-header">
+      <button class="sfp-collapse-btn" id="sfpCollapseBtn" type="button" title="Collapse player">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+      </button>
+      <div class="sfp-header-title">
+        <span class="sfp-subtitle">PLAYING FROM YOUTUBE</span>
+        <span class="sfp-title" id="sfpHeaderTitle">MusicFlow Player</span>
+      </div>
+      <button class="sfp-menu-btn" id="sfpMenuBtn" type="button" title="More options">
+        <svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+      </button>
+    </div>
+
+    <div class="sfp-artwork-container">
+      <div class="sfp-art-glow" id="sfpArtGlow"></div>
+      <img class="sfp-artwork" id="sfpArtwork" src="/icons/icon-512.png" alt="Album Artwork" />
+    </div>
+
+    <div class="sfp-track-details">
+      <div class="sfp-track-meta">
+        <div class="sfp-track-title" id="sfpTitle">Not Playing</div>
+        <div class="sfp-track-artist" id="sfpArtist">—</div>
+      </div>
+      <button class="sfp-like-btn" id="sfpLikeBtn" type="button" title="Save to Liked Songs">
+        <svg class="heart-outline" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        <svg class="heart-filled" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+    </div>
+
+    <!-- Progress Scrubber -->
+    <div class="sfp-progress-container">
+      <div class="sfp-scrubber" id="sfpScrubber">
+        <div class="sfp-scrubber-track">
+          <div class="sfp-scrubber-fill" id="sfpScrubberFill"></div>
+          <div class="sfp-scrubber-thumb" id="sfpScrubberThumb"></div>
+        </div>
+      </div>
+      <div class="sfp-time-row">
+        <span class="sfp-time" id="sfpCurrentTime">0:00</span>
+        <span class="sfp-time" id="sfpDuration">0:00</span>
+      </div>
+    </div>
+
+    <!-- Big Center Player Controls -->
+    <div class="sfp-controls-row">
+      <button class="sfp-btn" id="sfpShuffleBtn" type="button" title="Shuffle">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/><line x1="4" y1="4" x2="9" y2="9"/></svg>
+      </button>
+      <button class="sfp-btn sfp-skip-btn" id="sfpPrevBtn" type="button" title="Previous">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"/></svg>
+      </button>
+      <button class="sfp-play-btn" id="sfpPlayPauseBtn" type="button" title="Play">
+        <svg class="play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+        <svg class="pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      </button>
+      <button class="sfp-btn sfp-skip-btn" id="sfpNextBtn" type="button" title="Next">
+        <svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+      </button>
+      <button class="sfp-btn" id="sfpRepeatBtn" type="button" title="Repeat">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="17 1 21 5 17 9"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><polyline points="7 23 3 19 7 15"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg>
+      </button>
+    </div>
+
+    <!-- Bottom Actions -->
+    <div class="sfp-bottom-actions">
+      <button class="sfp-action-pill" id="sfpLyricsBtn" type="button">
+        <span>🎤</span>
+        <span>Lyrics</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpEqBtn" type="button">
+        <span>🎚️</span>
+        <span>Equalizer</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpSleepBtn" type="button">
+        <span>🌙</span>
+        <span>Sleep</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============ MOBILE PLAYER SHEET ============ -->
+  <div class="mobile-sheet-overlay" id="mobileSheetOverlay" style="display:none;">
+    <div class="mobile-sheet" id="mobileSheet" role="dialog" aria-label="Player controls">
+      <div class="mobile-sheet-handle"></div>
+      <div class="mobile-sheet-title" id="mobileSheetTitle">Player controls</div>
+
+      <div class="mobile-sheet-volume">
+        <button class="np-btn" id="mobileMuteBtn" title="Mute">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+        </button>
+        <input type="range" id="mobileVolumeRange" min="0" max="100" step="1" value="80" aria-label="Volume" />
+      </div>
+
+      <div class="mobile-sheet-grid">
+        <button class="sheet-action" id="mobileLikeBtn"><span class="sa-icon">❤️</span><span>Like</span></button>
+        <button class="sheet-action" id="mobileDislikeBtn"><span class="sa-icon">👎</span><span>Not for me</span></button>
+        <button class="sheet-action" id="mobileShuffleBtn"><span class="sa-icon">🔀</span><span>Shuffle</span></button>
+        <button class="sheet-action" id="mobileRepeatBtn"><span class="sa-icon">🔁</span><span>Repeat</span></button>
+        <button class="sheet-action" id="mobileLyricsBtn"><span class="sa-icon">🎤</span><span>Lyrics</span></button>
+        <button class="sheet-action" id="mobileSleepBtn"><span class="sa-icon">🌙</span><span>Sleep</span></button>
+        <button class="sheet-action" id="mobileEqBtn"><span class="sa-icon">🎚️</span><span>Equalizer</span></button>
+        <button class="sheet-action" id="mobileShareBtn"><span class="sa-icon">🔗</span><span>Share</span></button>
+        <button class="sheet-action" id="mobileDownloadBtn"><span class="sa-icon">⬇️</span><span>Download</span></button>
+        <button class="sheet-action" id="mobileQualityBtn"><span class="sa-icon">✨</span><span>Quality</span></button>
+      </div>
+
+      <button class="pill-action-btn mobile-sheet-close" id="mobileSheetCloseBtn">Close</button>
+    </div>
+  </div>
+
+  <!-- ============ KEYBOARD SHORTCUT HELP ============ -->
+  <div class="shortcut-help-overlay" id="shortcutHelpOverlay" style="display:none;">
+    <div class="shortcut-help-box" role="dialog" aria-label="Keyboard shortcuts">
+      <h3>Keyboard shortcuts</h3>
+      <p class="sh-sub">Shortcuts are ignored while you're typing in a text field.</p>
+      <div class="shortcut-help-list">
+        <div class="shortcut-row"><span>Play / pause</span><kbd>Space</kbd></div>
+        <div class="shortcut-row"><span>Next track</span><kbd>N</kbd></div>
+        <div class="shortcut-row"><span>Previous track</span><kbd>B</kbd></div>
+        <div class="shortcut-row"><span>Seek back 5s</span><kbd>←</kbd></div>
+        <div class="shortcut-row"><span>Seek forward 5s</span><kbd>→</kbd></div>
+        <div class="shortcut-row"><span>Volume up</span><kbd>↑</kbd></div>
+        <div class="shortcut-row"><span>Volume down</span><kbd>↓</kbd></div>
+        <div class="shortcut-row"><span>Mute / unmute</span><kbd>M</kbd></div>
+        <div class="shortcut-row"><span>Like current track</span><kbd>H</kbd></div>
+        <div class="shortcut-row"><span>Dislike current track</span><kbd>J</kbd></div>
+        <div class="shortcut-row"><span>Toggle shuffle</span><kbd>S</kbd></div>
+        <div class="shortcut-row"><span>Cycle repeat mode</span><kbd>R</kbd></div>
+        <div class="shortcut-row"><span>Toggle queue</span><kbd>Q</kbd></div>
+        <div class="shortcut-row"><span>Toggle lyrics</span><kbd>L</kbd></div>
+        <div class="shortcut-row"><span>Download track</span><kbd>D</kbd></div>
+        <div class="shortcut-row"><span>Picture in picture</span><kbd>P</kbd></div>
+        <div class="shortcut-row"><span>Focus timer</span><kbd>F</kbd></div>
+        <div class="shortcut-row"><span>Focus search</span><kbd>/</kbd></div>
+        <div class="shortcut-row"><span>Close panel / dialog</span><kbd>Esc</kbd></div>
+        <div class="shortcut-row"><span>This help</span><kbd>?</kbd></div>
+      </div>
+      <button class="pill-action-btn shortcut-help-close" id="shortcutHelpCloseBtn">Got it</button>
+    </div>
+  </div>
+
+  <!-- ============ APPLE FLOATING TRANSPARENT DYNAMIC ORB & CAPSULE ============ -->
+  <div class="apple-floating-orb" id="appleFloatingOrb" title="Drag to move • Click to open quick player">
+    <!-- Minimized Circular Transparent Apple Orb -->
+    <div class="orb-circle-core" id="orbCircleCore">
+      <div class="orb-disc-wrapper" id="orbDiscWrapper">
+        <img class="orb-art" id="orbArt" src="/icons/icon-192.png" alt="" />
+        <div class="orb-soundwaves" id="orbSoundwaves">
+          <span></span><span></span><span></span><span></span>
+        </div>
+      </div>
+      <div class="orb-ring-pulse" id="orbRingPulse"></div>
+    </div>
+
+    <!-- Expanded Apple Dynamic Island Glass Capsule -->
+    <div class="orb-expanded-capsule" id="orbExpandedCapsule" style="display:none;">
+      <div class="capsule-header">
+        <div class="capsule-track-meta">
+          <img class="capsule-art" id="capsuleArt" src="/icons/icon-192.png" alt="" />
+          <div class="capsule-text-wrap">
+            <div class="capsule-title" id="capsuleTitle">MusicFlow Orb</div>
+            <div class="capsule-artist" id="capsuleArtist">Ready to Play</div>
+          </div>
+        </div>
+        <button class="capsule-icon-btn" id="orbCloseBtn" title="Collapse">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- Capsule Mini Progress Bar -->
+      <div class="capsule-progress-bar" id="capsuleProgressBar">
+        <div class="capsule-progress-fill" id="capsuleProgressFill"></div>
+      </div>
+
+      <!-- Capsule Controls Row -->
+      <div class="capsule-controls">
+        <button class="capsule-ctrl-btn" id="orbPrevBtn" title="Previous"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2"/></svg></button>
+        <button class="capsule-ctrl-btn capsule-play-btn" id="orbPlayPauseBtn" title="Play/Pause">
+          <svg class="orb-play-icon" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          <svg class="orb-pause-icon" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <button class="capsule-ctrl-btn" id="orbNextBtn" title="Next"><svg viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2"/></svg></button>
+        <button class="capsule-ctrl-btn capsule-quick-switch-btn" id="orbQuickSwitchBtn" title="⚡ Instant Switch to next track">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+          <span>Quick Switch</span>
+        </button>
+      </div>
+
+      <!-- Capsule Bottom Quick Action Bar -->
+      <div class="capsule-bottom-bar">
+        <button class="capsule-action-pill" id="orbPipBtn" title="Always-On-Top Mini Player for Work">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2"/><rect x="12" y="10" width="8" height="8" rx="1"/></svg>
+          <span>PiP Work Mini</span>
+        </button>
+        <button class="capsule-action-pill" id="orbFocusBtn" title="Pomodoro Productivity & Focus Mode">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          <span>Focus Mode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOCUS & POMODORO FLOW MODAL ============ -->
+  <div class="modal-overlay" id="focusModalOverlay" style="display:none;">
+    <div class="focus-modal-card">
+      <button class="modal-close-btn" id="focusModalCloseBtn">&times;</button>
+      
+      <div class="focus-header">
+        <span class="focus-badge">🧠 Deep Work & Productivity Flow</span>
+        <h2>Stay In The Zone</h2>
+        <p class="focus-subtitle">Distraction-free music with integrated Pomodoro timer & ambient sound layers.</p>
+      </div>
+
+      <!-- Pomodoro Timer Visual Ring -->
+      <div class="pomodoro-container">
+        <div class="pomodoro-circle">
+          <svg class="pomodoro-svg" viewBox="0 0 160 160">
+            <circle class="pomodoro-bg-ring" cx="80" cy="80" r="70" />
+            <circle class="pomodoro-progress-ring" id="pomodoroRing" cx="80" cy="80" r="70" />
+          </svg>
+          <div class="pomodoro-time-display">
+            <span class="pomodoro-digits" id="pomodoroDigits">25:00</span>
+            <span class="pomodoro-label" id="pomodoroStatusLabel">Focus Session</span>
+          </div>
+        </div>
+
+        <div class="pomodoro-controls">
+          <button class="pomodoro-btn pomodoro-primary" id="pomodoroStartBtn">Start Focus</button>
+          <button class="pomodoro-btn" id="pomodoroResetBtn">Reset</button>
+          <div class="pomodoro-presets">
+            <button class="pomo-preset active" data-mins="25" data-type="focus">25m Focus</button>
+            <button class="pomo-preset" data-mins="50" data-type="focus">50m Deep</button>
+            <button class="pomo-preset" data-mins="5" data-type="break">5m Break</button>
+            <button class="pomo-preset" data-mins="15" data-type="break">15m Break</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Focus Music Presets -->
+      <div class="focus-music-section">
+        <label class="focus-section-label">⚡ 1-Click Instant Productivity Music:</label>
+        <div class="focus-presets-grid">
+          <button class="focus-preset-card" data-query="lo-fi hip hop study beats chill mix">
+            <span class="fp-icon">☕</span>
+            <span class="fp-name">Lo-Fi Study Beats</span>
+          </button>
+          <button class="focus-preset-card" data-query="deep focus alpha waves study music">
+            <span class="fp-icon">🧠</span>
+            <span class="fp-name">Deep Alpha Waves</span>
+          </button>
+          <button class="focus-preset-card" data-query="peaceful classical piano study focus">
+            <span class="fp-icon">🎹</span>
+            <span class="fp-name">Classical Piano Flow</span>
+          </button>
+          <button class="focus-preset-card" data-query="cyberpunk coding synthwave beats focus">
+            <span class="fp-icon">⚡</span>
+            <span class="fp-name">Synthwave Coding</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Ambient Sound Layer Mixer -->
+      <div class="ambient-mixer-section">
+        <label class="focus-section-label">🌧️ Ambient Background Atmosphere (Layer with music):</label>
+        <div class="ambient-cards-row">
+          <button class="ambient-chip" id="ambientRainBtn" data-sound="rain">🌧️ Gentle Rain</button>
+          <button class="ambient-chip" id="ambientCafeBtn" data-sound="cafe">☕ Cozy Cafe</button>
+          <button class="ambient-chip" id="ambientWavesBtn" data-sound="waves">🌊 Ocean Waves</button>
+          <button class="ambient-chip" id="ambientWhiteBtn" data-sound="whitenoise">💨 Soft White Noise</button>
+        </div>
+      </div>
+
+      <div class="focus-stats-row">
+        <div class="focus-stat-item">
+          <span class="f-stat-val" id="focusBlocksCompleted">0</span>
+          <span class="f-stat-lbl">Focus Blocks</span>
+        </div>
+        <div class="focus-stat-item">
+          <span class="f-stat-val" id="focusMinutesCompleted">0</span>
+          <span class="f-stat-lbl">Focus Minutes</span>
+        </div>
+        <div class="focus-stat-item">
+          <button class="focus-pip-launch-btn" id="focusLaunchPipBtn" title="Pop open Always-On-Top Mini Player">
+            🖼️ Pop Always-On-Top Mini
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ LYRICS PANEL ============ -->
+  <div class="lyrics-panel" id="lyricsPanel">
+    <div class="lyrics-panel-header">
+      <h3>Lyrics</h3>
+      <button class="lyrics-close-btn" id="lyricsCloseBtn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+      </button>
+    </div>
+    <div class="lyrics-content" id="lyricsContent">
+      <p class="lyrics-placeholder">Play a song to see lyrics</p>
+    </div>
+  </div>
+
+  <!-- ============ SETTINGS MODAL ============ -->
+  <div class="modal-overlay" id="settingsModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Settings</h3>
+        <button class="modal-close" id="settingsCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Theme Mode</span><span class="setting-desc">Switch between dark, light, and OLED black</span></div>
+          <select class="setting-select" id="settingTheme"><option value="dark">Dark Glass</option><option value="light">Light Glass</option><option value="oled">OLED Pitch Black</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Accent Color Studio</span><span class="setting-desc">Customize primary UI highlight colors</span></div>
+          <div class="accent-color-picker">
+            <button class="accent-dot active" data-color="indigo" style="background:#6366f1;" title="Indigo"></button>
+            <button class="accent-dot" data-color="cyan" style="background:#06b6d4;" title="Cyberpunk Cyan"></button>
+            <button class="accent-dot" data-color="emerald" style="background:#10b981;" title="Emerald Green"></button>
+            <button class="accent-dot" data-color="orange" style="background:#f97316;" title="Sunset Orange"></button>
+            <button class="accent-dot" data-color="pink" style="background:#ec4899;" title="Rose Pink"></button>
+            <button class="accent-dot" data-color="purple" style="background:#a855f7;" title="Electric Purple"></button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Endless Auto-Queue</span><span class="setting-desc">Auto-append recommendations when queue ends</span></div>
+          <input type="checkbox" id="settingAutoQueue" checked style="width:20px; height:20px; cursor:pointer;" />
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Audio Quality</span><span class="setting-desc">Higher quality uses best stream</span></div>
+          <select class="setting-select" id="settingQuality"><option value="high">High (Best)</option><option value="low">Low (Save Data)</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Crossfade</span><span class="setting-desc">Smoothly fade between tracks — no silent gap</span></div>
+          <div class="crossfade-control">
+            <input type="range" id="settingCrossfade" min="0" max="3" step="1" value="0" aria-label="Crossfade duration in seconds" />
+            <span class="crossfade-val" id="crossfadeValLabel">Off</span>
+          </div>
+        </div>
+        <div class="setting-row" id="settingAudioDeviceRow">
+          <div class="setting-info">
+            <span class="setting-label">🎧 Audio Output Device</span>
+            <span class="setting-desc" id="settingAudioDeviceDesc">Route sound to Headphones, Speakers, or Bluetooth</span>
+          </div>
+          <div class="audio-output-wrapper">
+            <div class="audio-output-controls">
+              <select class="setting-select audio-device-select" id="settingAudioDevice" aria-label="Select audio output device">
+                <option value="default">💻 Default Output</option>
+              </select>
+              <button class="setting-icon-btn" id="audioDeviceTestBtn" title="Play test chime on selected device" aria-label="Test audio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+                <span class="setting-icon-tooltip">Test</span>
+              </button>
+              <button class="setting-icon-btn" id="audioDeviceRefreshBtn" title="Scan & refresh connected audio devices" aria-label="Refresh audio devices">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <span class="setting-icon-tooltip">Refresh</span>
+              </button>
+            </div>
+            <button type="button" class="device-perm-link" id="unlockDeviceNamesBtn" style="display:none;" title="Show actual headphone & speaker names">
+              ✨ Unlock Device Names
+            </button>
+          </div>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Apple Floating Transparent Orb</span><span class="setting-desc">Floating circular quick player widget</span></div>
+          <select class="setting-select" id="settingOrb"><option value="show">Enabled (Floating)</option><option value="hide">Hidden</option></select>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Work PiP Mini-Player</span><span class="setting-desc">Always-on-top desktop overlay</span></div>
+          <button class="pill-action-btn" id="settingLaunchPipBtn" style="padding:6px 14px; font-size:13px;">🖼️ Open PiP Window</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">Keyboard Shortcuts</span><span class="setting-desc">Every hotkey in one list — or press ?</span></div>
+          <button class="pill-action-btn" id="shortcutsBtn" style="padding:6px 14px; font-size:13px;">⌨️ View Shortcuts</button>
+        </div>
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">🔤 Auto-Fix Search Spelling</span><span class="setting-desc">Auto-correct common music search typos before searching</span></div>
+          <input type="checkbox" id="settingAutoFix" checked style="width:20px; height:20px; cursor:pointer;" />
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:12px 0;" />
+        <div class="setting-row">
+          <div class="setting-info"><span class="setting-label">🔄 Fresh Start</span><span class="setting-desc">Archive queue, history & search — start a clean session. Likes, playlists & settings are kept.</span></div>
+          <button class="pill-action-btn" id="freshStartBtn" style="padding:6px 14px; font-size:13px; background:linear-gradient(135deg, #ef4444, #f97316);">🔄 Fresh Start</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ CREATE PLAYLIST MODAL ============ -->
+  <div class="modal-overlay" id="playlistModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="playlistModalTitle">Create Playlist</h3>
+        <button class="modal-close" id="playlistModalClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="modal-tabs-row" style="display:flex;gap:8px;margin-bottom:16px;">
+          <button type="button" class="modal-tab-btn active" id="modalTabAiBtn" style="flex:1;">✨ AI Custom Choice</button>
+          <button type="button" class="modal-tab-btn" id="modalTabManualBtn" style="flex:1;">📝 Blank Playlist</button>
+        </div>
+
+        <!-- AI Tab -->
+        <div id="modalAiTab">
+          <p class="modal-subtitle" style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">Generate a full song playlist instantly from any custom prompt, artists, or vibe.</p>
+          <input type="text" class="modal-input" id="modalAiPromptInput" placeholder="e.g. Arijit Singh romantic slow hits, 90s rock drive..." style="margin-bottom:12px;" />
+          <div style="display:flex;gap:10px;margin-bottom:16px;">
+            <select class="ai-select" id="modalAiCountSelect" style="flex:1;">
+              <option value="15">15 Songs</option>
+              <option value="25">25 Songs</option>
+              <option value="40">40 Songs</option>
+            </select>
+            <select class="ai-select" id="modalAiLanguageSelect" style="flex:1;">
+              <option value="all">Any Language</option>
+              <option value="hindi">Hindi / Bollywood</option>
+              <option value="punjabi">Punjabi</option>
+              <option value="english">English</option>
+              <option value="kpop">K-Pop</option>
+            </select>
+          </div>
+          <button type="button" class="modal-submit-btn" id="modalAiGenerateBtn">✨ Generate & Create Playlist</button>
+        </div>
+
+        <!-- Manual Tab -->
+        <div id="modalManualTab" style="display:none;">
+          <p class="modal-subtitle" style="margin-bottom:12px;font-size:13px;color:var(--text-secondary);">Create an empty playlist and manually add songs from search.</p>
+          <input type="text" class="modal-input" id="playlistNameInput" placeholder="Playlist name..." style="margin-bottom:14px;" />
+          <button type="button" class="modal-submit-btn" id="playlistSaveBtn">Create Blank Playlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ ADD TO PLAYLIST MODAL ============ -->
+  <div class="modal-overlay" id="addToPlaylistModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>Add to Playlist</h3>
+        <button class="modal-close" id="addToPlaylistClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="playlist-select-list" id="playlistSelectList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ BATCH IMPORT SONGS MODAL ============ -->
+  <div class="modal-overlay" id="batchImportModal" style="display:none;">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">✨ Batch Import Songs from Text</h3>
+          <p class="modal-subtitle">Paste song names or lyrics queries to search & add famous official releases.</p>
+        </div>
+        <button class="modal-close" id="batchImportClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="batch-examples">
+          <span class="batch-example-label">Quick test presets:</span>
+          <button class="batch-example-pill" type="button" data-text="siyara keshariya akhari ishk blinglight starboy">Bollywood & Pop Mix</button>
+          <button class="batch-example-pill" type="button" data-text="Apna Bana Le, Kesariya, Chaleya, Tum Hi Ho, O Bedardeya">Arijit Singh Hits</button>
+          <button class="batch-example-pill" type="button" data-text="Blinding Lights, Starboy, Save Your Tears, Die For You">The Weeknd Hits</button>
+        </div>
+
+        <div class="batch-textarea-wrap">
+          <textarea class="batch-textarea" id="batchTextarea" rows="4" placeholder="Enter song names separated by lines, commas, or spaces..."></textarea>
+          <div class="batch-textarea-footer">
+            <span id="batchCountBadge" class="batch-count-badge">0 songs detected</span>
+            <button class="text-btn text-xs" type="button" id="batchClearText">Clear</button>
+          </div>
+        </div>
+
+        <div class="batch-chips-section" id="batchChipsSection" style="display:none;">
+          <div class="batch-section-header">
+            <label class="batch-section-label">Recognized Songs (Click ✕ to remove):</label>
+            <span class="batch-section-sub" id="batchChipsCount">0 items</span>
+          </div>
+          <div class="batch-chips-container" id="batchChipsContainer"></div>
+        </div>
+
+        <div class="batch-options-card">
+          <label class="batch-section-label">Destination Playlist:</label>
+          <div class="batch-dest-radios">
+            <label class="radio-label">
+              <input type="radio" name="batchDestType" value="new" id="destRadioNew" checked />
+              <span>Create New Playlist</span>
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="batchDestType" value="existing" id="destRadioExisting" />
+              <span>Add to Existing Playlist</span>
+            </label>
+          </div>
+          <div id="batchNewPlaylistWrap">
+            <input type="text" class="modal-input" id="batchNewPlaylistName" placeholder="New Playlist Name (e.g. Batch Mix)" />
+          </div>
+          <div id="batchExistingPlaylistWrap" style="display:none;">
+            <select class="setting-select full-width" id="batchExistingPlaylistSelect">
+              <option value="">Select a playlist...</option>
+            </select>
+          </div>
+
+          <div class="batch-pref-group">
+            <label class="checkbox-label" title="Prioritizes verified releases from T-Series, Sony, Zee Music, VEVO, and top official tracks">
+              <input type="checkbox" id="batchPreferOfficial" checked />
+              <span>⭐ Prioritize Famous / Official Releases (T-Series, Sony, VEVO, High Views)</span>
+            </label>
+          </div>
+        </div>
+
+        <div class="batch-progress-box" id="batchProgressBox" style="display:none;">
+          <div class="batch-progress-header">
+            <span id="batchProgressStatus">Searching & adding songs...</span>
+            <span id="batchProgressPercent">0%</span>
+          </div>
+          <div class="batch-progress-track">
+            <div class="batch-progress-fill" id="batchProgressFill"></div>
+          </div>
+        </div>
+
+        <div class="batch-results-preview" id="batchResultsPreview" style="display:none;"></div>
+
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="batchCancelBtn">Cancel</button>
+          <button class="modal-submit-btn" type="button" id="batchStartBtn">✨ Import Songs to Playlist</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PLAYLIST ZIP DOWNLOAD PROGRESS MODAL ============ -->
+  <div class="modal-overlay" id="playlistDlModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">⬇️ Downloading Playlist</h3>
+          <p class="modal-subtitle" id="playlistDlSubtitle">Converting each track to MP3, then bundling them into one zip file.</p>
+        </div>
+        <button class="modal-close" id="playlistDlClose" title="Hide">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="batch-progress-box">
+          <div class="batch-progress-header">
+            <span id="playlistDlStatus">Starting…</span>
+            <span id="playlistDlPercent">0%</span>
+          </div>
+          <div class="batch-progress-track">
+            <div class="batch-progress-fill" id="playlistDlFill"></div>
+          </div>
+        </div>
+
+        <p class="playlist-dl-current" id="playlistDlCurrent"></p>
+        <p class="playlist-dl-note" id="playlistDlNote" style="display:none;"></p>
+
+        <div class="playlist-dl-failed" id="playlistDlFailed" style="display:none;"></div>
+
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="playlistDlCancelBtn">Cancel download</button>
+          <button class="modal-submit-btn" type="button" id="playlistDlSaveBtn" style="display:none;">⬇️ Save zip file</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ 10-BAND GRAPHIC EQUALIZER MODAL ============ -->
+  <div class="modal-overlay" id="eqModal" style="display:none;">
+    <div class="modal modal-large">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🎛️ 10-Band Audio Equalizer & Sound FX</h3>
+          <p class="modal-subtitle">Web Audio DSP — Adjust frequencies, Bass Boost, and 3D Spatial Surround Audio.</p>
+        </div>
+        <button class="modal-close" id="eqCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- EQ Presets Bar -->
+        <div class="eq-presets-bar">
+          <span class="eq-preset-label">Presets:</span>
+          <button class="eq-preset-btn active" data-preset="flat">Flat</button>
+          <button class="eq-preset-btn" data-preset="bassboost">🔥 Bass Boost</button>
+          <button class="eq-preset-btn" data-preset="vocal">🎤 Vocal Enhancer</button>
+          <button class="eq-preset-btn" data-preset="rock">🎸 Rock</button>
+          <button class="eq-preset-btn" data-preset="pop">🎤 Pop</button>
+          <button class="eq-preset-btn" data-preset="edm">🎹 EDM</button>
+          <button class="eq-preset-btn" data-preset="acoustic">🎻 Acoustic</button>
+        </div>
+
+        <!-- 10-Band Sliders Grid -->
+        <div class="eq-sliders-grid" id="eqSlidersGrid">
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="0" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">60Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="1" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">170Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="2" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">310Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="3" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">600Hz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="4" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">1kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="5" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">3kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="6" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">6kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="7" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">12kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="8" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">14kHz</span><span class="eq-val">0dB</span></div>
+          <div class="eq-col"><input type="range" class="eq-slider" data-band="9" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">16kHz</span><span class="eq-val">0dB</span></div>
+        </div>
+
+        <!-- Bass Boost & Sound FX Card -->
+        <div class="eq-fx-row">
+          <div class="eq-fx-card">
+            <div class="eq-fx-header">
+              <span>💥 Deep Bass Multiplier</span>
+              <span id="bassBoostVal">0 dB</span>
+            </div>
+            <input type="range" class="eq-fx-range" id="bassBoostRange" min="0" max="15" value="0" step="0.5" />
+          </div>
+
+          <div class="eq-fx-card">
+            <div class="eq-fx-header">
+              <span>🎧 3D Spatial Audio Expander</span>
+              <label class="checkbox-label" style="margin:0;">
+                <input type="checkbox" id="spatialAudioToggle" />
+                <span>Enable 3D</span>
+              </label>
+            </div>
+            <p style="font-size:12px; color:var(--text-secondary); margin-top:6px;">Simulates immersive headphones surround acoustics.</p>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="modal-cancel-btn" type="button" id="eqResetBtn">Reset to Flat</button>
+          <button class="modal-submit-btn" type="button" id="eqDoneBtn">✓ Apply Sound Profile</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SMART SLEEP TIMER MODAL ============ -->
+  <div class="modal-overlay" id="sleepModal" style="display:none;">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>⏲️ Smart Sleep Timer</h3>
+        <button class="modal-close" id="sleepCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-subtitle" style="margin-bottom:15px;">Automatically stop music playback with a smooth 30-second volume fade out.</p>
+
+        <div class="sleep-options-grid">
+          <button class="sleep-option-btn" data-mins="15">⏱️ 15 Minutes</button>
+          <button class="sleep-option-btn" data-mins="30">⏱️ 30 Minutes</button>
+          <button class="sleep-option-btn" data-mins="45">⏱️ 45 Minutes</button>
+          <button class="sleep-option-btn" data-mins="60">⏱️ 1 Hour</button>
+          <button class="sleep-option-btn" data-mins="track">🎵 End of Current Track</button>
+        </div>
+
+        <div class="sleep-status-bar" id="sleepStatusBar" style="display:none;">
+          <span>Active Timer: <strong id="sleepTimerDisplay">00:00</strong></span>
+          <button class="text-btn" id="cancelSleepTimerBtn">Turn Off</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ AI MOOD QUESTIONNAIRE MODAL ============ -->
+  <div class="modal-overlay" id="moodQuestionnaireModal" style="display:none;">
+    <div class="modal modal-large mood-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🎭 AI Mood & Vibe Questionnaire</h3>
+          <p class="modal-subtitle">Answer a few quick questions and get a perfectly tailored playlist.</p>
+        </div>
+        <button class="modal-close" id="moodModalCloseBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Step Indicator -->
+        <div class="mood-steps-bar">
+          <div class="mood-step-dot active" data-step="1"><span>1</span><small>Emotion</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="2"><span>2</span><small>Activity</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="3"><span>3</span><small>Style</small></div>
+          <div class="mood-step-line"></div>
+          <div class="mood-step-dot" data-step="4"><span>4</span><small>Energy</small></div>
+        </div>
+
+        <!-- Step 1: Emotion -->
+        <div class="mood-step-panel" id="moodStep1">
+          <h4 class="mood-question">How are you feeling right now?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="happy"><span class="moc-emoji">😊</span><span>Happy & Euphoric</span></button>
+            <button class="mood-option-chip" data-value="sad"><span class="moc-emoji">😢</span><span>Heartbroken / Sad</span></button>
+            <button class="mood-option-chip" data-value="chill"><span class="moc-emoji">😌</span><span>Chill & Relaxed</span></button>
+            <button class="mood-option-chip" data-value="energetic"><span class="moc-emoji">⚡</span><span>Energetic & Hyped</span></button>
+            <button class="mood-option-chip" data-value="focus"><span class="moc-emoji">🧠</span><span>Deep Focus</span></button>
+            <button class="mood-option-chip" data-value="romantic"><span class="moc-emoji">❤️</span><span>Romantic & Dreamy</span></button>
+            <button class="mood-option-chip" data-value="party"><span class="moc-emoji">🎉</span><span>Party & Dance</span></button>
+            <button class="mood-option-chip" data-value="nostalgia"><span class="moc-emoji">🕰️</span><span>Nostalgic / Retro</span></button>
+            <button class="mood-option-chip" data-value="sleep"><span class="moc-emoji">🌙</span><span>Zen & Sleep</span></button>
+          </div>
+        </div>
+
+        <!-- Step 2: Activity -->
+        <div class="mood-step-panel" id="moodStep2" style="display:none;">
+          <h4 class="mood-question">What are you doing?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="coding"><span class="moc-emoji">💻</span><span>Coding / Deep Work</span></button>
+            <button class="mood-option-chip" data-value="driving"><span class="moc-emoji">🚗</span><span>Night Driving</span></button>
+            <button class="mood-option-chip" data-value="workout"><span class="moc-emoji">🏋️</span><span>Gym / Workout</span></button>
+            <button class="mood-option-chip" data-value="morning"><span class="moc-emoji">☀️</span><span>Morning Coffee</span></button>
+            <button class="mood-option-chip" data-value="hangout"><span class="moc-emoji">🛋️</span><span>Hanging Out</span></button>
+            <button class="mood-option-chip" data-value="rainy"><span class="moc-emoji">🌧️</span><span>Rainy Day Vibes</span></button>
+            <button class="mood-option-chip" data-value="study"><span class="moc-emoji">📚</span><span>Studying</span></button>
+            <button class="mood-option-chip" data-value="cooking"><span class="moc-emoji">🍳</span><span>Cooking / Chores</span></button>
+          </div>
+        </div>
+
+        <!-- Step 3: Music Style -->
+        <div class="mood-step-panel" id="moodStep3" style="display:none;">
+          <h4 class="mood-question">What music style fits your vibe?</h4>
+          <div class="mood-options-grid">
+            <button class="mood-option-chip" data-value="global_pop"><span class="moc-emoji">🌍</span><span>Global Pop Hits</span></button>
+            <button class="mood-option-chip" data-value="bollywood"><span class="moc-emoji">🇮🇳</span><span>Bollywood & Hindi</span></button>
+            <button class="mood-option-chip" data-value="punjabi"><span class="moc-emoji">🔥</span><span>Punjabi Fire</span></button>
+            <button class="mood-option-chip" data-value="lofi"><span class="moc-emoji">☕</span><span>Lo-Fi & Instrumental</span></button>
+            <button class="mood-option-chip" data-value="edm"><span class="moc-emoji">🎹</span><span>EDM & Synthwave</span></button>
+            <button class="mood-option-chip" data-value="rock"><span class="moc-emoji">🎸</span><span>Rock & Indie</span></button>
+            <button class="mood-option-chip" data-value="rnb"><span class="moc-emoji">🎷</span><span>R&B / Soul</span></button>
+            <button class="mood-option-chip" data-value="kpop"><span class="moc-emoji">🇰🇷</span><span>K-Pop</span></button>
+          </div>
+        </div>
+
+        <!-- Step 4: Energy Level -->
+        <div class="mood-step-panel" id="moodStep4" style="display:none;">
+          <h4 class="mood-question">How much energy do you want?</h4>
+          <div class="mood-energy-slider-wrap">
+            <div class="mood-energy-labels">
+              <span>🌙 Mellow</span><span>☀️ Balanced</span><span>⚡ Upbeat</span><span>🔥 Ultra Hype</span>
+            </div>
+            <input type="range" class="mood-energy-slider" id="moodEnergySlider" min="1" max="4" value="2" step="1" />
+            <div class="mood-energy-value" id="moodEnergyValue">☀️ Balanced</div>
+          </div>
+        </div>
+
+        <!-- Generating Progress -->
+        <div class="mood-generating" id="moodGenerating" style="display:none;">
+          <div class="mood-gen-spinner"></div>
+          <p class="mood-gen-text">🎭 Crafting your perfect mood mix...</p>
+        </div>
+
+        <!-- Navigation Buttons -->
+        <div class="modal-actions mood-nav-actions" id="moodNavActions">
+          <button class="modal-cancel-btn" id="moodBackBtn" style="display:none;">← Back</button>
+          <div style="flex:1;"></div>
+          <button class="modal-cancel-btn" id="moodRandomBtn" title="Randomize answers">🎲 Surprise Me</button>
+          <button class="modal-submit-btn" id="moodNextBtn">Next →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Voice Assistant HUD. Lives outside .app so it can never be clipped by a
+       page's overflow. Hidden by default; VoiceAssistant is the only writer. -->
+  <div class="voice-hud" id="voiceHud" style="display:none;" role="status" aria-live="polite">
+    <div class="voice-hud-orb" id="voiceHudOrb"><span></span><span></span><span></span></div>
+    <div class="voice-hud-text">
+      <div class="voice-hud-state" id="voiceHudState">Listening…</div>
+      <div class="voice-hud-heard" id="voiceHudHeard">Say “Hey My Ruby, play Syaara”</div>
+    </div>
+    <button class="voice-hud-close" id="voiceHudClose" type="button" aria-label="Stop listening">✕</button>
+  </div>
+
+  <!-- ============ DOWNLOAD OPTIONS MODAL ============ -->
+  <div class="modal-overlay" id="downloadOptionsModal" style="display:none;">
+    <div class="modal dl-options-modal">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">⬇️ Download</h3>
+          <p class="modal-subtitle dl-song-title" id="dlSongTitle">Song Title</p>
+        </div>
+        <button class="modal-close" id="dlModalClose" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <!-- Format Toggle -->
+        <div class="dl-format-section">
+          <label class="dl-section-label">Format</label>
+          <div class="dl-format-toggle" id="dlFormatToggle">
+            <button class="dl-format-btn active" data-format="audio" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+              <span>Audio (MP3)</span>
+            </button>
+            <button class="dl-format-btn" data-format="video" type="button">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;"><rect x="2" y="4" width="20" height="16" rx="2"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor" stroke="none"/></svg>
+              <span>Video (MP4)</span>
+            </button>
+            <div class="dl-format-slider" id="dlFormatSlider"></div>
+          </div>
+        </div>
+
+        <!-- Quality Options -->
+        <div class="dl-quality-section">
+          <label class="dl-section-label">Quality</label>
+
+          <!-- Audio Quality Options -->
+          <div class="dl-quality-grid" id="dlAudioQualities">
+            <button class="dl-quality-option" data-quality="128" type="button">
+              <span class="dl-q-value">128</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">Standard</span>
+            </button>
+            <button class="dl-quality-option active" data-quality="192" type="button">
+              <span class="dl-q-value">192</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">High</span>
+            </button>
+            <button class="dl-quality-option" data-quality="320" type="button">
+              <span class="dl-q-value">320</span>
+              <span class="dl-q-unit">kbps</span>
+              <span class="dl-q-label">Best</span>
+              <span class="dl-q-badge">★</span>
+            </button>
+          </div>
+
+          <!-- Video Quality Options -->
+          <div class="dl-quality-grid" id="dlVideoQualities" style="display:none;">
+            <button class="dl-quality-option active" data-quality="480" type="button">
+              <span class="dl-q-value">480p</span>
+              <span class="dl-q-label">SD</span>
+            </button>
+            <button class="dl-quality-option" data-quality="720" type="button">
+              <span class="dl-q-value">720p</span>
+              <span class="dl-q-label">HD</span>
+            </button>
+            <button class="dl-quality-option" data-quality="1080" type="button">
+              <span class="dl-q-value">1080p</span>
+              <span class="dl-q-label">Full HD</span>
+              <span class="dl-q-badge">★</span>
+            </button>
+            <button class="dl-quality-option" data-quality="1440" type="button">
+              <span class="dl-q-value">1440p</span>
+              <span class="dl-q-label">2K</span>
+            </button>
+            <button class="dl-quality-option" data-quality="2160" type="button">
+              <span class="dl-q-value">2160p</span>
+              <span class="dl-q-label">4K</span>
+              <span class="dl-q-badge">👑</span>
+            </button>
+          </div>
+
+          <!-- Availability note: shown when a track's best resolution is below the
+               top of the ladder, so unavailable rungs are explained not just greyed. -->
+          <p class="dl-video-note" id="dlVideoNote" style="display:none;"></p>
+          <!-- One-click fix for the #1 cause of "only one resolution downloads": a
+               stale yt-dlp that can't see YouTube's full ladder. Updates the
+               downloader in place (no restart) and re-checks the resolutions. -->
+          <button class="dl-update-btn" id="dlUpdateYtdlpBtn" type="button" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:15px;height:15px;"><path d="M21 2v6h-6"/><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M3 22v-6h6"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+            <span id="dlUpdateYtdlpLabel">Update downloader &amp; re-check</span>
+          </button>
+        </div>
+
+        <!-- File size estimate -->
+        <div class="dl-estimate" id="dlEstimate">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+          <span id="dlEstimateText">Estimated size: ~5 MB</span>
+        </div>
+
+        <!-- Download Button -->
+        <button class="modal-submit-btn dl-start-btn" type="button" id="dlStartBtn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <span>Download MP3</span>
+        </button>
+      </div>
+  <!-- ============ YOUTUBE LINK MODAL ============ -->
+  <div class="modal-overlay" id="ytLinkModal" style="display:none;">
+    <div class="modal yt-link-modal" style="max-width:500px;">
+      <div class="modal-header">
+        <div>
+          <h3 class="modal-gradient-title">🔗 Play or Download YouTube Link</h3>
+          <p class="modal-subtitle">Paste any YouTube video, Shorts, or Music URL</p>
+        </div>
+        <button class="modal-close" id="ytLinkModalClose" title="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="yt-link-input-group" style="margin-bottom:16px;">
+          <label style="display:block;font-size:12px;font-weight:600;margin-bottom:6px;color:var(--text-secondary);">YouTube URL</label>
+          <div style="position:relative;display:flex;align-items:center;">
+            <input type="text" id="ytLinkInput" class="search-input" placeholder="https://www.youtube.com/watch?v=... or youtu.be/..." style="width:100%;padding-right:45px;" autocomplete="off" />
+            <button id="ytLinkPasteBtn" type="button" title="Paste from clipboard" style="position:absolute;right:8px;background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;">📋</button>
+          </div>
+        </div>
+
+        <div id="ytLinkPreview" style="display:none;margin-bottom:16px;padding:12px;border-radius:12px;background:var(--bg-glass);border:1px solid var(--border);display:flex;gap:12px;align-items:center;">
+          <img id="ytLinkThumb" src="" alt="" style="width:80px;height:55px;border-radius:8px;object-fit:cover;flex-shrink:0;" />
+          <div style="flex:1;min-width:0;">
+            <div id="ytLinkTitle" style="font-weight:600;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--text-primary);"></div>
+            <div id="ytLinkChannel" style="font-size:12px;color:var(--text-secondary);margin-top:2px;"></div>
+            <div id="ytLinkDuration" style="font-size:11px;color:var(--text-muted);margin-top:2px;"></div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;margin-top:8px;">
+          <button class="modal-submit-btn" id="ytLinkPlayBtn" type="button" style="flex:1;background:var(--accent);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span>▶️ Play Now</span>
+          </button>
+          <button class="modal-submit-btn" id="ytLinkDownloadBtn" type="button" style="flex:1;background:linear-gradient(135deg,#3b82f6,#2563eb);display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span>⬇️ Download</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Audio Element -->
+  <audio id="audioPlayer" preload="auto"></audio>
+
+  <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
+  <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
+  <video id="pipVideo" playsinline muted style="position:fixed; bottom:-9999px; left:-9999px; width:480px; height:270px; opacity:0; pointer-events:none;"></video>
+  <!-- Hidden YouTube Player Container for Resilient Direct Playback -->
+  <div id="ytFallbackContainer" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-100;" aria-hidden="true">
+    <div id="ytFallbackPlayer"></div>
+  </div>
+
+  <script src="https://www.youtube.com/iframe_api"></script>
+  <script src="/js/app.js?v=3.2"></script>
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>

@@ -11,12 +11,21 @@ android {
         applicationId = "com.musicflow.player"
         minSdk = 24
         targetSdk = 34
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "2.0-standalone"
     }
 
     buildFeatures {
         buildConfig = true
+    }
+
+    signingConfigs {
+        create("release") {
+            storeFile = file("../release-key.jks")
+            storePassword = "musicflow123"
+            keyAlias = "musicflow"
+            keyPassword = "musicflow123"
+        }
     }
 
     buildTypes {
@@ -24,14 +33,13 @@ android {
             isMinifyEnabled = false
         }
         release {
-            isMinifyEnabled = true
-            isShrinkResources = true
+            isMinifyEnabled = false
+            isShrinkResources = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            // Use debug signing for sideloading; swap for a real keystore for Play Store
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 
@@ -43,6 +51,13 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+            excludes += "META-INF/DEPENDENCIES"
+        }
+    }
 }
 
 dependencies {
@@ -53,5 +68,22 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.9.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
     implementation("androidx.lifecycle:lifecycle-process:2.8.2")
-    implementation("androidx.swiperefreshlayout:swiperefreshlayout:1.1.0")
+
+    // Embedded HTTP server (serves web frontend + API on localhost)
+    implementation("org.nanohttpd:nanohttpd:2.3.1")
+
+    // OkHttp for YouTube API calls and audio stream proxying
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+
+    // JSON parsing
+    implementation("com.google.code.gson:gson:2.11.0")
+
+    // AndroidX Media3 (ExoPlayer + MediaSessionService for production background playback & caching)
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-session:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
+    implementation("androidx.media3:media3-datasource-okhttp:1.3.1")
+
+    // Palette for dynamic dominant-color gradients
+    implementation("androidx.palette:palette-ktx:1.0.0")
 }

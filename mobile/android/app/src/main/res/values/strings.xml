@@ -2,4 +2,20 @@
     <string name="app_name">MusicFlow</string>
     <string name="notif_channel_playback">Playback</string>
     <string name="notif_playing">MusicFlow is playing</string>
+    <string name="offline_title">Connect to MusicFlow Server</string>
+    <string name="offline_message">Connect to your local PC music server over Wi-Fi or USB, or enter a cloud URL:</string>
+    <string name="retry">Retry</string>
+    <string name="connect">Connect</string>
+    <string name="loading">Loading MusicFlow…</string>
+    <string name="change_server_url">Change Server URL</string>
+    <string name="server_url_hint">http://192.168.0.106:3000</string>
+    <string name="server_url_dialog_title">MusicFlow Server Connection</string>
+    <string name="server_url_dialog_message">Enter your PC server address (e.g. http://192.168.0.106:3000) or USB localhost (http://127.0.0.1:3000):</string>
+    <string name="save_and_connect">Save &amp; Connect</string>
+    <string name="cancel">Cancel</string>
+    <string name="preset_wifi">⚡ PC Wi-Fi (192.168.0.106:3000)</string>
+    <string name="preset_usb">🔌 USB Localhost (127.0.0.1:3000)</string>
+    <string name="preset_emulator">💻 Emulator (10.0.2.2:3000)</string>
+    <string name="preset_cloud">☁️ Cloud Server (Render)</string>
+    <string name="quick_presets">Quick Connect Presets:</string>
 </resources>

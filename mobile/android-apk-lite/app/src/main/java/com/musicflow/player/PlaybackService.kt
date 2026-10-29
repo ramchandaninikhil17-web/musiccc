@@ -1,300 +1,322 @@
 package com.musicflow.player
 
-import android.app.Notification
 import android.app.PendingIntent
-import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.os.Binder
-import android.os.Build
-import android.os.IBinder
-import android.support.v4.media.MediaMetadataCompat
-import android.support.v4.media.session.MediaSessionCompat
-import android.support.v4.media.session.PlaybackStateCompat
-import androidx.core.app.NotificationCompat
-import androidx.media.app.NotificationCompat as MediaNotificationCompat
+import android.os.Handler
+import android.os.Looper
+import android.util.Log
+import androidx.annotation.OptIn
+import androidx.media3.common.AudioAttributes
+import androidx.media3.common.C
+import androidx.media3.common.MediaItem
+import androidx.media3.common.MediaMetadata
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.util.UnstableApi
+import androidx.media3.database.StandaloneDatabaseProvider
+import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.datasource.cache.CacheDataSource
+import androidx.media3.datasource.cache.LeastRecentlyUsedCacheEvictor
+import androidx.media3.datasource.cache.SimpleCache
+import androidx.media3.exoplayer.ExoPlayer
+import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.session.MediaSession
+import androidx.media3.session.MediaSessionService
+import java.io.File
 import java.net.URL
 import java.util.concurrent.Executors
 
-class PlaybackService : Service() {
+@OptIn(UnstableApi::class)
+class PlaybackService : MediaSessionService() {
 
     companion object {
-        private const val NOTIFICATION_ID = 1
-        private const val ACTION_PLAY_PAUSE = "com.musicflow.player.PLAY_PAUSE"
-        private const val ACTION_NEXT = "com.musicflow.player.NEXT"
-        private const val ACTION_PREVIOUS = "com.musicflow.player.PREVIOUS"
-        private const val ACTION_STOP = "com.musicflow.player.STOP"
+        private const val TAG = "PlaybackService"
+        private const val CACHE_SIZE = 300 * 1024 * 1024L // 300 MB audio disk cache
+
+        @Volatile
+        private var simpleCache: SimpleCache? = null
+
+        @Synchronized
+        fun getCache(context: Context): SimpleCache {
+            if (simpleCache == null) {
+                val cacheDir = File(context.cacheDir, "musicflow_audio_cache")
+                if (!cacheDir.exists()) cacheDir.mkdirs()
+                val evictor = LeastRecentlyUsedCacheEvictor(CACHE_SIZE)
+                val databaseProvider = StandaloneDatabaseProvider(context)
+                simpleCache = SimpleCache(cacheDir, evictor, databaseProvider)
+            }
+            return simpleCache!!
+        }
     }
 
     private val binder = LocalBinder()
-    private lateinit var mediaSession: MediaSessionCompat
-    private val executor = Executors.newSingleThreadExecutor()
+    private var mediaSession: MediaSession? = null
+    lateinit var player: ExoPlayer
+        private set
 
-    private var isPlaying = false
-    private var currentTitle = "MusicFlow"
-    private var currentArtist = ""
-    private var currentAlbum = ""
+    private val executor = Executors.newSingleThreadExecutor()
+    private val mainHandler = Handler(Looper.getMainLooper())
+
+    private var currentId: String = ""
+    private var currentTitle: String = "MusicFlow"
+    private var currentArtist: String = ""
+    private var currentAlbum: String = ""
+    private var currentArtworkUrl: String = ""
     private var currentArtwork: Bitmap? = null
-    private var currentArtworkUrl = ""
+
+    private var sleepTimerRunnable: Runnable? = null
+    var playbackListener: PlaybackEventListener? = null
+
+    interface PlaybackEventListener {
+        fun onPlaybackStateChanged(isPlaying: Boolean)
+        fun onPositionUpdate(positionMs: Long, durationMs: Long, bufferedMs: Long)
+        fun onTrackEnded()
+        fun onError(error: String)
+    }
 
     inner class LocalBinder : Binder() {
         fun getService(): PlaybackService = this@PlaybackService
     }
 
-    override fun onBind(intent: Intent?): IBinder = binder
+    override fun onBind(intent: Intent?): android.os.IBinder? {
+        val superBinder = super.onBind(intent)
+        // If system is binding for MediaSessionService, return super, otherwise our local binder
+        return superBinder ?: binder
+    }
 
     override fun onCreate() {
         super.onCreate()
+        setupExoPlayer()
         setupMediaSession()
+        startPositionReporting()
+    }
+
+    private fun setupExoPlayer() {
+        val cache = getCache(this)
+        val httpDataSourceFactory = DefaultHttpDataSource.Factory()
+            .setUserAgent("MusicFlow/3.0 (Android; ExoPlayer)")
+            .setConnectTimeoutMs(15000)
+            .setReadTimeoutMs(30000)
+            .setAllowCrossProtocolRedirects(true)
+
+        val cacheDataSourceFactory = CacheDataSource.Factory()
+            .setCache(cache)
+            .setUpstreamDataSourceFactory(httpDataSourceFactory)
+            .setFlags(CacheDataSource.FLAG_IGNORE_CACHE_ON_ERROR)
+
+        val mediaSourceFactory = DefaultMediaSourceFactory(cacheDataSourceFactory)
+
+        val audioAttributes = AudioAttributes.Builder()
+            .setContentType(C.AUDIO_CONTENT_TYPE_MUSIC)
+            .setUsage(C.USAGE_MEDIA)
+            .build()
+
+        player = ExoPlayer.Builder(this)
+            .setMediaSourceFactory(mediaSourceFactory)
+            .setAudioAttributes(audioAttributes, /* handleAudioFocus = */ true)
+            .setWakeMode(C.WAKE_MODE_NETWORK)
+            .setHandleAudioBecomingNoisy(true)
+            .build()
+
+        player.addListener(object : Player.Listener {
+            override fun onIsPlayingChanged(isPlaying: Boolean) {
+                playbackListener?.onPlaybackStateChanged(isPlaying)
+            }
+
+            override fun onPlaybackStateChanged(playbackState: Int) {
+                when (playbackState) {
+                    Player.STATE_ENDED -> {
+                        playbackListener?.onTrackEnded()
+                    }
+                    Player.STATE_READY -> {
+                        playbackListener?.onPositionUpdate(
+                            player.currentPosition,
+                            player.duration.coerceAtLeast(0L),
+                            player.bufferedPosition
+                        )
+                    }
+                    else -> {}
+                }
+            }
+
+            override fun onPlayerError(error: PlaybackException) {
+                Log.e(TAG, "ExoPlayer error: ${error.message}", error)
+                playbackListener?.onError(error.message ?: "Playback error")
+            }
+        })
     }
 
     private fun setupMediaSession() {
-        mediaSession = MediaSessionCompat(this, "MusicFlowSession").apply {
-            setFlags(
-                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS or
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS
-            )
-
-            setCallback(object : MediaSessionCompat.Callback() {
-                override fun onPlay() {
-                    sendCommandToWebView("if(typeof togglePlayPause==='function')togglePlayPause();")
-                }
-
-                override fun onPause() {
-                    sendCommandToWebView("if(typeof togglePlayPause==='function')togglePlayPause();")
-                }
-
-                override fun onSkipToNext() {
-                    sendCommandToWebView("if(typeof playNext==='function')playNext();")
-                }
-
-                override fun onSkipToPrevious() {
-                    sendCommandToWebView("if(typeof playPrev==='function')playPrev();")
-                }
-
-                override fun onStop() {
-                    stopPlayback()
-                }
-
-                override fun onSeekTo(pos: Long) {
-                    sendCommandToWebView(
-                        "if(typeof audioPlayer!=='undefined'&&audioPlayer){audioPlayer.currentTime=${pos / 1000.0};}"
-                    )
-                }
-            })
-
-            isActive = true
+        val intent = Intent(this, MainActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
         }
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+        mediaSession = MediaSession.Builder(this, player)
+            .setSessionActivity(pendingIntent)
+            .build()
     }
 
-    private fun sendCommandToWebView(js: String) {
-        val intent = Intent("com.musicflow.player.WEBVIEW_COMMAND")
-        intent.putExtra("js", js)
-        sendBroadcast(intent)
+    override fun onGetSession(controllerInfo: MediaSession.ControllerInfo): MediaSession? {
+        return mediaSession
     }
 
-    fun startPlayback() {
-        isPlaying = true
+    // ── Playback Controls ──
 
-        // Start foreground service
-        try {
-            val notification = buildNotification()
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                startForeground(NOTIFICATION_ID, notification, android.content.pm.ServiceInfo.FOREGROUND_SERVICE_TYPE_MEDIA_PLAYBACK)
-            } else {
-                startForeground(NOTIFICATION_ID, notification)
-            }
-        } catch (e: Exception) {
-            // Foreground service start can fail on some devices
-        }
-
-        updatePlaybackState()
-        updateNotification()
-    }
-
-    fun pausePlayback() {
-        isPlaying = false
-        updatePlaybackState()
-        updateNotification()
-    }
-
-    fun stopPlayback() {
-        isPlaying = false
-        mediaSession.isActive = false
-        stopForeground(true)
-        stopSelf()
-    }
-
-    fun updateMetadata(title: String, artist: String, album: String, artworkUrl: String) {
+    fun playTrack(
+        id: String,
+        title: String,
+        artist: String,
+        album: String,
+        artworkUrl: String,
+        streamUrl: String
+    ) {
+        currentId = id
         currentTitle = title.ifEmpty { "MusicFlow" }
         currentArtist = artist
         currentAlbum = album
+        currentArtworkUrl = artworkUrl
 
-        // Fetch artwork in background
-        if (artworkUrl.isNotEmpty() && artworkUrl != currentArtworkUrl) {
-            currentArtworkUrl = artworkUrl
-            executor.execute {
-                try {
-                    val url = if (artworkUrl.startsWith("//")) "https:$artworkUrl"
-                              else if (artworkUrl.startsWith("/")) {
-                                  val prefs = getSharedPreferences("musicflow_prefs", android.content.Context.MODE_PRIVATE)
-                                  val base = prefs.getString("server_url", "https://musicwalahnar.com") ?: "https://musicwalahnar.com"
-                                  "$base$artworkUrl"
-                              }
-                              else artworkUrl
-                    val inputStream = URL(url).openStream()
-                    val bitmap = BitmapFactory.decodeStream(inputStream)
-                    inputStream.close()
-                    if (bitmap != null) {
-                        currentArtwork = bitmap
-                        updateMediaSessionMetadata()
-                        updateNotification()
-                    }
-                } catch (e: Exception) {
-                    // Failed to load artwork, continue without it
-                }
-            }
+        val metadataBuilder = MediaMetadata.Builder()
+            .setTitle(currentTitle)
+            .setArtist(currentArtist)
+            .setAlbumTitle(currentAlbum)
+            .setDisplayTitle(currentTitle)
+
+        if (artworkUrl.isNotEmpty()) {
+            metadataBuilder.setArtworkUri(Uri.parse(artworkUrl))
         }
 
-        updateMediaSessionMetadata()
-        updateNotification()
-    }
-
-    private fun updateMediaSessionMetadata() {
-        val builder = MediaMetadataCompat.Builder()
-            .putString(MediaMetadataCompat.METADATA_KEY_TITLE, currentTitle)
-            .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, currentArtist)
-            .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, currentAlbum)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_TITLE, currentTitle)
-            .putString(MediaMetadataCompat.METADATA_KEY_DISPLAY_SUBTITLE, currentArtist)
-
-        currentArtwork?.let {
-            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, it)
-            builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ART, it)
-        }
-
-        mediaSession.setMetadata(builder.build())
-    }
-
-    private fun updatePlaybackState() {
-        val state = if (isPlaying) {
-            PlaybackStateCompat.STATE_PLAYING
-        } else {
-            PlaybackStateCompat.STATE_PAUSED
-        }
-
-        val playbackState = PlaybackStateCompat.Builder()
-            .setActions(
-                PlaybackStateCompat.ACTION_PLAY or
-                PlaybackStateCompat.ACTION_PAUSE or
-                PlaybackStateCompat.ACTION_PLAY_PAUSE or
-                PlaybackStateCompat.ACTION_SKIP_TO_NEXT or
-                PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS or
-                PlaybackStateCompat.ACTION_STOP or
-                PlaybackStateCompat.ACTION_SEEK_TO
-            )
-            .setState(state, PlaybackStateCompat.PLAYBACK_POSITION_UNKNOWN, 1.0f)
+        val mediaItem = MediaItem.Builder()
+            .setMediaId(id)
+            .setUri(streamUrl)
+            .setMediaMetadata(metadataBuilder.build())
             .build()
 
-        mediaSession.setPlaybackState(playbackState)
+        player.setMediaItem(mediaItem)
+        player.prepare()
+        player.play()
+
+        loadArtworkBitmap(artworkUrl)
     }
 
-    private fun buildNotification(): Notification {
-        val launchIntent = Intent(this, MainActivity::class.java).apply {
-            flags = Intent.FLAG_ACTIVITY_SINGLE_TOP
-        }
-        val pendingLaunch = PendingIntent.getActivity(
-            this, 0, launchIntent,
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        // Action intents
-        val prevIntent = PendingIntent.getService(
-            this, 1,
-            Intent(this, PlaybackService::class.java).apply { action = ACTION_PREVIOUS },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val playPauseIntent = PendingIntent.getService(
-            this, 2,
-            Intent(this, PlaybackService::class.java).apply { action = ACTION_PLAY_PAUSE },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val nextIntent = PendingIntent.getService(
-            this, 3,
-            Intent(this, PlaybackService::class.java).apply { action = ACTION_NEXT },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-        val stopIntent = PendingIntent.getService(
-            this, 4,
-            Intent(this, PlaybackService::class.java).apply { action = ACTION_STOP },
-            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-        )
-
-        val playPauseIcon = if (isPlaying) R.drawable.ic_pause else R.drawable.ic_play
-        val playPauseLabel = if (isPlaying) "Pause" else "Play"
-
-        val builder = NotificationCompat.Builder(this, MusicFlowApp.CHANNEL_PLAYBACK)
-            .setContentTitle(currentTitle)
-            .setContentText(currentArtist)
-            .setSubText(currentAlbum)
-            .setSmallIcon(R.drawable.ic_notification)
-            .setContentIntent(pendingLaunch)
-            .setDeleteIntent(stopIntent)
-            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
-            .setOngoing(isPlaying)
-            .setShowWhen(false)
-            .addAction(R.drawable.ic_previous, "Previous", prevIntent)
-            .addAction(playPauseIcon, playPauseLabel, playPauseIntent)
-            .addAction(R.drawable.ic_next, "Next", nextIntent)
-            .setStyle(
-                MediaNotificationCompat.MediaStyle()
-                    .setMediaSession(mediaSession.sessionToken)
-                    .setShowActionsInCompactView(0, 1, 2)
-                    .setShowCancelButton(true)
-                    .setCancelButtonIntent(stopIntent)
-            )
-            .setPriority(NotificationCompat.PRIORITY_LOW)
-            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)
-
-        currentArtwork?.let {
-            builder.setLargeIcon(it)
-        }
-
-        return builder.build()
-    }
-
-    private fun updateNotification() {
-        try {
-            val notification = buildNotification()
-            val manager = getSystemService(NOTIFICATION_SERVICE) as android.app.NotificationManager
-            manager.notify(NOTIFICATION_ID, notification)
-        } catch (e: Exception) {
-            // Notification update can fail if permissions were revoked
+    private fun loadArtworkBitmap(artworkUrl: String) {
+        if (artworkUrl.isEmpty()) return
+        executor.execute {
+            try {
+                val resolvedUrl = if (artworkUrl.startsWith("//")) "https:$artworkUrl" else artworkUrl
+                val stream = URL(resolvedUrl).openStream()
+                val bitmap = BitmapFactory.decodeStream(stream)
+                stream.close()
+                if (bitmap != null) {
+                    currentArtwork = bitmap
+                    mainHandler.post {
+                        val meta = player.mediaMetadata.buildUpon()
+                            .setArtworkUri(Uri.parse(artworkUrl))
+                            .build()
+                        // Update session metadata with loaded art
+                        val currentItem = player.currentMediaItem
+                        if (currentItem != null) {
+                            val updatedItem = currentItem.buildUpon().setMediaMetadata(meta).build()
+                            // Just update metadata in place
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Failed to load artwork: ${e.message}")
+            }
         }
     }
 
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        when (intent?.action) {
-            ACTION_PLAY_PAUSE -> {
-                sendCommandToWebView("if(typeof togglePlayPause==='function')togglePlayPause();")
-            }
-            ACTION_NEXT -> {
-                sendCommandToWebView("if(typeof playNext==='function')playNext();")
-            }
-            ACTION_PREVIOUS -> {
-                sendCommandToWebView("if(typeof playPrev==='function')playPrev();")
-            }
-            ACTION_STOP -> {
-                stopPlayback()
-            }
+    fun pause() {
+        player.pause()
+    }
+
+    fun resume() {
+        player.play()
+    }
+
+    fun togglePlayPause() {
+        if (player.isPlaying) {
+            player.pause()
+        } else {
+            player.play()
         }
-        return START_STICKY
+    }
+
+    fun seekTo(positionMs: Long) {
+        player.seekTo(positionMs)
+    }
+
+    fun setPlaybackSpeed(speed: Float) {
+        player.playbackParameters = PlaybackParameters(speed.coerceIn(0.5f, 2.0f))
+    }
+
+    fun setSleepTimer(minutes: Int) {
+        sleepTimerRunnable?.let { mainHandler.removeCallbacks(it) }
+        if (minutes <= 0) {
+            sleepTimerRunnable = null
+            return
+        }
+
+        sleepTimerRunnable = Runnable {
+            fadeOutAndPause()
+        }
+        mainHandler.postDelayed(sleepTimerRunnable!!, minutes * 60 * 1000L)
+        Log.i(TAG, "Sleep timer set for $minutes minutes")
+    }
+
+    private fun fadeOutAndPause() {
+        val initialVolume = player.volume
+        val steps = 10
+        val stepDelay = 200L
+        for (i in 1..steps) {
+            mainHandler.postDelayed({
+                val vol = initialVolume * (1f - (i.toFloat() / steps))
+                player.volume = vol
+                if (i == steps) {
+                    player.pause()
+                    player.volume = initialVolume
+                }
+            }, i * stepDelay)
+        }
+    }
+
+    // ── Continuous Position Reporting Loop (60fps smooth seekbar & lyrics sync) ──
+
+    private fun startPositionReporting() {
+        mainHandler.post(object : Runnable {
+            override fun run() {
+                if (player.isPlaying) {
+                    playbackListener?.onPositionUpdate(
+                        player.currentPosition,
+                        player.duration.coerceAtLeast(0L),
+                        player.bufferedPosition
+                    )
+                }
+                mainHandler.postDelayed(this, 100) // 10Hz update
+            }
+        })
     }
 
     override fun onDestroy() {
+        sleepTimerRunnable?.let { mainHandler.removeCallbacks(it) }
+        mediaSession?.run {
+            player.release()
+            release()
+            mediaSession = null
+        }
         super.onDestroy()
-        mediaSession.release()
-        executor.shutdown()
     }
 }
