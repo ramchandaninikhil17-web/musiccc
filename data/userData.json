@@ -1,7 +1,83 @@
 {
   "theme": "oled",
-  "lastSaved": "2026-10-29T10:34:38.168Z",
+  "lastSaved": "2026-10-29T11:52:18.151Z",
   "history": [
+    {
+      "song": {
+        "id": "gwX71Dmc",
+        "title": "Wavy",
+        "channel": "Karan Aujla, Jay Trak",
+        "duration": 210,
+        "thumbnail": "https://c.saavncdn.com/178/Wavy-Punjabi-2024-20250523044332-500x500.jpg",
+        "isCloud": true
+      },
+      "playedAt": "2026-10-29T11:51:38.112Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "asG7cwxi1sA",
+        "title": "Saiyaara Reprise - Female | Full Song | Ahaan, Aneet | Tanishk, Faheem, Arslan | Shreya | Irshad",
+        "channel": "YRF",
+        "duration": 184,
+        "thumbnail": "https://i.ytimg.com/vi/asG7cwxi1sA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCnE59H4FA56D5oZxXATP_oIVeq4A",
+        "views": 352440227
+      },
+      "playedAt": "2026-10-29T11:51:31.714Z",
+      "listenedSec": 6
+    },
+    {
+      "song": {
+        "id": "asG7cwxi1sA",
+        "title": "Saiyaara Reprise - Female | Full Song | Ahaan, Aneet | Tanishk, Faheem, Arslan | Shreya | Irshad",
+        "channel": "YRF",
+        "duration": 184,
+        "thumbnail": "https://i.ytimg.com/vi/asG7cwxi1sA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCnE59H4FA56D5oZxXATP_oIVeq4A",
+        "views": 352440227
+      },
+      "playedAt": "2026-10-29T11:47:51.975Z",
+      "listenedSec": 183,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "YRwX6AYInJw",
+        "title": "Etho Sayana Audio Song | 10:30 AM Local Call | Sachin Warrier | Gopi Sunder | Rafeeq Ahammed",
+        "channel": "Sony Music Malayalam",
+        "duration": 291,
+        "thumbnail": "https://i.ytimg.com/vi/YRwX6AYInJw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAYgLREN7X7IWg_r_YpsPdZciWAtA",
+        "views": 2915594
+      },
+      "playedAt": "2026-10-29T11:46:49.019Z",
+      "listenedSec": 51,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "f-9IaGAlgEA",
+        "title": "AARI AARI (Full Video) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev | Bombay Rockers",
+        "channel": "T-Series and 2 more",
+        "duration": 164,
+        "thumbnail": "https://i.ytimg.com/vi/f-9IaGAlgEA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC_d47sE7Oaulolez8wRAHWtjyaRw",
+        "views": 20233856
+      },
+      "playedAt": "2026-10-29T11:45:42.565Z",
+      "listenedSec": 55,
+      "counted": true
+    },
+    {
+      "song": {
+        "id": "aT4N7jn2Eww",
+        "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
+        "channel": "Saregama Music and Reble",
+        "duration": 148,
+        "thumbnail": "https://i.ytimg.com/vi/aT4N7jn2Eww/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD8pjY4nfm4K8szbIVnsxELHTq3PQ",
+        "views": 77570553
+      },
+      "playedAt": "2026-10-29T11:45:20.953Z",
+      "listenedSec": 30,
+      "counted": true
+    },
     {
       "song": {
         "id": "aT4N7jn2Eww",
@@ -29,6 +105,18 @@
     },
     {
       "song": {
+        "id": "iSo9l950QLo",
+        "title": "Shiddat Title Track (Full Video) |Sunny Kaushal,Radhika Madan, Mohit Raina, Diana P | Manan Bhardwaj",
+        "channel": "T-Series",
+        "duration": 244,
+        "thumbnail": "https://i.ytimg.com/vi/iSo9l950QLo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbAa4UgL9bRjWnTGi76kuTTCfOEA",
+        "views": 182713922
+      },
+      "playedAt": "2026-10-29T10:33:31.573Z",
+      "listenedSec": 7
+    },
+    {
+      "song": {
         "id": "oMesPehN_Do",
         "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
         "channel": "T-Series",
@@ -50,6 +138,18 @@
       },
       "playedAt": "2026-10-29T10:33:09.497Z",
       "listenedSec": 4
+    },
+    {
+      "song": {
+        "id": "YyepU5ztLf4",
+        "title": "Shararat | Dhurandhar | Ranveer, Aditya Dhar, Shashwat, Jasmine, Madhubanti, Ayesha, Krystle",
+        "channel": "Saregama Music",
+        "duration": 229,
+        "thumbnail": "https://i.ytimg.com/vi/YyepU5ztLf4/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBmqGbYc9xGJD6NELHZLMaBHuHr9Q",
+        "views": 849061513
+      },
+      "playedAt": "2026-10-29T10:32:59.113Z",
+      "listenedSec": 0
     },
     {
       "song": {
@@ -3087,108 +3187,6 @@
       "playedAt": "2026-09-05T14:55:59.177Z",
       "listenedSec": 209,
       "counted": true
-    },
-    {
-      "song": {
-        "id": "E7ergOnpO1Q",
-        "title": "Dhanda Nyoliwala - Not Guilty (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/E7ergOnpO1Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzurf5gm0QULqz7CS8kjXL-3FQ6A",
-        "views": 138141114
-      },
-      "playedAt": "2026-09-05T14:53:00.189Z",
-      "listenedSec": 178,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "E7ergOnpO1Q",
-        "title": "Dhanda Nyoliwala - Not Guilty (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/E7ergOnpO1Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzurf5gm0QULqz7CS8kjXL-3FQ6A",
-        "views": 138141114
-      },
-      "playedAt": "2026-09-05T14:38:08.467Z",
-      "listenedSec": 21,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "E7ergOnpO1Q",
-        "title": "Dhanda Nyoliwala - Not Guilty (Official Music Video)",
-        "channel": "Dhanda Nyoliwala",
-        "duration": 185,
-        "thumbnail": "https://i.ytimg.com/vi/E7ergOnpO1Q/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDzurf5gm0QULqz7CS8kjXL-3FQ6A",
-        "views": 138141114
-      },
-      "playedAt": "2026-09-05T14:37:28.947Z",
-      "listenedSec": 0
-    },
-    {
-      "song": {
-        "id": "Q5MtXJ3DbcU",
-        "title": "Kabhi Shaam Dhale | 60s–70s Retro Romantic Song | Old Bollywood Vibes",
-        "channel": "Old Love Melodies",
-        "duration": 483,
-        "thumbnail": "https://i.ytimg.com/vi/Q5MtXJ3DbcU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDM9uxD-o0CXbgE9wxV6lq5oGqiKg",
-        "views": 12962002
-      },
-      "playedAt": "2026-09-05T14:37:05.587Z",
-      "listenedSec": 2
-    },
-    {
-      "song": {
-        "id": "Q5MtXJ3DbcU",
-        "title": "Kabhi Shaam Dhale | 60s–70s Retro Romantic Song | Old Bollywood Vibes",
-        "channel": "Old Love Melodies",
-        "duration": 483,
-        "thumbnail": "https://i.ytimg.com/vi/Q5MtXJ3DbcU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDM9uxD-o0CXbgE9wxV6lq5oGqiKg",
-        "views": 12962002
-      },
-      "playedAt": "2026-09-05T13:28:26.997Z",
-      "listenedSec": 36,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "NgvjhLLY1zs",
-        "title": "Retro Medley | Tejas & Mitali Collective | Live",
-        "channel": "Tejas & Mitali Collective",
-        "duration": 330,
-        "thumbnail": "https://i.ytimg.com/vi/NgvjhLLY1zs/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDIMQLHYNGrrTDV5Iu0loVSDZ8oQA",
-        "views": 1512117
-      },
-      "playedAt": "2026-09-05T13:26:33.071Z",
-      "listenedSec": 113,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "mzIuhFx5W1o",
-        "title": "Pal Pal Dil Ke Paas | Retro Hit Songs | Kishore Kumar Romantic Songs | Dharmendra | Blackmail (1973)",
-        "channel": "Retro Hit Songs",
-        "duration": 317,
-        "thumbnail": "https://i.ytimg.com/vi/mzIuhFx5W1o/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLARnYLzD9nDABdruY7KAI9l-kmAFw",
-        "views": 78238942
-      },
-      "playedAt": "2026-09-05T13:21:10.911Z",
-      "listenedSec": 322,
-      "counted": true
-    },
-    {
-      "song": {
-        "id": "WsmBJOb-hWU",
-        "title": "Bollywood's Retro Espresso | Staccato | Freshly Brewed",
-        "channel": "Staccato - Contemporary Classic",
-        "duration": 427,
-        "thumbnail": "https://i.ytimg.com/vi/WsmBJOb-hWU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD6waCbjoa4Ijm9LEMv1moXBErCrg",
-        "views": 11446073
-      },
-      "playedAt": "2026-09-05T13:18:05.145Z",
-      "listenedSec": 185,
-      "counted": true
     }
   ],
   "searchHistory": [],
@@ -3748,84 +3746,84 @@
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "LedDxbUCBVE",
-      "title": "Mixtape 2024 | T-Series Mixtape songs | Armaan Malik, Neha kakkar, Jubin, Shirley Setia...",
-      "channel": "MusicBench",
-      "duration": 1436,
-      "thumbnail": "https://i.ytimg.com/vi/LedDxbUCBVE/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARh_IBcoTzAP&rs=AOn4CLCQSGwMvhaLrqFnGnNIbsyczV_06A",
-      "views": 4512652
+      "id": "qcEf8GY8",
+      "title": "Apna Bana Le",
+      "channel": "Amitabh Bhattacharya, Sachin-Jigar, Arijit Singh",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "aT4N7jn2Eww",
-      "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
-      "channel": "Saregama Music and Reble",
-      "duration": 148,
-      "thumbnail": "https://i.ytimg.com/vi/aT4N7jn2Eww/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLD8pjY4nfm4K8szbIVnsxELHTq3PQ",
-      "views": 77570553
+      "id": "UPJYO3v0",
+      "title": "Ishq de Fanniyar - Female",
+      "channel": "Jyotica Tangri, Shaarib Toshi, Kumaar",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "7KXVzkxM0-g",
-      "title": "Bheegi Bheegi Raaton Mein | The Paradise | Nani | Raghav Juyal | Lata Mangeshkar, Kishore Kumar",
-      "channel": "Saregama Music",
-      "duration": 58,
-      "thumbnail": "https://i.ytimg.com/vi/7KXVzkxM0-g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDCTfkuSHM2Q287UjYW0WM5siLxRA",
-      "views": 1801
+      "id": "kHS4uHli",
+      "title": "Vaaroon",
+      "channel": "Anand Bhaskar",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "TFTnJzWRTJ8",
-      "title": "Naal Nachna | Dhurandhar | Ranveer Singh, Sara Arjun, Shashwat Sachdev, Afsana Khan, Reble, Irshad",
-      "channel": "Saregama Music and 2 more",
-      "duration": 126,
-      "thumbnail": "https://i.ytimg.com/vi/TFTnJzWRTJ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDbQ7__wkzoG5VtOU3jwVN3pP-wtQ",
-      "views": 102073884
+      "id": "RPY7kBp3",
+      "title": "Lae Dooba",
+      "channel": "Manoj Muntashir, Rochak Kohli, Sunidhi Chauhan",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "vJQMhj6WYZA",
-      "title": "Barbaadiyan (Full Video)| Shiddat |Sunny K,Radhika M |Sachet T,Nikhita G, Madhubanti B|Sachin -Jigar",
-      "channel": "T-Series",
-      "duration": 242,
-      "thumbnail": "https://i.ytimg.com/vi/vJQMhj6WYZA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDpe_xjxxpfg0voLpKwo2RPtJNYMA",
-      "views": 210986167
+      "id": "BtmajL_i",
+      "title": "Vaaroon Trending Version",
+      "channel": "Ginny Diwan, Anand Bhaskar, Romy",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/037/Vaaroon-Trending-Version-Hindi-2025-20250709213623-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "nJZcbidTutE",
-      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
-      "channel": "T-Series",
-      "duration": 248,
-      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCqk2GDkOBY0Bjy9nUVMzcZzy3DRg",
-      "views": 393495057
+      "id": "VkKO4wT4",
+      "title": "Jugraafiya Trending Version",
+      "channel": "Amitabh Bhattacharya, Ajay-Atul, Udit Narayan",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/022/Jugraafiya-Trending-Version-Hindi-2025-20250618165955-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "oMesPehN_Do",
-      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
-      "channel": "T-Series",
-      "duration": 268,
-      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCP2fr86VttexE6AnKdeYVbit0-3w",
-      "views": 92293494
+      "id": "7o2bZnQk",
+      "title": "Vaaroon Trending Version",
+      "channel": "Ginny Diwan, Anand Bhaskar, Romy",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/835/1-Min-Insta-Viral-Mix-Hindi-2026-20260512190618-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "n2dVFdqMYGA",
-      "title": "Sahiba (Official Music Video) : Aditya Rikhari, Ankita Chhetri | T-Series",
-      "channel": "T-Series",
-      "duration": 184,
-      "thumbnail": "https://i.ytimg.com/vi/n2dVFdqMYGA/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDjHSYXox1RX8Z-IgSuu9Pdqe_ljQ",
-      "views": 401617978
+      "id": "bl6OTcVp",
+      "title": "Jugraafiya",
+      "channel": "Udit Narayan, Shreya Ghoshal",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "dR9B_gPxjkk",
-      "title": "Kiliye Kiliye - Video Song | Lokah Chapter 1: Chandra | Kalyani Priyadarshan | Naslen | Dominic Arun",
-      "channel": "Saregama Malayalam",
-      "duration": 125,
-      "thumbnail": "https://i.ytimg.com/vi/dR9B_gPxjkk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAwl9b3hQJqOyRNAUj1fD-e9AnAXQ",
-      "views": 79131907
+      "id": "kXvA3QYv",
+      "title": "Teri Ore (Trending Version)",
+      "channel": "Shreya Ghoshal",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/609/Teri-Ore-Trending-Version-Hindi-2025-20250815162404-500x500.jpg",
+      "isCloud": true
     },
     {
-      "id": "iSo9l950QLo",
-      "title": "Shiddat Title Track (Full Video) |Sunny Kaushal,Radhika Madan, Mohit Raina, Diana P | Manan Bhardwaj",
-      "channel": "T-Series",
-      "duration": 244,
-      "thumbnail": "https://i.ytimg.com/vi/iSo9l950QLo/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCbAa4UgL9bRjWnTGi76kuTTCfOEA",
-      "views": 182713922
+      "id": "ILnuUlkk",
+      "title": "Tu Hi Disda",
+      "channel": "Kumaar, Pritam, Arijit Singh",
+      "duration": 210,
+      "thumbnail": "https://c.saavncdn.com/675/Trending-Love-Songs-Hindi-2026-20260506185328-500x500.jpg",
+      "isCloud": true
     }
   ],
   "likes": [
@@ -4068,7 +4066,7 @@
     "8qCVXCFREkQ": 6,
     "IAONd2d_PDU": 5,
     "jo3p7O8n6is": 1,
-    "aT4N7jn2Eww": 1,
+    "aT4N7jn2Eww": 2,
     "TFTnJzWRTJ8": 1,
     "dESIGVxSSCE": 1,
     "VWCBZpvjZfc": 1,
@@ -4094,8 +4092,10 @@
     "ZBiaUvvFAFk": 4,
     "Lf4vdiKLhNE": 1,
     "p5EeJ9bHAOI": 2,
-    "f-9IaGAlgEA": 2,
-    "iSo9l950QLo": 1
+    "f-9IaGAlgEA": 3,
+    "iSo9l950QLo": 1,
+    "YRwX6AYInJw": 1,
+    "asG7cwxi1sA": 1
   },
   "eqState": {
     "gains": [
@@ -4204,6 +4204,30 @@
       "date": "2026-10-29",
       "minutes": 0,
       "tracks": [
+        {
+          "id": "gwX71Dmc",
+          "title": "Wavy",
+          "channel": "Karan Aujla, Jay Trak",
+          "playedAt": "05:21 pm"
+        },
+        {
+          "id": "asG7cwxi1sA",
+          "title": "Saiyaara Reprise - Female | Full Song | Ahaan, Aneet | Tanishk, Faheem, Arslan | Shreya | Irshad",
+          "channel": "YRF",
+          "playedAt": "05:17 pm"
+        },
+        {
+          "id": "YRwX6AYInJw",
+          "title": "Etho Sayana Audio Song | 10:30 AM Local Call | Sachin Warrier | Gopi Sunder | Rafeeq Ahammed",
+          "channel": "Sony Music Malayalam",
+          "playedAt": "05:16 pm"
+        },
+        {
+          "id": "f-9IaGAlgEA",
+          "title": "AARI AARI (Full Video) | Dhurandhar The Revenge | Ranveer Singh | Shashwat Sachdev | Bombay Rockers",
+          "channel": "T-Series and 2 more",
+          "playedAt": "05:15 pm"
+        },
         {
           "id": "aT4N7jn2Eww",
           "title": "Run Down The City - Monica | Dhurandhar | Ranveer, Sara, Shashwat, Reble, Asha Bhosle, R.D. Burman",
