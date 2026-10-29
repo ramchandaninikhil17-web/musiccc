@@ -39,6 +39,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.media.AudioManager
 import android.media.MediaScannerConnection
 import android.widget.Button
 import android.widget.FrameLayout
@@ -344,11 +345,25 @@ class MainActivity : AppCompatActivity() {
         }
 
         try {
+            // Mute system notification and system sound streams temporarily during startListening
+            // to suppress Android's recognition earcon beep ("tada")
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            try {
+                audioManager?.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_MUTE, 0)
+                audioManager?.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_MUTE, 0)
+            } catch (e: Exception) {}
+
             if (speechRecognizer == null) {
                 speechRecognizer = SpeechRecognizer.createSpeechRecognizer(applicationContext)
                 speechRecognizer?.setRecognitionListener(object : RecognitionListener {
                     override fun onReadyForSpeech(params: Bundle?) {
                         isSpeechListening = true
+                        // Unmute once microphone is active
+                        try {
+                            val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                            am?.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+                            am?.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+                        } catch (e: Exception) {}
                         sendSpeechEvent("onReady", "")
                     }
                     override fun onBeginningOfSpeech() {
@@ -364,20 +379,25 @@ class MainActivity : AppCompatActivity() {
                     }
                     override fun onError(error: Int) {
                         isSpeechListening = false
+                        // Unmute on error as safety
+                        try {
+                            val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                            am?.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+                            am?.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+                        } catch (e: Exception) {}
                         sendSpeechEvent("onError", "code_$error")
-                        // If always-listening is armed and error was timeout or no match, schedule restart
-                        if (isAlwaysListeningMode && (error == SpeechRecognizer.ERROR_NO_MATCH || error == SpeechRecognizer.ERROR_SPEECH_TIMEOUT)) {
-                            scheduleSpeechRestart(350)
-                        }
                     }
                     override fun onResults(results: Bundle?) {
                         isSpeechListening = false
+                        // Unmute on completion as safety
+                        try {
+                            val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+                            am?.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+                            am?.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+                        } catch (e: Exception) {}
                         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
                         val text = matches?.firstOrNull() ?: ""
                         sendSpeechEvent("onResult", text)
-                        if (isAlwaysListeningMode) {
-                            scheduleSpeechRestart(450)
-                        }
                     }
                     override fun onPartialResults(partialResults: Bundle?) {
                         val matches = partialResults?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
@@ -402,19 +422,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun scheduleSpeechRestart(delayMs: Long) {
-        executor.execute {
-            try {
-                Thread.sleep(delayMs)
-                runOnUiThread {
-                    if (isAlwaysListeningMode && !isFinishing) {
-                        startNativeSpeechListening(true)
-                    }
-                }
-            } catch (e: Exception) {}
-        }
-    }
-
     private fun stopNativeSpeechListening() {
         isAlwaysListeningMode = false
         isSpeechListening = false
@@ -422,11 +429,16 @@ class MainActivity : AppCompatActivity() {
             speechRecognizer?.stopListening()
             speechRecognizer?.cancel()
         } catch (e: Exception) {}
+        try {
+            val am = getSystemService(Context.AUDIO_SERVICE) as? AudioManager
+            am?.adjustStreamVolume(AudioManager.STREAM_NOTIFICATION, AudioManager.ADJUST_UNMUTE, 0)
+            am?.adjustStreamVolume(AudioManager.STREAM_SYSTEM, AudioManager.ADJUST_UNMUTE, 0)
+        } catch (e: Exception) {}
     }
 
     private fun sendSpeechEvent(type: String, data: String) {
         val safeData = data.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ").replace("\r", "")
-        val js = "if(window.MusicFlowNativeSpeech && typeof window.MusicFlowNativeSpeech.handleNativeSpeechEvent === 'function'){ window.MusicFlowNativeSpeech.handleNativeSpeechEvent('$type', '$safeData'); }"
+        val js = "if(window.MusicFlowNativeSpeech && typeof window.MusicFlowNativeSpeech.handleNativeSpeechEvent === 'function'){ window.MusicFlowNativeSpeech.handleNativeSpeechEvent('$type', '$safeData'); } else if(window.VoiceAssistant && typeof window.VoiceAssistant.handleNativeSpeech === 'function'){ window.VoiceAssistant.handleNativeSpeech('$type', '$safeData'); }"
         runOnUiThread {
             webView.evaluateJavascript(js, null)
         }

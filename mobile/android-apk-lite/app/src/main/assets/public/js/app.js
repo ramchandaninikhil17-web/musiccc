@@ -9059,8 +9059,8 @@
       }
     },
 
-    wake() { this.play([784, 1175], 0.16); },   // tu-dú, rising
-    off() { this.play([1175, 784], 0.10); },    // dú-tu, falling
+    wake() { this.play([784, 1175], 0.06); },   // gentle subtle chime
+    off() { this.play([1175, 784], 0.04); },    // gentle subtle chime
   };
 
   const VOICE_IDLE_MS = 12000;      // command window: give up waiting after this much silence
@@ -9073,7 +9073,7 @@
   const VoiceAssistant = {
     inited: false, supported: false, disabled: false,
     mode: 'off',
-    always: true,
+    always: false,
     sessionOpen: false,
     turn: 0,
     rec: null, restarts: 0,
@@ -9094,7 +9094,7 @@
       const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
       this.supported = !!Rec || (typeof window.MusicFlowAndroid !== 'undefined');
 
-      this.always = Storage.get('voiceAlwaysOn', true) !== false;
+      this.always = Storage.get('voiceAlwaysOn', false) === true;
 
       if (this.btn) this.btn.addEventListener('click', () => this.toggle());
       if (this.mobileBtn) {
@@ -9166,8 +9166,7 @@
     autoStart() {
       if (!this.always || this.disabled) return;
       if (window.MusicFlowAndroid) {
-        // Native APK shell: permissions handled by Android OS
-        this.arm();
+        // In native APK: only start on explicit command or tap
         return;
       }
       const perms = navigator.permissions;
@@ -9829,6 +9828,16 @@
     hide() {
       if (this.hud) this.hud.style.display = 'none';
     },
+  };
+
+  // Expose VoiceAssistant to window for native APK bridge
+  window.VoiceAssistant = VoiceAssistant;
+  window.MusicFlowNativeSpeech = {
+    handleNativeSpeechEvent: function(type, data) {
+      if (window.VoiceAssistant && typeof window.VoiceAssistant.handleNativeSpeech === 'function') {
+        window.VoiceAssistant.handleNativeSpeech(type, data);
+      }
+    }
   };
 
   /* ================================================================
