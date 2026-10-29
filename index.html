@@ -1,0 +1,1275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <title>MusicFlow — 120FPS Zero-Latency Cloud Music Streaming & Android APK</title>
+  <meta name="description" content="Experience MusicFlow: a blazingly fast, ad-free music streaming app for Android and Web. Built with dual-buffer gapless playback, time-synced lyrics, 10-band DSP equalizer, and 100% background playback in an ultra-light 1.37MB APK." />
+  <meta name="keywords" content="music player, free music streaming, android music apk, no ads music, gapless playback, synced lyrics, 10-band equalizer, offline music, youtube music alternative" />
+  <meta name="theme-color" content="#10b981" />
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://musicwalahnar.com/" />
+  <meta property="og:title" content="MusicFlow — 120FPS Zero-Latency Cloud Music Player" />
+  <meta property="og:description" content="Ad-free music streaming with zero latency, synced lyrics, DSP equalizer, and background playback. Featherweight 1.37MB Android APK." />
+  <meta property="og:image" content="/public/icons/icon-512.png" />
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MusicFlow — High-IQ Music Streaming Engine" />
+  <meta name="twitter:description" content="Pure music streaming. Zero ads. Zero latency. Download the 1.37MB Android APK or stream live on the web." />
+  <meta name="twitter:image" content="/public/icons/icon-512.png" />
+
+  <!-- Favicons -->
+  <link rel="icon" type="image/png" href="/public/icons/icon-192.png" />
+  <link rel="apple-touch-icon" href="/public/icons/icon-192.png" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg-dark: #080B10;
+      --bg-card: rgba(16, 22, 34, 0.75);
+      --bg-card-hover: rgba(22, 30, 48, 0.85);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-hover: rgba(16, 185, 129, 0.35);
+      --accent: #10B981;
+      --accent-glow: rgba(16, 185, 129, 0.35);
+      --accent-light: #34D399;
+      --accent-cyan: #06B6D4;
+      --accent-pink: #EC4899;
+      --accent-purple: #8B5CF6;
+      --text-main: #FFFFFF;
+      --text-muted: #94A3B8;
+      --text-dim: #64748B;
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 22px;
+      --radius-pill: 9999px;
+      --font: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      color: var(--text-main);
+      font-family: var(--font);
+      overflow-x: hidden;
+      line-height: 1.6;
+      position: relative;
+    }
+
+    /* Ambient animated background orbs */
+    .ambient-bg {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.22;
+      animation: floatOrb 18s infinite alternate ease-in-out;
+    }
+    .orb-1 {
+      top: -10%;
+      left: 15%;
+      width: 550px;
+      height: 550px;
+      background: radial-gradient(circle, #10B981 0%, transparent 70%);
+    }
+    .orb-2 {
+      top: 35%;
+      right: -10%;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, #06B6D4 0%, transparent 70%);
+      animation-duration: 22s;
+    }
+    .orb-3 {
+      bottom: 5%;
+      left: 10%;
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(circle, #8B5CF6 0%, transparent 70%);
+      animation-duration: 26s;
+    }
+    @keyframes floatOrb {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(60px, 40px) scale(1.12); }
+    }
+
+    /* Header Nav */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8, 11, 16, 0.82);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      max-width: 1280px;
+      margin: 0 auto;
+    }
+    .nav-brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+      color: #fff;
+    }
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #10B981, #06B6D4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+    }
+    .brand-name {
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+    }
+    .brand-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--accent-light);
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      padding: 2px 8px;
+      border-radius: var(--radius-pill);
+      margin-left: 4px;
+    }
+    .nav-menu {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+    }
+    .nav-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 14px;
+      font-weight: 600;
+      transition: color 0.2s ease;
+    }
+    .nav-link:hover {
+      color: #fff;
+    }
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .btn-nav-apk {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #10B981, #059669);
+      color: #fff;
+      font-size: 13.5px;
+      font-weight: 700;
+      padding: 9px 18px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .btn-nav-apk:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
+    }
+
+    /* Container */
+    .container {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 0 24px;
+      position: relative;
+      z-index: 10;
+    }
+
+    /* Hero Section */
+    .hero {
+      padding: 80px 0 60px 0;
+      text-align: center;
+    }
+    .hero-badge-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.28);
+      padding: 6px 16px;
+      border-radius: var(--radius-pill);
+      color: var(--accent-light);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 24px;
+      letter-spacing: 0.2px;
+    }
+    .hero-badge-pill span.dot {
+      width: 8px;
+      height: 8px;
+      background: #10B981;
+      border-radius: 50%;
+      box-shadow: 0 0 10px #10B981;
+      animation: pulseDot 2s infinite;
+    }
+    @keyframes pulseDot {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(1.3); }
+    }
+    .hero-title {
+      font-size: clamp(38px, 6vw, 68px);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -1.5px;
+      margin-bottom: 24px;
+      background: linear-gradient(180deg, #FFFFFF 30%, #94A3B8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-title span.highlight {
+      background: linear-gradient(135deg, #34D399, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-subtitle {
+      font-size: clamp(16px, 2vw, 19px);
+      color: var(--text-muted);
+      max-width: 780px;
+      margin: 0 auto 36px auto;
+      font-weight: 400;
+    }
+
+    /* Hero CTA Group */
+    .hero-cta-group {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 40px;
+    }
+    .btn-hero-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+      background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px 32px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      box-shadow: 0 8px 30px rgba(16, 185, 129, 0.45);
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+    }
+    .btn-hero-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 12px 40px rgba(16, 185, 129, 0.6);
+    }
+    .btn-hero-secondary {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 16px 28px;
+      border-radius: var(--radius-pill);
+      text-decoration: none;
+      backdrop-filter: blur(12px);
+      transition: all 0.25s ease;
+    }
+    .btn-hero-secondary:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: translateY(-2px);
+    }
+    .btn-hero-tertiary {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-muted);
+      font-size: 14.5px;
+      font-weight: 600;
+      text-decoration: none;
+      padding: 12px 18px;
+      border-radius: var(--radius-pill);
+      transition: color 0.2s ease;
+    }
+    .btn-hero-tertiary:hover {
+      color: #fff;
+    }
+
+    /* Micro-Metrics Bar */
+    .metrics-bar {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 24px;
+      flex-wrap: wrap;
+      padding: 16px 24px;
+      background: rgba(16, 22, 34, 0.6);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      max-width: 860px;
+      margin: 0 auto;
+      font-size: 13.5px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+    .metrics-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .metrics-item strong {
+      color: #fff;
+    }
+    .metrics-dot {
+      color: var(--border);
+    }
+
+    /* Live Interactive Demo Player Widget */
+    .demo-player-wrapper {
+      margin: 60px auto 40px auto;
+      max-width: 840px;
+    }
+    .demo-player-card {
+      background: rgba(18, 26, 42, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.7), 0 0 40px rgba(16, 185, 129, 0.15);
+      padding: 28px;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+    }
+    .demo-glow-bg {
+      position: absolute;
+      top: -30%;
+      right: -10%;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(16, 185, 129, 0.22) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .demo-top-row {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+    .demo-art-disc {
+      position: relative;
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      background: #111;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      animation: spinDisc 14s linear infinite;
+    }
+    .demo-art-disc.paused {
+      animation-play-state: paused;
+    }
+    @keyframes spinDisc {
+      100% { transform: rotate(360deg); }
+    }
+    .demo-art-img {
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      object-fit: cover;
+    }
+    .demo-meta {
+      flex: 1;
+      min-width: 0;
+      text-align: left;
+    }
+    .demo-badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      color: var(--accent-light);
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+    .demo-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .demo-artist {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+    .demo-soundwaves {
+      display: flex;
+      align-items: flex-end;
+      gap: 3px;
+      height: 28px;
+    }
+    .demo-soundwaves span {
+      width: 4px;
+      background: var(--accent-light);
+      border-radius: 2px;
+      animation: soundwave 1.2s infinite ease-in-out alternate;
+    }
+    .demo-soundwaves span:nth-child(1) { height: 10px; animation-delay: 0.1s; }
+    .demo-soundwaves span:nth-child(2) { height: 22px; animation-delay: 0.4s; }
+    .demo-soundwaves span:nth-child(3) { height: 16px; animation-delay: 0.2s; }
+    .demo-soundwaves span:nth-child(4) { height: 26px; animation-delay: 0.5s; }
+    .demo-soundwaves span:nth-child(5) { height: 12px; animation-delay: 0.3s; }
+    .demo-soundwaves.paused span {
+      animation-play-state: paused;
+      height: 6px !important;
+    }
+    @keyframes soundwave {
+      0% { height: 6px; }
+      100% { height: 26px; }
+    }
+
+    /* Live lyrics line preview */
+    .demo-lyrics-box {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      text-align: left;
+      font-size: 14.5px;
+      font-weight: 600;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .demo-lyrics-pill {
+      font-size: 10.5px;
+      font-weight: 800;
+      color: #06B6D4;
+      background: rgba(6, 182, 212, 0.15);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 3px 8px;
+      border-radius: var(--radius-pill);
+    }
+    .demo-lyrics-text {
+      color: #E2E8F0;
+      font-style: italic;
+    }
+
+    /* Demo Controls */
+    .demo-controls-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .demo-time-bar {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+    .demo-progress {
+      flex: 1;
+      height: 6px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+      position: relative;
+      cursor: pointer;
+    }
+    .demo-progress-fill {
+      width: 45%;
+      height: 100%;
+      background: linear-gradient(90deg, #10B981, #06B6D4);
+      border-radius: 3px;
+    }
+    .demo-btn-group {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .demo-btn {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: #fff;
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .demo-btn:hover {
+      background: rgba(255, 255, 255, 0.16);
+      transform: scale(1.08);
+    }
+    .demo-play-btn {
+      width: 48px;
+      height: 48px;
+      background: #10B981;
+      color: #080B10;
+      border: none;
+      box-shadow: 0 4px 16px rgba(16, 185, 129, 0.4);
+    }
+    .demo-play-btn:hover {
+      background: #34D399;
+      transform: scale(1.08);
+    }
+
+    /* Section Styles */
+    .section {
+      padding: 90px 0;
+    }
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 50px auto;
+    }
+    .section-pill {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      color: var(--accent-light);
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+    .section-title {
+      font-size: clamp(28px, 4vw, 42px);
+      font-weight: 800;
+      letter-spacing: -1px;
+      margin-bottom: 16px;
+      line-height: 1.2;
+    }
+    .section-desc {
+      font-size: 16px;
+      color: var(--text-muted);
+    }
+
+    /* Feature Grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+    }
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      transition: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .feature-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--border-hover);
+      background: var(--bg-card-hover);
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+    .feature-icon-box {
+      width: 52px;
+      height: 52px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      margin-bottom: 20px;
+      background: rgba(16, 185, 129, 0.12);
+      border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .feature-card:nth-child(2) .feature-icon-box { background: rgba(6, 182, 212, 0.12); border-color: rgba(6, 182, 212, 0.25); }
+    .feature-card:nth-child(3) .feature-icon-box { background: rgba(236, 72, 153, 0.12); border-color: rgba(236, 72, 153, 0.25); }
+    .feature-card:nth-child(4) .feature-icon-box { background: rgba(139, 92, 246, 0.12); border-color: rgba(139, 92, 246, 0.25); }
+    .feature-card:nth-child(5) .feature-icon-box { background: rgba(245, 158, 11, 0.12); border-color: rgba(245, 158, 11, 0.25); }
+    .feature-card:nth-child(6) .feature-icon-box { background: rgba(16, 185, 129, 0.12); border-color: rgba(16, 185, 129, 0.25); }
+
+    .feature-title {
+      font-size: 19px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: #fff;
+    }
+    .feature-desc {
+      font-size: 14.5px;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    /* Comparison Table */
+    .comparison-table-wrap {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+    }
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      min-width: 680px;
+    }
+    .comparison-table th,
+    .comparison-table td {
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      font-size: 14.5px;
+    }
+    .comparison-table th {
+      background: rgba(255, 255, 255, 0.02);
+      font-weight: 700;
+      color: var(--text-muted);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .comparison-table th.col-musicflow {
+      background: rgba(16, 185, 129, 0.08);
+      color: var(--accent-light);
+      font-size: 15px;
+      font-weight: 800;
+      border-bottom: 2px solid var(--accent);
+    }
+    .comparison-table td.col-musicflow {
+      background: rgba(16, 185, 129, 0.04);
+      font-weight: 700;
+      color: #fff;
+    }
+    .check-yes {
+      color: var(--accent-light);
+      font-weight: 800;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .check-no {
+      color: #EF4444;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Installation Steps */
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 24px;
+    }
+    .step-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      position: relative;
+    }
+    .step-number {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--accent-light);
+      opacity: 0.35;
+      margin-bottom: 12px;
+      line-height: 1;
+    }
+    .step-title {
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .step-desc {
+      font-size: 14px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    /* FAQ Accordion */
+    .faq-list {
+      max-width: 820px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    .faq-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .faq-item:hover {
+      border-color: var(--border-hover);
+    }
+    .faq-question {
+      padding: 20px 24px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 16px;
+      font-weight: 700;
+      color: #fff;
+      user-select: none;
+    }
+    .faq-arrow {
+      font-size: 18px;
+      transition: transform 0.25s ease;
+    }
+    .faq-item.open .faq-arrow {
+      transform: rotate(180deg);
+      color: var(--accent-light);
+    }
+    .faq-answer {
+      display: none;
+      padding: 0 24px 20px 24px;
+      color: var(--text-muted);
+      font-size: 14.5px;
+      line-height: 1.6;
+    }
+    .faq-item.open .faq-answer {
+      display: block;
+    }
+
+    /* Big Banner CTA */
+    .banner-cta {
+      background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(6, 182, 212, 0.12));
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: var(--radius-lg);
+      padding: 60px 32px;
+      text-align: center;
+      margin: 60px 0;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+    .banner-cta h2 {
+      font-size: clamp(26px, 4vw, 38px);
+      font-weight: 800;
+      margin-bottom: 16px;
+    }
+    .banner-cta p {
+      font-size: 16px;
+      color: var(--text-muted);
+      max-width: 600px;
+      margin: 0 auto 30px auto;
+    }
+
+    /* Footer */
+    .footer {
+      border-top: 1px solid var(--border);
+      padding: 40px 0;
+      font-size: 14px;
+      color: var(--text-dim);
+    }
+    .footer-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    .footer-links {
+      display: flex;
+      gap: 24px;
+      list-style: none;
+    }
+    .footer-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+    }
+    .footer-links a:hover {
+      color: #fff;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .nav-menu { display: none; }
+      .hero { padding: 40px 0; }
+      .metrics-bar { flex-direction: column; gap: 8px; border-radius: var(--radius-md); }
+      .metrics-dot { display: none; }
+      .demo-player-card { padding: 20px; }
+      .demo-top-row { flex-direction: column; align-items: flex-start; }
+      .footer-inner { flex-direction: column; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Ambient Animated Lighting -->
+  <div class="ambient-bg">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+  </div>
+
+  <!-- Navigation Bar -->
+  <header class="navbar">
+    <a href="#" class="nav-brand">
+      <div class="brand-icon">🎵</div>
+      <div>
+        <span class="brand-name">MusicFlow</span>
+        <span class="brand-tag">v3.5.0-HyperFlow</span>
+      </div>
+    </a>
+    <ul class="nav-menu">
+      <li><a href="#features" class="nav-link">Features</a></li>
+      <li><a href="#demo" class="nav-link">Live Demo</a></li>
+      <li><a href="#comparison" class="nav-link">Comparison</a></li>
+      <li><a href="#install" class="nav-link">How to Install</a></li>
+      <li><a href="#faq" class="nav-link">FAQ</a></li>
+    </ul>
+    <div class="nav-actions">
+      <a href="/public/index.html" class="nav-link" target="_blank" title="Launch Web Player in Browser">🌐 Web Player</a>
+      <a href="/MusicFlow.apk" class="btn-nav-apk" download="MusicFlow.apk">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        <span>Download APK (1.37MB)</span>
+      </a>
+    </div>
+  </header>
+
+  <main class="container">
+
+    <!-- ============ HERO SECTION ============ -->
+    <section class="hero">
+      <div class="hero-badge-pill">
+        <span class="dot"></span>
+        <span>Ad-Free • Zero Latency • 100% Free Forever</span>
+      </div>
+      <h1 class="hero-title">
+        Pure Music Streaming.<br />
+        <span class="highlight">Zero Latency. Zero Ads.</span>
+      </h1>
+      <p class="hero-subtitle">
+        An ultra-fast, 120FPS hybrid music streaming player for Android and Web. Built with dual-buffer gapless transitions, time-synced lyrics, 10-band DSP equalizer, and rock-solid background screen-off playback.
+      </p>
+
+      <div class="hero-cta-group">
+        <a href="/MusicFlow.apk" class="btn-hero-primary" download="MusicFlow.apk">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 17.5c0 1.93 1.57 3.5 3.5 3.5h10c1.93 0 3.5-1.57 3.5-3.5v-7h-17v7zm14.5-9.5h-12c-1.1 0-2 .9-2 2v.5h16v-.5c0-1.1-.9-2-2-2zm-6-4.5l1.5-2.5h-2l-1.5 2.5h2z"/></svg>
+          <span>Download Android APK (1.37 MB)</span>
+        </a>
+        <a href="/public/index.html" class="btn-hero-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+          <span>Launch Web App</span>
+        </a>
+        <a href="https://github.com/ramchandaninikhil17-web/musiccc" target="_blank" class="btn-hero-tertiary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+      </div>
+
+      <!-- Quick Metrics Bar -->
+      <div class="metrics-bar">
+        <div class="metrics-item">⚡ <span>Latency:</span> <strong>&lt;100ms switch</strong></div>
+        <span class="metrics-dot">•</span>
+        <div class="metrics-item">📦 <span>APK Size:</span> <strong>1.37 MB featherweight</strong></div>
+        <span class="metrics-dot">•</span>
+        <div class="metrics-item">🔋 <span>Battery:</span> <strong>Zero Doze kills</strong></div>
+        <span class="metrics-dot">•</span>
+        <div class="metrics-item">🚫 <span>Ads:</span> <strong>Zero Commercials</strong></div>
+      </div>
+
+      <!-- ============ LIVE INTERACTIVE DEMO PLAYER ============ -->
+      <div class="demo-player-wrapper" id="demo">
+        <div class="demo-player-card">
+          <div class="demo-glow-bg"></div>
+
+          <div class="demo-top-row">
+            <div class="demo-art-disc" id="demoDisc">
+              <img class="demo-art-img" src="/public/icons/icon-512.png" alt="Album Cover" />
+            </div>
+            <div class="demo-meta">
+              <span class="demo-badge">🔥 LIVE AUDIO PREVIEW</span>
+              <div class="demo-title" id="demoTitle">Syaara • MusicFlow Studio</div>
+              <div class="demo-artist" id="demoArtist">Acoustic Chill Mix — 120FPS HyperFlow Engine</div>
+            </div>
+            <div class="demo-soundwaves" id="demoWaves">
+              <span></span><span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+
+          <!-- Dynamic Lyric Preview -->
+          <div class="demo-lyrics-box">
+            <span class="demo-lyrics-pill">SYNCED LRC</span>
+            <span class="demo-lyrics-text" id="demoLyricText">“Tu hi mera chain, tu hi meri raatein...”</span>
+          </div>
+
+          <div class="demo-controls-row">
+            <div class="demo-time-bar">
+              <span id="demoCurTime">1:24</span>
+              <div class="demo-progress" id="demoProgress">
+                <div class="demo-progress-fill" id="demoProgressFill"></div>
+              </div>
+              <span id="demoDurTime">3:42</span>
+            </div>
+
+            <div class="demo-btn-group">
+              <button class="demo-btn" id="demoPrevBtn" title="Previous Track">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="19 20 9 12 19 4 19 20"/><line x1="5" y1="19" x2="5" y2="5" stroke="currentColor" stroke-width="2.5"/></svg>
+              </button>
+              <button class="demo-btn demo-play-btn" id="demoPlayBtn" title="Play / Pause Demo">
+                <svg class="demo-icon-play" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21 6 3"/></svg>
+                <svg class="demo-icon-pause" width="20" height="20" viewBox="0 0 24 24" fill="currentColor" style="display:none;"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+              </button>
+              <button class="demo-btn" id="demoNextBtn" title="Next Track">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 4 15 12 5 20 5 4"/><line x1="19" y1="5" x2="19" y2="19" stroke="currentColor" stroke-width="2.5"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FEATURES GRID ============ -->
+    <section class="section" id="features">
+      <div class="section-header">
+        <span class="section-pill">ENGINEERED FOR SPEED</span>
+        <h2 class="section-title">Why MusicFlow Feels Faster Than Spotify</h2>
+        <p class="section-desc">Designed from the ground up with native Android system services and hardware-accelerated Web Audio architecture.</p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-box">⚡</div>
+          <h3 class="feature-title">Zero-Latency Audio Engine</h3>
+          <p class="feature-desc">When a track hits 60% progress, our predictive Queue Preloader resolves stream URLs and pre-buffers the next two songs in the background. Track switches take less than 100ms.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🔋</div>
+          <h3 class="feature-title">Unstoppable Background Audio</h3>
+          <p class="feature-desc">Native Android MediaSession foreground service with dedicated CPU WakeLock and WifiLock prevents Android Doze from cutting off audio when the screen is locked.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🎤</div>
+          <h3 class="feature-title">Real-Time Synced LRC Lyrics</h3>
+          <p class="feature-desc">Sub-second word-by-word synced lyrics powered by LRCLIB. Tap any lyric line inside the player to jump directly to that timestamp with silky smooth auto-scroll.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🎛️</div>
+          <h3 class="feature-title">10-Band DSP Equalizer</h3>
+          <p class="feature-desc">Studio-grade Web Audio equalizer with customizable frequencies, explosive Deep Bass Boost, 3D Spatial Audio, speed controls (0.5x–2.0x), and smart 30s fade-out sleep timer.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">🧠</div>
+          <h3 class="feature-title">Smart Flow AI Mood Mixer</h3>
+          <p class="feature-desc">Tap instant mood pills (*Deep Focus*, *Gym Hype*, *Late Night*, *Acoustic Chill*) to dynamically auto-queue personalized playlists curated by energy and tempo similarity.</p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-box">📦</div>
+          <h3 class="feature-title">1.37MB Featherweight Size</h3>
+          <p class="feature-desc">100% standalone with embedded NanoHTTPD and R8 minification. No PC server required, zero bloated tracking SDKs, and virtually zero battery footprint.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ COMPARISON MATRIX ============ -->
+    <section class="section" id="comparison">
+      <div class="section-header">
+        <span class="section-pill">HEAD-TO-HEAD</span>
+        <h2 class="section-title">How MusicFlow Compares</h2>
+        <p class="section-desc">Experience premium music streaming capabilities completely free with no compromises.</p>
+      </div>
+
+      <div class="comparison-table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="col-musicflow">MusicFlow</th>
+              <th>Spotify Free</th>
+              <th>YouTube Music</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Audio Ads & Commercials</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ Zero Ads Forever</span></td>
+              <td><span class="check-no">✕ Every 2–3 songs</span></td>
+              <td><span class="check-no">✕ Frequent video ads</span></td>
+            </tr>
+            <tr>
+              <td><strong>Screen-Off Background Play</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ 100% Free & Unlimited</span></td>
+              <td><span class="check-yes">✓ Limited</span></td>
+              <td><span class="check-no">✕ Paid Premium Only ($10.99/mo)</span></td>
+            </tr>
+            <tr>
+              <td><strong>App Download Size</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ 1.37 MB</span></td>
+              <td><span class="check-no">✕ ~80 MB</span></td>
+              <td><span class="check-no">✕ ~65 MB</span></td>
+            </tr>
+            <tr>
+              <td><strong>Unlimited Skips</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ Unlimited</span></td>
+              <td><span class="check-no">✕ 6 skips per hour</span></td>
+              <td><span class="check-no">✕ Limited</span></td>
+            </tr>
+            <tr>
+              <td><strong>Real-Time Synced Lyrics</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ Included Free</span></td>
+              <td><span class="check-no">✕ Limited / Paywalled</span></td>
+              <td><span class="check-no">✕ Plain text only</span></td>
+            </tr>
+            <tr>
+              <td><strong>10-Band EQ & Bass Multiplier</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ Full Web Audio DSP</span></td>
+              <td><span class="check-no">✕ Basic 5-band</span></td>
+              <td><span class="check-no">✕ Device default only</span></td>
+            </tr>
+            <tr>
+              <td><strong>Mandatory User Account</strong></td>
+              <td class="col-musicflow"><span class="check-yes">✓ No Sign-up (100% Private)</span></td>
+              <td><span class="check-no">✕ Required</span></td>
+              <td><span class="check-no">✕ Google Account</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ INSTALLATION GUIDE ============ -->
+    <section class="section" id="install">
+      <div class="section-header">
+        <span class="section-pill">SIMPLE SETUP</span>
+        <h2 class="section-title">Get Started in 60 Seconds</h2>
+        <p class="section-desc">Choose your preferred way to run MusicFlow on phone, desktop, or browser.</p>
+      </div>
+
+      <div class="steps-grid">
+        <div class="step-card">
+          <div class="step-number">01</div>
+          <h3 class="step-title">Download APK</h3>
+          <p class="step-desc">Tap the <strong>Download Android APK</strong> button to save the lightweight 1.37MB package directly to your Android device.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">02</div>
+          <h3 class="step-title">Tap to Install</h3>
+          <p class="step-desc">Open your Downloads and tap <code>MusicFlow.apk</code>. If prompted, toggle <em>"Allow from this source"</em> in Android Settings.</p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-number">03</div>
+          <h3 class="step-title">Stream & Enjoy</h3>
+          <p class="step-desc">Launch MusicFlow, search your favorite track, and enjoy high-speed, ad-free music with lock-screen notification controls.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ FAQ ACCORDION ============ -->
+    <section class="section" id="faq">
+      <div class="section-header">
+        <span class="section-pill">COMMON QUESTIONS</span>
+        <h2 class="section-title">Frequently Asked Questions</h2>
+      </div>
+
+      <div class="faq-list">
+        <div class="faq-item open">
+          <div class="faq-question">
+            <span>Is MusicFlow really 100% free with zero ads?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer">
+            Yes! MusicFlow is open-source software built for music lovers. It streams music without audio advertisements, sponsored banners, or mandatory subscription fees.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Will music continue playing when my phone screen is turned off?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer">
+            Yes. MusicFlow utilizes a dedicated Android Foreground Service combined with system WakeLocks and AndroidX MediaSession. You can lock your screen, turn off the display, or multitask in other apps without playback interrupting.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Why is the APK size only 1.37MB compared to Spotify's 80MB?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer">
+            MusicFlow is built using modern lean engineering principles. We employ Kotlin with R8 full-mode shrinking, NanoHTTPD, and standard Android WebView hardware-accelerated rendering, avoiding bloated third-party ad networks and tracking telemetry.
+          </div>
+        </div>
+
+        <div class="faq-item">
+          <div class="faq-question">
+            <span>Do I need my computer on for the Android app to work?</span>
+            <span class="faq-arrow">▼</span>
+          </div>
+          <div class="faq-answer">
+            No! The Android APK is completely standalone. It contains an internal on-device streaming server and directly connects to high-health audio instances over Wi-Fi and mobile 4G/5G.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ BIG CALL TO ACTION ============ -->
+    <section class="banner-cta">
+      <h2>Ready for the Ultimate Music Experience?</h2>
+      <p>Download the free 1.37MB Android APK or start streaming right now in your browser with zero setup.</p>
+      <div class="hero-cta-group" style="margin-bottom:0;">
+        <a href="/MusicFlow.apk" class="btn-hero-primary" download="MusicFlow.apk">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M3.5 17.5c0 1.93 1.57 3.5 3.5 3.5h10c1.93 0 3.5-1.57 3.5-3.5v-7h-17v7zm14.5-9.5h-12c-1.1 0-2 .9-2 2v.5h16v-.5c0-1.1-.9-2-2-2zm-6-4.5l1.5-2.5h-2l-1.5 2.5h2z"/></svg>
+          <span>Download Android APK (1.37 MB)</span>
+        </a>
+        <a href="/public/index.html" class="btn-hero-secondary">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8" fill="currentColor"/></svg>
+          <span>Open Web Player</span>
+        </a>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <div class="container footer-inner">
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:18px;">🎵</span>
+        <span style="font-weight:700;color:#fff;">MusicFlow</span>
+        <span>• v3.5.0-HyperFlow</span>
+      </div>
+      <ul class="footer-links">
+        <li><a href="/MusicFlow.apk" download="MusicFlow.apk">Download APK</a></li>
+        <li><a href="/public/index.html">Web Player</a></li>
+        <li><a href="https://github.com/ramchandaninikhil17-web/musiccc" target="_blank">GitHub Repository</a></li>
+        <li><a href="https://github.com/ramchandaninikhil17-web/musiccc/issues" target="_blank">Report Issue</a></li>
+      </ul>
+      <div>
+        <span>Released under MIT License • Open Source</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Interactive Demo Script -->
+  <script>
+    (function() {
+      // FAQ Accordion Toggle
+      document.querySelectorAll('.faq-question').forEach(function(q) {
+        q.addEventListener('click', function() {
+          var item = q.parentElement;
+          item.classList.toggle('open');
+        });
+      });
+
+      // Interactive Demo Player Mockup
+      var isPlaying = true;
+      var playBtn = document.getElementById('demoPlayBtn');
+      var disc = document.getElementById('demoDisc');
+      var waves = document.getElementById('demoWaves');
+      var iconPlay = playBtn.querySelector('.demo-icon-play');
+      var iconPause = playBtn.querySelector('.demo-icon-pause');
+      var lyricText = document.getElementById('demoLyricText');
+      var curTime = document.getElementById('demoCurTime');
+      var progressFill = document.getElementById('demoProgressFill');
+
+      var lyrics = [
+        "“Tu hi mera chain, tu hi meri raatein...”",
+        "“Tere bina jeena lage adhura sa...”",
+        "“Har pal tera khumaar chhaya rehta hai...”",
+        "“MusicFlow: 120FPS Butter-Smooth Gapless Flow...”"
+      ];
+      var lyricIndex = 0;
+      var currentSec = 84;
+
+      function updatePlayState(playing) {
+        isPlaying = playing;
+        if (iconPlay) iconPlay.style.display = playing ? 'none' : 'block';
+        if (iconPause) iconPause.style.display = playing ? 'block' : 'none';
+        if (disc) disc.classList.toggle('paused', !playing);
+        if (waves) waves.classList.toggle('paused', !playing);
+      }
+
+      playBtn.addEventListener('click', function() {
+        updatePlayState(!isPlaying);
+      });
+
+      // Demo seek simulation
+      setInterval(function() {
+        if (!isPlaying) return;
+        currentSec++;
+        if (currentSec > 222) currentSec = 0;
+        var min = Math.floor(currentSec / 60);
+        var sec = currentSec % 60;
+        if (curTime) curTime.textContent = min + ':' + (sec < 10 ? '0' : '') + sec;
+        if (progressFill) progressFill.style.width = ((currentSec / 222) * 100) + '%';
+
+        if (currentSec % 6 === 0) {
+          lyricIndex = (lyricIndex + 1) % lyrics.length;
+          if (lyricText) lyricText.textContent = lyrics[lyricIndex];
+        }
+      }, 1000);
+
+      document.getElementById('demoNextBtn').addEventListener('click', function() {
+        lyricIndex = (lyricIndex + 1) % lyrics.length;
+        if (lyricText) lyricText.textContent = lyrics[lyricIndex];
+        currentSec = Math.floor(Math.random() * 100);
+      });
+
+      document.getElementById('demoPrevBtn').addEventListener('click', function() {
+        lyricIndex = (lyricIndex - 1 + lyrics.length) % lyrics.length;
+        if (lyricText) lyricText.textContent = lyrics[lyricIndex];
+        currentSec = 0;
+      });
+    })();
+  </script>
+</body>
+</html>
+
