@@ -14,6 +14,9 @@ import android.support.v4.media.session.MediaSessionCompat
 import android.support.v4.media.session.PlaybackStateCompat
 import androidx.core.app.NotificationCompat
 import androidx.media.app.NotificationCompat as MediaNotificationCompat
+import android.content.Context
+import android.os.PowerManager
+import android.net.wifi.WifiManager
 import java.net.URL
 import java.util.concurrent.Executors
 
@@ -45,6 +48,9 @@ class PlaybackService : Service() {
     private var currentDurationMs = 0L
     private var currentArtwork: Bitmap? = null
     private var currentArtworkUrl = ""
+    private var wakeLock: PowerManager.WakeLock? = null
+    private var wifiLock: WifiManager.WifiLock? = null
+    private var currentQueueJson: String = ""
 
     inner class LocalBinder : Binder() {
         fun getService(): PlaybackService = this@PlaybackService
@@ -54,6 +60,13 @@ class PlaybackService : Service() {
 
     override fun onCreate() {
         super.onCreate()
+        try {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as? PowerManager
+            wakeLock = powerManager?.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "MusicFlow:PlaybackWakeLock")
+
+            val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as? WifiManager
+            wifiLock = wifiManager?.createWifiLock(WifiManager.WIFI_MODE_FULL_HIGH_PERF, "MusicFlow:PlaybackWifiLock")
+        } catch (e: Exception) {}
         setupMediaSession()
     }
 
@@ -104,6 +117,10 @@ class PlaybackService : Service() {
 
     fun startPlayback() {
         isPlaying = true
+        try {
+            if (wakeLock?.isHeld == false) wakeLock?.acquire(12 * 60 * 60 * 1000L)
+            if (wifiLock?.isHeld == false) wifiLock?.acquire()
+        } catch (e: Exception) {}
 
         try {
             val notification = buildNotification()
@@ -124,17 +141,29 @@ class PlaybackService : Service() {
 
     fun pausePlayback() {
         isPlaying = false
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+        } catch (e: Exception) {}
         updatePlaybackState()
         updateNotification()
     }
 
     fun stopPlayback() {
         isPlaying = false
+        try {
+            if (wakeLock?.isHeld == true) wakeLock?.release()
+            if (wifiLock?.isHeld == true) wifiLock?.release()
+        } catch (e: Exception) {}
         mediaSession.isActive = false
         stopForeground(STOP_FOREGROUND_REMOVE)
         stopSelf()
     }
 
+
+    fun updateQueue(queueJson: String) {
+        currentQueueJson = queueJson
+    }
     fun updateMetadata(title: String, artist: String, album: String, artworkUrl: String, durationMs: Long = 0L) {
         currentTitle = title.ifEmpty { "MusicFlow" }
         currentArtist = artist

@@ -111,6 +111,10 @@ class MainActivity : AppCompatActivity() {
         window.statusBarColor = Color.parseColor("#0B0E14")
         window.navigationBarColor = Color.parseColor("#0B0E14")
         window.addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        window.setFlags(
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED,
+            WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED
+        )
 
         setContentView(R.layout.activity_main)
 
@@ -192,6 +196,7 @@ class MainActivity : AppCompatActivity() {
             builtInZoomControls = false
             displayZoomControls = false
             cacheMode = WebSettings.LOAD_DEFAULT
+            offscreenPreRaster = true
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
             userAgentString = webView.settings.userAgentString + " MusicFlowAndroid/3.5 (Standalone; SpotifyStyle)"
         }
@@ -205,7 +210,9 @@ class MainActivity : AppCompatActivity() {
 
         WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
 
-        webView.addJavascriptInterface(WebAppInterface(), "MusicFlowAndroid")
+        val bridge = WebAppInterface()
+        webView.addJavascriptInterface(bridge, "MusicFlowBridge")
+        webView.addJavascriptInterface(bridge, "MusicFlowAndroid")
         webView.webViewClient = MusicFlowWebViewClient()
         webView.webChromeClient = MusicFlowChromeClient()
         webView.setDownloadListener(MusicFlowDownloadListener())
@@ -359,6 +366,7 @@ class MainActivity : AppCompatActivity() {
             if (window._musicFlowNativeBridgeInjected) return;
             window._musicFlowNativeBridgeInjected = true;
 
+            window.MusicFlowBridge = window.MusicFlowBridge || window.MusicFlowAndroid;
             // Signal to web app that it is running inside the Android APK shell
             document.documentElement.classList.add('is-mobile-app');
             if (document.body) document.body.classList.add('is-mobile-app');
@@ -498,6 +506,27 @@ class MainActivity : AppCompatActivity() {
         fun setPlaybackSpeed(speed: Float) {
             runOnUiThread {
                 webView.evaluateJavascript("if(typeof audioPlayer!=='undefined'&&audioPlayer){audioPlayer.playbackRate=$speed;}", null)
+            }
+        }
+
+        @JavascriptInterface
+        fun updateQueue(queueJson: String) {
+            runOnUiThread {
+                playbackService?.updateQueue(queueJson)
+            }
+        }
+
+        @JavascriptInterface
+        fun nextTrack() {
+            runOnUiThread {
+                webView.evaluateJavascript("if(typeof playNext==='function')playNext();", null)
+            }
+        }
+
+        @JavascriptInterface
+        fun prevTrack() {
+            runOnUiThread {
+                webView.evaluateJavascript("if(typeof playPrev==='function')playPrev();", null)
             }
         }
 

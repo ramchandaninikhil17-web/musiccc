@@ -885,7 +885,7 @@
     </button>
     <button class="sbn-btn" data-page="mood" id="sbnMood" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-      <span>Moods</span>
+      <span>AI DJ / Flow</span>
     </button>
   </nav>
 
@@ -1503,12 +1503,25 @@
           <button class="eq-preset-btn active" data-preset="flat">Flat</button>
           <button class="eq-preset-btn" data-preset="bassboost">🔥 Bass Boost</button>
           <button class="eq-preset-btn" data-preset="vocal">🎤 Vocal Enhancer</button>
+          <button class="eq-preset-btn" data-preset="treble">✨ Treble Boost</button>
           <button class="eq-preset-btn" data-preset="rock">🎸 Rock</button>
           <button class="eq-preset-btn" data-preset="pop">🎤 Pop</button>
           <button class="eq-preset-btn" data-preset="edm">🎹 EDM</button>
           <button class="eq-preset-btn" data-preset="acoustic">🎻 Acoustic</button>
         </div>
 
+        <!-- Playback Speed Control Row (0.5x to 2.0x) -->
+        <div class="eq-speed-row">
+          <span class="eq-speed-label">⚡ Playback Speed:</span>
+          <div class="eq-speed-buttons" id="eqSpeedButtons">
+            <button class="speed-chip" data-speed="0.5">0.5x</button>
+            <button class="speed-chip" data-speed="0.75">0.75x</button>
+            <button class="speed-chip active" data-speed="1.0">1.0x</button>
+            <button class="speed-chip" data-speed="1.25">1.25x</button>
+            <button class="speed-chip" data-speed="1.5">1.5x</button>
+            <button class="speed-chip" data-speed="2.0">2.0x</button>
+          </div>
+        </div>
         <!-- 10-Band Sliders Grid -->
         <div class="eq-sliders-grid" id="eqSlidersGrid">
           <div class="eq-col"><input type="range" class="eq-slider" data-band="0" min="-12" max="12" value="0" step="0.5" /><span class="eq-freq">60Hz</span><span class="eq-val">0dB</span></div>
@@ -1840,7 +1853,9 @@
   <div class="toast-container" id="toastContainer"></div>
 
   <!-- Audio Element -->
+  <!-- Audio Elements for Dual-Buffer Gapless & Crossfade Engine -->
   <audio id="audioPlayer" preload="auto"></audio>
+  <audio id="audioPlayerB" preload="auto" style="display:none;"></audio>
 
   <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
   <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
