@@ -210,7 +210,7 @@
   let volume = (typeof rawVol === 'number' && Number.isFinite(rawVol)) ? (rawVol > 1 ? rawVol / 100 : Math.max(0, Math.min(1, rawVol))) : 0.8;
   let isLyricsSearchMode = false;
   let audioQuality = Storage.get('quality', 'high');
-  let currentTheme = Storage.get('theme', 'dark');
+  let currentTheme = Storage.get('theme', 'oled');
   let searchResults = [];
   let lastQuery = '';
   let searchTimeout = null;
@@ -287,9 +287,11 @@
       if (!song || this.isReconnecting) return;
       if (song.isLocal || song.isCloud) return; // only for yt-dlp streams
       if (this.reconnectCount >= this.MAX_RECONNECTS) {
-        toast(`\u26a0\ufe0f Stream failed after ${this.MAX_RECONNECTS} retries. Skipping...`);
         this.reconnectCount = 0;
-        setTimeout(() => { if (currentSong === song) playNext(); }, 1500);
+        this.isReconnecting = false;
+        console.log('[StreamWatchdog] Exhausted reconnects, falling back to direct stream for', song.id);
+        toast(`▶ Direct Stream: ${(song.title || 'track').slice(0, 24)}`);
+        YouTubeDirectPlayer.play(song.id);
         return;
       }
 
@@ -532,7 +534,7 @@
   const bgAnimation = $('#bgAnimation');
 
   // Pages
-  const pages = { home: $('#pageHome'), search: $('#pageSearch'), library: $('#pageLibrary'), profile: $('#pageProfile'), mood: $('#pageMood') };
+  const pages = { home: $('#pageHome'), search: $('#pageSearch'), library: $('#pageLibrary'), profile: $('#pageProfile'), mood: $('#pageMood'), charts: $('#pageCharts'), trending: $('#pageTrending'), 'ai-discover': $('#pageAiDiscover') };
   const navLinks = $$('.nav-link');
 
   // Now playing
@@ -566,6 +568,7 @@
     isActive: false,
     timer: null,
     currentVideoId: null,
+    consecutiveErrors: 0,
 
     init() {
       if (this.player) return;
@@ -585,9 +588,10 @@
         const target = document.getElementById('ytFallbackPlayer');
         if (!target) return;
         this.player = new YT.Player('ytFallbackPlayer', {
-          height: '1',
-          width: '1',
+          height: '240',
+          width: '240',
           videoId: '',
+          host: 'https://www.youtube-nocookie.com',
           playerVars: {
             autoplay: 1,
             controls: 0,
@@ -595,7 +599,9 @@
             fs: 0,
             playsinline: 1,
             rel: 0,
-            modestbranding: 1
+            modestbranding: 1,
+            enablejsapi: 1,
+            origin: window.location.origin || 'http://127.0.0.1:8765'
           },
           events: {
             onReady: () => {
@@ -610,6 +616,7 @@
             onStateChange: (e) => {
               if (!this.isActive) return;
               if (e.data === YT.PlayerState.PLAYING) {
+                this.consecutiveErrors = 0;
                 setPlayState(true);
                 this.startTimer();
               } else if (e.data === YT.PlayerState.PAUSED) {
@@ -617,14 +624,23 @@
                 this.stopTimer();
               } else if (e.data === YT.PlayerState.ENDED) {
                 this.stopTimer();
-                onSongEnded();
+                this.isActive = false;
+                onEnd();
               }
             },
             onError: (err) => {
               console.warn('[YT Direct Player Error]', err);
               this.stopTimer();
-              toast(`Track unavailable on direct player, trying next...`);
-              setTimeout(() => { if (currentSong) playNext(); }, 1200);
+              this.isActive = false;
+              this.consecutiveErrors = (this.consecutiveErrors || 0) + 1;
+              if (this.consecutiveErrors < 2) {
+                toast(`Track unavailable on direct stream, trying next...`);
+                setTimeout(() => { if (currentSong) playNext(); }, 1500);
+              } else {
+                this.consecutiveErrors = 0;
+                setPlayState(false);
+                toast(`⚠️ Playback stopped. Tap any song to play.`);
+              }
             }
           }
         });
@@ -651,6 +667,15 @@
         } catch (e) {
           console.warn('[YT Direct Play Error]', e);
         }
+      }
+    },
+
+    stop() {
+      this.isActive = false;
+      this.currentVideoId = null;
+      this.stopTimer();
+      if (this.player && this.isReady) {
+        try { this.player.stopVideo(); } catch (e) {}
       }
     },
 
@@ -799,8 +824,9 @@
      THEME
      ================================================================ */
   function applyTheme(theme) {
-    currentTheme = theme || 'dark';
+    currentTheme = theme || 'oled';
     document.documentElement.setAttribute('data-theme', currentTheme);
+    document.body.setAttribute('data-theme', currentTheme);
     Storage.set('theme', currentTheme);
     const sun = $('.icon-sun');
     const moon = $('.icon-moon');
@@ -814,6 +840,11 @@
       }
     }
     if ($('#settingTheme')) $('#settingTheme').value = currentTheme;
+    // Re-apply the accent color studio on theme change so colors never get wiped
+    if (typeof ThemeStudioManager !== 'undefined' && typeof ThemeStudioManager.applyAccent === 'function') {
+      const savedColor = Storage.get('accent_color', 'indigo');
+      ThemeStudioManager.applyAccent(savedColor);
+    }
   }
 
   function toggleLyricsMode(forceState) {
@@ -1036,6 +1067,13 @@
     $('#shareBtn')?.addEventListener('click', shareSong);
     $('#downloadBtn')?.addEventListener('click', () => { if (currentSong) downloadSong(currentSong); else toast('No song playing'); });
 
+    // Speed Control & Song Radio (new v4.0 features)
+    SpeedController.init();
+    SongRadioManager.init();
+    // Gemini AI features
+    GeminiAI.init();
+    AiSongInfo.init();
+
     // Lyrics
     $('#lyricsBtn')?.addEventListener('click', toggleLyrics);
     $('#lyricsCloseBtn')?.addEventListener('click', toggleLyrics);
@@ -1184,7 +1222,10 @@
         search: 'Search',
         library: 'Your Library',
         mood: '🎭 Mood Flow',
-        profile: 'Your Stats'
+        profile: 'Your Stats',
+        charts: '📈 Charts',
+        trending: '🔥 Trending',
+        'ai-discover': 'AI Discover'
       };
       mobileTitle.textContent = titles[page] || 'MusicFlow';
     }
@@ -1208,6 +1249,9 @@
     if (page === 'profile') renderProfile();
     if (page === 'search') renderSearchHistory();
     if (page === 'mood') MoodFlowManager.renderPage();
+    if (page === 'charts') ChartsManager.init();
+    if (page === 'trending') TrendingManager.init();
+    if (page === 'ai-discover') AiDiscoverManager.init();
 
     closeMobileSidebar();
   }
@@ -2020,15 +2064,14 @@
         });
       }
     } else {
+      // If direct fallback player was active on previous song, cleanly stop it
       if (YouTubeDirectPlayer.isActive) {
-        YouTubeDirectPlayer.play(song.id);
-        setPlayState(true);
-      } else {
-        applyCrossOrigin(null);
-        const preloaded = typeof QueuePreloader !== 'undefined' ? QueuePreloader.getResolvedUrl(song.id) : null;
-        audioPlayer.src = preloaded || `/api/stream/${song.id}?quality=${audioQuality}`;
-        startPlayback(song);
+        YouTubeDirectPlayer.stop();
       }
+      applyCrossOrigin(null);
+      const preloaded = typeof QueuePreloader !== 'undefined' ? QueuePreloader.getResolvedUrl(song.id) : null;
+      audioPlayer.src = preloaded || `/api/stream/${song.id}?quality=${audioQuality}`;
+      startPlayback(song);
     }
 
     // History
@@ -2261,8 +2304,25 @@
       return;
     }
 
+    // ── Standard YT stream: Retry up to 3 times with fresh server stream URLs ──
+    // before falling back to the YouTube Direct IFrame Player. This ensures a
+    // transient Invidious/CDN hiccup doesn't skip songs unnecessarily.
     if (!song.isLocal && !song.isCloud) {
-      console.log('[MusicFlow] 🚀 Switching to YouTube Direct Player for', song.id);
+      audioRetryCount++;
+      console.log(`[MusicFlow] Audio error for ${song.id}, attempt ${audioRetryCount}/3, code=${code}`);
+
+      if (audioRetryCount <= 3) {
+        // Retry with a fresh server stream URL (cache-busted)
+        toast(`🔄 Retrying stream... (${audioRetryCount}/3)`);
+        const retrySrc = `/api/stream/${song.id}?quality=${audioQuality}&retry=${audioRetryCount}&t=${Date.now()}`;
+        audioPlayer.src = retrySrc;
+        startPlayback(song);
+        return;
+      }
+
+      // All server retries exhausted — fall back to YouTube Direct IFrame Player
+      console.log('[MusicFlow] 🚀 All server retries failed, switching to YouTube Direct Player for', song.id);
+      audioRetryCount = 0;
       toast(`▶ Direct Stream: ${(song.title || 'track').slice(0, 24)}`);
       YouTubeDirectPlayer.play(song.id);
       return;
@@ -2707,6 +2767,9 @@
     if (isShuffle) resetShuffleBag(currentSong && currentSong.id);
     else shuffleBag = [];
     if (isMobileSheetOpen()) reflectMobileSheetState();
+    if (typeof SpotifyMobileController !== 'undefined' && SpotifyMobileController.syncShuffleRepeat) {
+      SpotifyMobileController.syncShuffleRepeat();
+    }
     toast(isShuffle ? 'Shuffle ON' : 'Shuffle OFF');
   }
 
@@ -2717,6 +2780,9 @@
     Storage.set('repeat', repeatMode);
     updateRepeatIcon();
     if (isMobileSheetOpen()) reflectMobileSheetState();
+    if (typeof SpotifyMobileController !== 'undefined' && SpotifyMobileController.syncShuffleRepeat) {
+      SpotifyMobileController.syncShuffleRepeat();
+    }
     toast('Repeat: ' + repeatMode.toUpperCase());
   }
 
@@ -3770,6 +3836,9 @@
               </button>
               <button class="card-action-btn" data-action="queue" title="Add to queue">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+              </button>
+              <button class="card-action-btn" data-action="radio" title="Start Song Radio">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.49"/><path d="M7.76 7.76a6 6 0 0 0 0 8.49"/><path d="M20.49 4.51a11.5 11.5 0 0 1 0 14.98"/><path d="M3.51 4.51a11.5 11.5 0 0 0 0 14.98"/></svg>
               </button>${removeBtn}
             </div>
           </div>
@@ -3795,6 +3864,7 @@
             else if (act === 'addpl') openAddToPlaylist(item);
             else if (act === 'download') downloadSong(item);
             else if (act === 'removepl') removeSongFromPlaylist(i, item);
+            else if (act === 'radio') SongRadioManager.startFromSong(item);
             else playSong(item);
           } else {
             playSong(item);
@@ -8080,12 +8150,14 @@
      ================================================================ */
   const ThemeStudioManager = {
     colorMap: {
-      indigo: { primary: '#6366f1', glow: 'rgba(99, 102, 241, 0.35)', hover: '#4f46e5' },
-      cyan: { primary: '#06b6d4', glow: 'rgba(6, 182, 212, 0.35)', hover: '#0891b2' },
-      emerald: { primary: '#10b981', glow: 'rgba(16, 185, 129, 0.35)', hover: '#059669' },
-      orange: { primary: '#f97316', glow: 'rgba(249, 115, 22, 0.35)', hover: '#ea580c' },
-      pink: { primary: '#ec4899', glow: 'rgba(236, 72, 153, 0.35)', hover: '#db2777' },
-      purple: { primary: '#a855f7', glow: 'rgba(168, 85, 247, 0.35)', hover: '#9333ea' }
+      indigo: { primary: '#6366f1', glow: 'rgba(99, 102, 241, 0.45)', hover: '#818cf8', name: 'Indigo' },
+      cyan: { primary: '#06b6d4', glow: 'rgba(6, 182, 212, 0.45)', hover: '#22d3ee', name: 'Cyberpunk Cyan' },
+      emerald: { primary: '#10b981', glow: 'rgba(16, 185, 129, 0.45)', hover: '#34d399', name: 'Emerald Green' },
+      green: { primary: '#1db954', glow: 'rgba(29, 185, 84, 0.45)', hover: '#1ed760', name: 'Spotify Green' },
+      orange: { primary: '#f97316', glow: 'rgba(249, 115, 22, 0.45)', hover: '#fb923c', name: 'Sunset Orange' },
+      pink: { primary: '#ec4899', glow: 'rgba(236, 72, 153, 0.45)', hover: '#f472b6', name: 'Rose Pink' },
+      purple: { primary: '#a855f7', glow: 'rgba(168, 85, 247, 0.45)', hover: '#c084fc', name: 'Electric Purple' },
+      red: { primary: '#ef4444', glow: 'rgba(239, 68, 68, 0.45)', hover: '#f87171', name: 'Crimson Red' }
     },
 
     init() {
@@ -8111,9 +8183,45 @@
       root.style.setProperty('--primary-glow', c.glow);
       root.style.setProperty('--primary-hover', c.hover);
       root.style.setProperty('--accent', c.primary);
-      root.style.setProperty('--accent-light', c.primary);
+      root.style.setProperty('--accent-light', c.hover || c.primary);
       root.style.setProperty('--accent-glow', c.glow);
       root.style.setProperty('--accent-gradient', `linear-gradient(135deg, ${c.primary}, ${c.hover || '#ec4899'})`);
+
+      if (document.body) {
+        document.body.style.setProperty('--primary', c.primary);
+        document.body.style.setProperty('--accent', c.primary);
+        document.body.style.setProperty('--accent-glow', c.glow);
+      }
+
+      // Dynamic style injection to reliably override any stubborn rules with high specificity
+      let dynStyle = document.getElementById('dynamic-theme-style');
+      if (!dynStyle) {
+        dynStyle = document.createElement('style');
+        dynStyle.id = 'dynamic-theme-style';
+        document.head.appendChild(dynStyle);
+      }
+      dynStyle.textContent = `
+        :root, html, body, [data-theme], [data-theme="oled"], [data-theme="dark"], [data-theme="light"] {
+          --primary: ${c.primary} !important;
+          --primary-glow: ${c.glow} !important;
+          --primary-hover: ${c.hover} !important;
+          --accent: ${c.primary} !important;
+          --accent-light: ${c.hover} !important;
+          --accent-glow: ${c.glow} !important;
+          --accent-gradient: linear-gradient(135deg, ${c.primary}, ${c.hover}) !important;
+        }
+        .np-play-btn { background: ${c.primary} !important; box-shadow: 0 4px 20px ${c.glow} !important; }
+        .np-play-btn:hover { background: ${c.hover} !important; box-shadow: 0 6px 28px ${c.glow} !important; }
+        .np-progress-fill { background: ${c.primary} !important; box-shadow: 0 0 12px ${c.glow} !important; }
+        .np-volume-fill { background: ${c.primary} !important; }
+        .np-progress-thumb { box-shadow: 0 0 10px ${c.glow}, 0 0 3px #fff !important; }
+        .np-equalizer span { background: ${c.primary} !important; }
+        .nav-link.active { background: ${c.glow} !important; color: ${c.hover} !important; box-shadow: inset 3px 0 0 ${c.primary} !important; }
+        .result-card.playing { border-color: ${c.primary} !important; box-shadow: 0 0 24px ${c.glow} !important; }
+        .result-card:hover { border-color: ${c.glow} !important; }
+        .top-btn:hover, .action-btn:hover { border-color: ${c.primary} !important; color: ${c.hover} !important; }
+        .accent-dot.active { border-color: #fff !important; box-shadow: 0 0 12px ${c.glow} !important; }
+      `;
 
       const activeDot = $(`.accent-dot[data-color="${key}"]`);
       if (activeDot) {
@@ -9959,7 +10067,7 @@
           if (e.target.closest('#playPauseBtn') || e.target.closest('#nextBtn') || e.target.closest('#prevBtn') || e.target.closest('#npMoreBtn')) {
             return;
           }
-          if ((window.innerWidth <= 768 || window.MusicFlowAndroid) && currentSong) {
+          if ((window.innerWidth <= 768 || window.MusicFlowAndroid || document.body.classList.contains('is-mobile-app')) && currentSong) {
             this.openFullscreen();
           }
         });
@@ -9969,6 +10077,16 @@
       $('#sfpCollapseBtn')?.addEventListener('click', (e) => {
         e.stopPropagation();
         this.closeFullscreen();
+      });
+
+      // Menu / 3-dots button on Spotify player
+      $('#sfpMenuBtn')?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (currentSong && typeof openTrackMenu === 'function') {
+          openTrackMenu(e, currentSong);
+        } else if (typeof openMobileSheet === 'function') {
+          openMobileSheet();
+        }
       });
 
       // Controls
@@ -10104,6 +10222,8 @@
       this.syncSong(currentSong);
       modal.classList.add('active');
       modal.setAttribute('aria-hidden', 'false');
+      // Fetch AI song info when fullscreen opens
+      if (typeof AiSongInfo !== 'undefined') AiSongInfo.fetch(currentSong);
     },
 
     closeFullscreen() {
@@ -10316,6 +10436,10 @@
       this.standbyPlayer = temp;
       audioPlayer = this.activePlayer;
       window.audioPlayer = this.activePlayer;
+      // Preserve playback speed after swap
+      if (typeof SpeedController !== 'undefined' && audioPlayer) {
+        audioPlayer.playbackRate = SpeedController.getRate();
+      }
     },
 
     prebufferNext(nextSong) {
@@ -11101,6 +11225,910 @@
       }
     }
   };
+
+  /* ----- Start ----- */
+  /* ================================================================
+     GEMINI AI MANAGER
+     All AI-powered features: Trending Discovery, Smart Radio,
+     Song Info, Playlist Generator. API key stored in localStorage.
+     ================================================================ */
+  const GeminiAI = {
+    _key: '',
+    _workingEndpoint: null,
+
+    // ── Key Management ──────────────────────────────────────────
+    getKey() { return this._key || Storage.get('geminiApiKey', ''); },
+    setKey(k) {
+      this._key = k.trim();
+      Storage.set('geminiApiKey', this._key);
+      this._workingEndpoint = null;
+      Storage.set('geminiWorkingEndpoint', null);
+    },
+    clearKey() {
+      this._key = '';
+      Storage.set('geminiApiKey', '');
+      this._workingEndpoint = null;
+      Storage.set('geminiWorkingEndpoint', null);
+    },
+    hasKey() { const k = this.getKey(); return k && k.length > 20; },
+
+    // Get candidate endpoints or cached working endpoint
+    getEndpoints() {
+      if (this._workingEndpoint) return [this._workingEndpoint];
+      const saved = Storage.get('geminiWorkingEndpoint', null);
+      if (saved) {
+        this._workingEndpoint = saved;
+        return [saved];
+      }
+      return [
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent',
+        'https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro-latest:generateContent',
+        'https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent',
+        'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
+      ];
+    },
+
+    // Auto-discover the exact supported model from Google's ModelService
+    async discoverAvailableModel(key) {
+      const versions = ['v1beta', 'v1'];
+      for (const ver of versions) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/${ver}/models?key=${encodeURIComponent(key)}`);
+          if (res.ok) {
+            const data = await res.json();
+            const models = data?.models || [];
+            const candidate = models.find(m => {
+              const methods = m.supportedGenerationMethods || [];
+              const name = (m.name || '').toLowerCase();
+              return methods.includes('generateContent') &&
+                     (name.includes('flash') || name.includes('gemini') || name.includes('pro'));
+            }) || models.find(m => (m.supportedGenerationMethods || []).includes('generateContent'));
+
+            if (candidate && candidate.name) {
+              const modelPath = candidate.name.startsWith('models/') ? candidate.name : `models/${candidate.name}`;
+              return `https://generativelanguage.googleapis.com/${ver}/${modelPath}:generateContent`;
+            }
+          }
+        } catch (e) {
+          console.warn('[GeminiAI] discoverModel error', ver, e);
+        }
+      }
+      return null;
+    },
+
+    // ── Direct Gemini API caller (100% standalone, auto-recovering) ──
+    async callGemini(prompt, temperature = 0.3, maxTokens = 1500) {
+      const key = this.getKey();
+      if (!key) throw new Error('Missing Gemini API key. Add it in Settings.');
+
+      const endpoints = this.getEndpoints();
+      let lastError = null;
+
+      const bodyPayload = JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          temperature,
+          maxOutputTokens: maxTokens
+        }
+      });
+
+      for (const endpoint of endpoints) {
+        try {
+          const url = `${endpoint}?key=${encodeURIComponent(key)}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: bodyPayload
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            // Cache successful endpoint
+            this._workingEndpoint = endpoint;
+            Storage.set('geminiWorkingEndpoint', endpoint);
+            return text;
+          }
+
+          const errData = await res.json().catch(() => ({}));
+          const msg = errData?.error?.message || `HTTP ${res.status}`;
+
+          // If not found or unsupported model, continue to try other models
+          if (res.status === 404 || msg.toLowerCase().includes('not found') || msg.toLowerCase().includes('not supported')) {
+            lastError = new Error(msg);
+            continue;
+          }
+          // If invalid key or quota, fail immediately
+          throw new Error(msg);
+        } catch (err) {
+          lastError = err;
+          const lower = (err.message || '').toLowerCase();
+          if (lower.includes('not found') || lower.includes('not supported') || lower.includes('404')) {
+            continue;
+          }
+          throw err;
+        }
+      }
+
+      // If preset endpoints were not found, auto-discover via ModelService.ListModels
+      const discovered = await this.discoverAvailableModel(key);
+      if (discovered) {
+        try {
+          const url = `${discovered}?key=${encodeURIComponent(key)}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: bodyPayload
+          });
+          if (res.ok) {
+            const data = await res.json();
+            const text = data?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+            this._workingEndpoint = discovered;
+            Storage.set('geminiWorkingEndpoint', discovered);
+            return text;
+          }
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData?.error?.message || `HTTP ${res.status}`);
+        } catch (err) {
+          throw err;
+        }
+      }
+
+      throw lastError || new Error('No supported Gemini model found for this key. Please verify key at aistudio.google.com');
+    },
+
+    // Safely extract JSON array from Gemini text (handles code fences, explanations)
+    parseJsonArray(text) {
+      if (!text) return [];
+      try {
+        const match = text.match(/\[[\s\S]*\]/);
+        if (match) return JSON.parse(match[0]);
+      } catch (e) {
+        console.warn('[GeminiAI] JSON parse error:', e);
+      }
+      return [];
+    },
+
+    // ── Trending Discovery ───────────────────────────────────────
+    async getTrending(region = 'india', type = 'trending') {
+      const regionNames = {
+        india: 'India (Bollywood, Punjabi, South and Indie)',
+        global: 'Global (Billboard Hot 100, Spotify Global Top Hits)',
+        punjabi: 'Punjabi (Latest Punjabi chartbusters and viral hits)',
+        english: 'English (US/UK pop, hip-hop and global trending hits)'
+      };
+      const regionLabel = regionNames[region] || region;
+
+      const prompts = {
+        trending: `List 15 real popular trending hit songs right now in ${regionLabel}. Focus on current chart toppers and viral tracks. Return ONLY a valid JSON array of objects with "title" and "artist". Example: [{"title":"Song Name","artist":"Artist Name"}]. Pure JSON only, no markdown, no explanation.`,
+        movies: `List 15 famous soundtrack hit songs from recent movies in ${regionLabel}. Return ONLY a valid JSON array of objects with "title" and "artist": [{"title":"Song Name","artist":"Singer Name"}]. Pure JSON only.`,
+        reels: `List 15 songs currently most viral on Instagram Reels, YouTube Shorts and TikTok in ${regionLabel}. Return ONLY a valid JSON array of objects with "title" and "artist": [{"title":"Song Name","artist":"Artist Name"}]. Pure JSON only.`
+      };
+      const prompt = prompts[type] || prompts.trending;
+      const text = await this.callGemini(prompt, 0.3, 1400);
+      return { songs: this.parseJsonArray(text) };
+    },
+
+    // ── Smart Radio (AI picks similar songs) ────────────────────
+    async getSmartRadio(song) {
+      if (!song) return { songs: [] };
+      const title = song.title || '';
+      const artist = song.channel || song.artist || '';
+      const prompt = `I am listening to "${title}" by "${artist}". Recommend 12 songs that match this vibe, musical genre, and energy. Mix the artist's other hits with other great artists. Return ONLY a valid JSON array: [{"title":"Song Name","artist":"Artist Name"}]. Pure JSON only.`;
+      const text = await this.callGemini(prompt, 0.4, 900);
+      return { songs: this.parseJsonArray(text) };
+    },
+
+    // ── Song Info ────────────────────────────────────────────────
+    async getSongInfo(song) {
+      if (!song) return { info: '' };
+      const title = song.title || '';
+      const artist = song.channel || song.artist || '';
+      const prompt = `Give a concise 2-sentence engaging description of the song "${title}" by "${artist}". Mention its vibe/genre and why listeners love it. Under 50 words.`;
+      const text = await this.callGemini(prompt, 0.6, 200);
+      return { info: text.trim() };
+    },
+
+    // ── Playlist Generator ───────────────────────────────────────
+    async generatePlaylist(userPrompt) {
+      const prompt = `Create a custom music playlist for this request: "${userPrompt}". Provide 15 real popular songs that match this mood. Return ONLY a valid JSON array: [{"title":"Song Name","artist":"Artist Name"}]. Pure JSON only.`;
+      const text = await this.callGemini(prompt, 0.5, 1100);
+      return { songs: this.parseJsonArray(text) };
+    },
+
+    // ── Init UI bindings ─────────────────────────────────────────
+    init() {
+      this._key = Storage.get('geminiApiKey', '');
+      this._bindSettings();
+      this._updateSettingsUI();
+    },
+
+    _bindSettings() {
+      const keyInput = $('#settingGeminiKey');
+      const saveBtn  = $('#geminiKeySaveBtn');
+      const clearBtn = $('#geminiKeyClearBtn');
+
+      // Pre-fill masked key
+      if (keyInput && this.hasKey()) {
+        keyInput.value = this.getKey().slice(0, 6) + '••••••••••••••••••';
+      }
+
+      saveBtn?.addEventListener('click', () => {
+        const val = keyInput ? keyInput.value.trim() : '';
+        if (!val || val.includes('•')) { toast('Paste your full Gemini API key first'); return; }
+        if (val.length < 20) { toast('Key looks too short — check it again'); return; }
+        this.setKey(val);
+        this._updateSettingsUI();
+        toast('✨ AI Key saved — Gemini features unlocked!');
+        // Show masked
+        if (keyInput) keyInput.value = val.slice(0, 6) + '••••••••••••••••••';
+        // Auto-refresh AI Discover if open
+        if (typeof AiDiscoverManager !== 'undefined' && AiDiscoverManager.initialized) {
+          AiDiscoverManager.load();
+        }
+      });
+
+      clearBtn?.addEventListener('click', () => {
+        this.clearKey();
+        if (keyInput) keyInput.value = '';
+        this._updateSettingsUI();
+        toast('AI key removed');
+      });
+
+      $('#aiGoToSettingsBtn')?.addEventListener('click', () => {
+        $('#settingsBtn')?.click();
+      });
+    },
+
+    _updateSettingsUI() {
+      const statusRow = $('#aiStatusRow');
+      const noKeyWarn = $('#aiNoKeyWarning');
+      if (statusRow) statusRow.style.display = this.hasKey() ? '' : 'none';
+      if (noKeyWarn) noKeyWarn.style.display = this.hasKey() ? 'none' : '';
+    }
+  };
+
+  /* ================================================================
+     AI DISCOVER PAGE MANAGER
+     ================================================================ */
+  const AiDiscoverManager = {
+    initialized: false,
+    currentType: 'trending',
+    currentRegion: 'india',
+    _lastSongs: [],
+    _searchCache: new Map(), // query → song object from search results
+
+    init() {
+      if (this.initialized) return;
+      this.initialized = true;
+
+      // Type pills
+      $('#aiDiscoverTypePills')?.addEventListener('click', (e) => {
+        const pill = e.target.closest('[data-aitype]');
+        if (!pill) return;
+        $$('#aiDiscoverTypePills .mood-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.currentType = pill.dataset.aitype;
+        const playlistBox = $('#aiPlaylistGenBox');
+        const regionPills = $('#aiRegionPills');
+        if (playlistBox) playlistBox.style.display = this.currentType === 'playlist' ? '' : 'none';
+        if (regionPills) regionPills.style.display = this.currentType === 'playlist' ? 'none' : '';
+        if (this.currentType !== 'playlist') this.load();
+        else { const g = $('#aiDiscoverGrid'); if (g) g.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">Enter a prompt above and hit Generate</p>'; }
+      });
+
+      // Region pills
+      $('#aiRegionPills')?.addEventListener('click', (e) => {
+        const pill = e.target.closest('[data-region]');
+        if (!pill) return;
+        $$('#aiRegionPills .mood-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        this.currentRegion = pill.dataset.region;
+        this.load();
+      });
+
+      // Refresh
+      $('#aiRefreshBtn')?.addEventListener('click', () => this.load());
+
+      // Play All
+      $('#aiPlayAllBtn')?.addEventListener('click', () => {
+        if (!this._lastSongs.length) { toast('No songs loaded'); return; }
+        queue.length = 0;
+        this._lastSongs.forEach(s => queue.push(s));
+        currentIndex = 0;
+        playSong(this._lastSongs[0]);
+        updateQueueUI();
+        toast(`AI Discover — playing ${this._lastSongs.length} songs`);
+      });
+
+      // AI Playlist generate button
+      $('#aiPlaylistGenBtn')?.addEventListener('click', () => this.generatePlaylist());
+
+      // Enter key on prompt input
+      $('#aiPlaylistPromptInput')?.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') this.generatePlaylist();
+      });
+
+      this.load();
+    },
+
+    _showThinking(msg = 'Gemini AI is thinking...') {
+      const grid = $('#aiDiscoverGrid');
+      if (!grid) return;
+      grid.innerHTML = `<div class="ai-thinking-card">
+        <div class="ai-thinking-dots"><span></span><span></span><span></span></div>
+        <p style="font-size:14px;color:var(--text-secondary);">${msg}</p>
+      </div>`;
+    },
+
+    async load() {
+      if (!GeminiAI.hasKey()) {
+        GeminiAI._updateSettingsUI();
+        const grid = $('#aiDiscoverGrid');
+        if (grid) grid.innerHTML = '';
+        return;
+      }
+      GeminiAI._updateSettingsUI();
+
+      const labels = { trending:'Trending Now', movies:'Movie Hits', reels:'Viral Reels' };
+      const title = $('#aiDiscoverResultTitle');
+      if (title) title.textContent = `${labels[this.currentType] || 'AI Results'} — ${this.currentRegion.charAt(0).toUpperCase()+this.currentRegion.slice(1)}`;
+
+      this._showThinking(`Asking Gemini about ${labels[this.currentType] || ''} in ${this.currentRegion}...`);
+
+      try {
+        const data = await GeminiAI.getTrending(this.currentRegion, this.currentType);
+        const songs = data.songs || [];
+        if (!songs.length) {
+          const grid = $('#aiDiscoverGrid');
+          if (grid) grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">Gemini returned no results. Try another region.</p>';
+          return;
+        }
+        await this._searchAndRender(songs);
+      } catch(e) {
+        const grid = $('#aiDiscoverGrid');
+        if (grid) grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;"><p style="color:var(--text-muted);margin-bottom:12px;">AI Error: ${e.message}</p><p style="font-size:12px;color:var(--text-muted);">Check your Gemini API key in Settings</p></div>`;
+      }
+    },
+
+    async generatePlaylist() {
+      const inp = $('#aiPlaylistPromptInput');
+      const prompt = inp ? inp.value.trim() : '';
+      if (!prompt) { toast('Type a playlist idea first'); inp?.focus(); return; }
+      if (!GeminiAI.hasKey()) { toast('Add Gemini API key in Settings first'); return; }
+
+      const btn = $('#aiPlaylistGenBtn');
+      if (btn) { btn.textContent = 'Generating...'; btn.classList.add('loading'); }
+      this._showThinking(`Creating playlist for: "${prompt}"`);
+
+      try {
+        const data = await GeminiAI.generatePlaylist(prompt);
+        const songs = data.songs || [];
+        if (!songs.length) { toast('No songs generated — try a different prompt'); return; }
+        await this._searchAndRender(songs);
+        const title = $('#aiDiscoverResultTitle');
+        if (title) title.textContent = `AI Playlist: ${prompt.slice(0,30)}`;
+      } catch(e) {
+        toast('Playlist generation failed: ' + e.message);
+      } finally {
+        if (btn) { btn.textContent = 'Generate'; btn.classList.remove('loading'); }
+      }
+    },
+
+    async _searchAndRender(aiSongs) {
+      const grid = $('#aiDiscoverGrid');
+      if (!grid) return;
+
+      // Show skeleton placeholders while searching
+      grid.innerHTML = aiSongs.map((_, i) => `
+        <div class="result-card skeleton-card" style="min-height:80px;background:rgba(255,255,255,0.03);border-radius:12px;"></div>
+      `).join('');
+
+      const resolved = [];
+      // Search each AI-suggested song in batches of 4
+      const BATCH = 4;
+      for (let i = 0; i < aiSongs.length; i += BATCH) {
+        const batch = aiSongs.slice(i, i + BATCH);
+        const results = await Promise.allSettled(
+          batch.map(s => this._searchOne(`${s.title} ${s.artist}`))
+        );
+        results.forEach(r => { if (r.status === 'fulfilled' && r.value) resolved.push(r.value); });
+      }
+
+      this._lastSongs = resolved;
+      if (!resolved.length) {
+        grid.innerHTML = '<p style="grid-column:1/-1;text-align:center;padding:40px;color:var(--text-muted);">Could not find songs on YouTube. Try a different region.</p>';
+        return;
+      }
+
+      renderRecommendationCards(grid, resolved);
+      // Add AI badge to each card
+      grid.querySelectorAll('.result-card').forEach(card => {
+        card.style.position = 'relative';
+        const badge = document.createElement('div');
+        badge.className = 'ai-source-badge';
+        badge.textContent = 'AI';
+        card.insertBefore(badge, card.firstChild);
+      });
+    },
+
+    async _searchOne(query) {
+      if (this._searchCache.has(query)) return this._searchCache.get(query);
+      try {
+        const r = await fetch(`/api/search?q=${encodeURIComponent(query)}&limit=1`);
+        if (!r.ok) return null;
+        const data = await r.json();
+        const songs = Array.isArray(data) ? data : (data.results || data.songs || []);
+        const song = songs[0] || null;
+        if (song) this._searchCache.set(query, song);
+        return song;
+      } catch { return null; }
+    }
+  };
+
+  /* ================================================================
+     AI SMART RADIO — upgrade existing SongRadioManager with Gemini
+     ================================================================ */
+  const AiSmartRadio = {
+    async start(song) {
+      if (!song) return;
+      if (!GeminiAI.hasKey()) {
+        // Fall back to basic song-radio API
+        SongRadioManager.startFromSong(song);
+        return;
+      }
+      toast('AI Radio — Gemini is curating your station...');
+      try {
+        const data = await GeminiAI.getSmartRadio(song);
+        const aiSongs = data.songs || [];
+        if (!aiSongs.length) throw new Error('no songs');
+
+        // Search each AI-recommended song
+        const resolved = [];
+        const BATCH = 3;
+        for (let i = 0; i < aiSongs.length; i += BATCH) {
+          const batch = aiSongs.slice(i, i + BATCH);
+          const results = await Promise.allSettled(
+            batch.map(s => AiDiscoverManager._searchOne(`${s.title} ${s.artist}`))
+          );
+          results.forEach(r => { if (r.status === 'fulfilled' && r.value) resolved.push(r.value); });
+        }
+
+        if (!resolved.length) throw new Error('no results');
+        queue.length = 0;
+        [song, ...resolved].forEach(s => { if (s) queue.push(s); });
+        currentIndex = 0;
+        playSong(song); // keep current song first
+        updateQueueUI();
+        toast(`AI Radio active — ${resolved.length} songs curated for you`);
+      } catch(e) {
+        SongRadioManager.startFromSong(song); // fallback
+      }
+    }
+  };
+
+  /* ================================================================
+     AI SONG INFO — shows below fullscreen player
+     ================================================================ */
+  const AiSongInfo = {
+    _currentId: null,
+    _card: null,
+
+    init() {
+      // Inject info card into fullscreen player
+      const sfp = $('#spotifyFullscreenPlayer');
+      if (!sfp) return;
+      const card = document.createElement('div');
+      card.className = 'ai-song-info-card';
+      card.id = 'aiSongInfoCard';
+      card.innerHTML = `<div class="ai-song-info-header">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:12px;height:12px;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+        Gemini AI · Song Context
+      </div>
+      <div id="aiSongInfoText" style="font-size:13px;line-height:1.6;color:var(--text-secondary);"></div>`;
+      sfp.appendChild(card);
+      this._card = card;
+    },
+
+    async fetch(song) {
+      if (!GeminiAI.hasKey() || !song || !this._card) return;
+      if (this._currentId === song.id) return; // already loaded
+      this._currentId = song.id;
+
+      const textEl = $('#aiSongInfoText');
+      if (textEl) textEl.textContent = 'Asking Gemini...';
+      this._card.classList.add('visible');
+
+      try {
+        const data = await GeminiAI.getSongInfo(song);
+        if (data.info && this._currentId === song.id) {
+          if (textEl) textEl.textContent = data.info;
+        }
+      } catch {
+        if (textEl) textEl.textContent = '';
+        this._card.classList.remove('visible');
+        this._currentId = null;
+      }
+    },
+
+    clear() { this._currentId = null; if (this._card) this._card.classList.remove('visible'); }
+  };
+
+  /* ================================================================
+     PLAYBACK SPEED CONTROL
+     ================================================================ */
+  const SpeedController = {
+    current: 1,
+    options: [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2],
+    init() {
+      const speedBtn  = $('#speedBtn');
+      const sfpSpeedBtn = $('#sfpSpeedBtn');
+      const popup     = $('#speedPopup');
+      if (!popup) return;
+
+      // Toggle popup
+      const togglePopup = (e) => {
+        e.stopPropagation();
+        popup.style.display = popup.style.display === 'flex' ? 'none' : 'flex';
+      };
+      speedBtn?.addEventListener('click', togglePopup);
+      sfpSpeedBtn?.addEventListener('click', togglePopup);
+
+      // Click on speed option
+      popup.addEventListener('click', (e) => {
+        const opt = e.target.closest('.speed-opt');
+        if (!opt) return;
+        const speed = parseFloat(opt.dataset.speed);
+        if (isNaN(speed)) return;
+        this.apply(speed);
+        popup.style.display = 'none';
+      });
+
+      // Close on outside click
+      document.addEventListener('click', (e) => {
+        if (popup && popup.style.display === 'flex' && !popup.contains(e.target)) {
+          popup.style.display = 'none';
+        }
+      });
+    },
+    apply(speed) {
+      this.current = speed;
+      const label = speed === 1 ? '1×' : speed + '×';
+      // Apply to main audio element
+      if (audioPlayer) audioPlayer.playbackRate = speed;
+      // Apply to crossfade B-player if exists
+      const playerB = $('#audioPlayerB');
+      if (playerB) playerB.playbackRate = speed;
+      // Update all labels
+      const speedLabel = $('#speedLabel');
+      if (speedLabel) speedLabel.textContent = label;
+      const sfpSpeedLabel = $('#sfpSpeedLabel');
+      if (sfpSpeedLabel) sfpSpeedLabel.textContent = label;
+      // Mark active option
+      $$('.speed-opt').forEach(o => o.classList.toggle('active', parseFloat(o.dataset.speed) === speed));
+      toast(`⚡ Speed: ${label}`);
+    },
+    getRate() { return this.current; }
+  };
+
+  /* ================================================================
+     SONG RADIO
+     ================================================================ */
+  const SongRadioManager = {
+    active: false,
+    toastEl: null,
+    init() {
+      this.toastEl = $('#songRadioToast');
+      $('#sfpRadioBtn')?.addEventListener('click', () => {
+        if (currentSong && typeof AiSmartRadio !== 'undefined') {
+          AiSmartRadio.start(currentSong);
+        } else {
+          this.start();
+        }
+      });
+      $('#srtClose')?.addEventListener('click', () => this.dismissToast());
+      // Also bind song card radio context (delegated)
+      document.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action="radio"]');
+        if (!btn) return;
+        const card = btn.closest('[data-id]');
+        if (!card) return;
+        // Find song from card — look in results or queue
+        const id = card.dataset.id;
+        const song = [...queue, ...(recommendedSongs || [])].find(s => s && s.id === id);
+        if (song) this.startFromSong(song);
+      });
+    },
+    async start() {
+      if (!currentSong) { toast('▶️ Play a song first to start Radio'); return; }
+      this.startFromSong(currentSong);
+    },
+    async startFromSong(song) {
+      toast('📻 Building Radio...');
+      let songs = [];
+      try {
+        const res = await fetch(`/api/song-radio/${encodeURIComponent(song.id)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) songs = data;
+        }
+      } catch(e) {}
+
+      // Fallback: search for artist hits
+      if (!songs || !songs.length) {
+        try {
+          const q = `${song.channel || song.artist || ''} top songs`;
+          const sRes = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=15`);
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            const found = Array.isArray(sData) ? sData : (sData.results || sData.songs || []);
+            if (found.length) songs = [song, ...found.filter(s => s.id !== song.id)];
+          }
+        } catch(e) {}
+      }
+
+      if (songs && songs.length) {
+        queue.length = 0;
+        songs.forEach(s => queue.push(s));
+        currentIndex = 0;
+        playSong(songs[0]);
+        updateQueueUI();
+        this.showToast(song.title);
+      } else {
+        toast('📻 Could not build radio for this track');
+      }
+    },
+    showToast(title) {
+      if (!this.toastEl) return;
+      const el = $('#srtTitle');
+      if (el) el.textContent = `Radio: ${String(title).slice(0, 30)}`;
+      this.toastEl.style.display = 'flex';
+      clearTimeout(this._timer);
+      this._timer = setTimeout(() => this.dismissToast(), 8000);
+    },
+    dismissToast() {
+      if (this.toastEl) this.toastEl.style.display = 'none';
+    }
+  };
+
+  /* ================================================================
+     CHARTS PAGE MANAGER
+     ================================================================ */
+  const ChartsManager = {
+    initialized: false,
+    loading: false,
+    init() {
+      if (this.initialized) return;
+      this.initialized = true;
+
+      // Chart pill clicks
+      $('#chartTypePills')?.addEventListener('click', (e) => {
+        const pill = e.target.closest('[data-chart]');
+        if (!pill) return;
+        $$('#chartTypePills .mood-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const chart = pill.dataset.chart;
+        const labels = {
+          global50: '🌍 Global Top 50', india40: '🇮🇳 India Top 40',
+          viral: '🔥 Viral Hits', new_releases: '✨ New Releases',
+          decades90s: '📼 90s Hits', decades2000s: '🎸 2000s Hits'
+        };
+        const title = $('#chartsTitle');
+        if (title) title.textContent = labels[chart] || chart;
+        this.load(chart);
+      });
+
+      // Refresh button
+      $('#refreshChartsBtn')?.addEventListener('click', () => {
+        const active = $('#chartTypePills .mood-pill.active');
+        const chart = active ? active.dataset.chart : 'global50';
+        this.load(chart);
+      });
+
+      // Play All button
+      $('#playAllChartsBtn')?.addEventListener('click', () => {
+        const grid = $('#chartsGrid');
+        if (!grid) return;
+        const cards = grid.querySelectorAll('.result-card');
+        if (!cards.length) { toast('No tracks to play'); return; }
+        // Build a queue from grid cards by matching IDs to loaded data
+        const songs = this._lastSongs;
+        if (songs && songs.length) {
+          queue.length = 0;
+          songs.forEach(s => queue.push(s));
+          currentIndex = 0;
+          playSong(songs[0]);
+          updateQueueUI();
+          toast(`▶️ Playing all ${songs.length} chart tracks`);
+        }
+      });
+
+      // Load default chart
+      this.load('global50');
+    },
+    _lastSongs: [],
+    async load(chart) {
+      if (this.loading) return;
+      this.loading = true;
+      const grid = $('#chartsGrid');
+      if (!grid) { this.loading = false; return; }
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-secondary);">
+        <div class="spinner" style="margin:0 auto 16px;width:40px;height:40px;border-width:3px;"></div>
+        <p style="font-size:14px;">Loading charts...</p></div>`;
+      let songs = [];
+      try {
+        const res = await fetch(`/api/charts?chart=${encodeURIComponent(chart)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) songs = data;
+        }
+      } catch (e) {}
+
+      // Fallback: search YouTube directly if /api/charts is not present
+      if (!songs || !songs.length) {
+        const queries = {
+          global50: 'top 50 songs hits global 2026',
+          india40: 'top songs india hindi hits 2026',
+          viral: 'viral hits songs reels tiktok',
+          new_releases: 'new music release songs 2026',
+          decades90s: '90s hit songs bollywood hollywood',
+          decades2000s: '2000s superhit songs'
+        };
+        try {
+          const q = queries[chart] || 'top songs';
+          const sRes = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=25`);
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            songs = Array.isArray(sData) ? sData : (sData.results || sData.songs || []);
+          }
+        } catch (e) {}
+      }
+
+      this._lastSongs = songs || [];
+      if (!songs || !songs.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;">
+          <p style="color:var(--text-muted);margin-bottom:12px;">Could not load chart. Tap Retry.</p>
+          <button onclick="ChartsManager.load('${chart}')" style="background:var(--accent);color:#000;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;font-weight:600;">Retry</button>
+        </div>`;
+      } else {
+        this._renderWithRanks(grid, songs, chart);
+      }
+      this.loading = false;
+    },
+    _renderWithRanks(container, songs, chart) {
+      renderRecommendationCards(container, songs);
+      // Overlay rank badges on each card
+      const cards = container.querySelectorAll('.result-card');
+      songs.forEach((song, i) => {
+        if (!cards[i]) return;
+        const badge = document.createElement('div');
+        badge.className = 'chart-rank';
+        badge.textContent = '#' + (i + 1);
+        cards[i].style.position = 'relative';
+        cards[i].insertBefore(badge, cards[i].firstChild);
+      });
+    }
+  };
+  // Expose globally for retry button
+  window.ChartsManager = ChartsManager;
+
+  /* ================================================================
+     TRENDING PAGE MANAGER
+     ================================================================ */
+  const TrendingManager = {
+    initialized: false,
+    loading: false,
+    init() {
+      if (this.initialized) return;
+      this.initialized = true;
+
+      // Region pill clicks
+      $('#trendingRegionPills')?.addEventListener('click', (e) => {
+        const pill = e.target.closest('[data-region]');
+        if (!pill) return;
+        $$('#trendingRegionPills .mood-pill').forEach(p => p.classList.remove('active'));
+        pill.classList.add('active');
+        const region = pill.dataset.region;
+        const labels = {
+          global: '🌍 Global Trending', india: '🇮🇳 India Trending',
+          punjabi: '🎵 Punjabi Trending', kpop: '🇰🇷 K-Pop Trending', english: '🇺🇸 English Trending'
+        };
+        const title = $('#trendingTitle');
+        if (title) title.textContent = labels[region] || 'Trending';
+        this.load(region);
+      });
+
+      // Refresh
+      $('#refreshTrendingBtn')?.addEventListener('click', () => {
+        const active = $('#trendingRegionPills .mood-pill.active');
+        const region = active ? active.dataset.region : 'global';
+        this.load(region);
+      });
+
+      // Play All
+      $('#playAllTrendingBtn')?.addEventListener('click', () => {
+        const songs = this._lastSongs;
+        if (!songs || !songs.length) { toast('No tracks to play'); return; }
+        queue.length = 0;
+        songs.forEach(s => queue.push(s));
+        currentIndex = 0;
+        playSong(songs[0]);
+        updateQueueUI();
+        toast(`🔥 Playing ${songs.length} trending tracks`);
+      });
+
+      // Load default region
+      this.load('global');
+    },
+    _lastSongs: [],
+    async load(region) {
+      if (this.loading) return;
+      this.loading = true;
+      const grid = $('#trendingGrid');
+      if (!grid) { this.loading = false; return; }
+      grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-secondary);">
+        <div class="spinner" style="margin:0 auto 16px;width:40px;height:40px;border-width:3px;"></div>
+        <p style="font-size:14px;">Fetching trending music...</p></div>`;
+      let songs = [];
+      try {
+        const res = await fetch(`/api/trending?region=${encodeURIComponent(region)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) songs = data;
+        }
+      } catch (e) {}
+
+      // Fallback: search YouTube directly if /api/trending is not present
+      if (!songs || !songs.length) {
+        const queries = {
+          global: 'trending songs billboard hot hits global 2026',
+          india: 'trending songs india bollywood hits 2026',
+          punjabi: 'trending punjabi latest songs 2026',
+          kpop: 'trending kpop songs 2026',
+          english: 'trending english billboard songs 2026'
+        };
+        try {
+          const q = queries[region] || 'trending songs';
+          const sRes = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=25`);
+          if (sRes.ok) {
+            const sData = await sRes.json();
+            songs = Array.isArray(sData) ? sData : (sData.results || sData.songs || []);
+          }
+        } catch (e) {}
+      }
+
+      this._lastSongs = songs || [];
+      if (!songs || !songs.length) {
+        grid.innerHTML = `<div style="grid-column:1/-1;text-align:center;padding:40px;">
+          <p style="color:var(--text-muted);margin-bottom:12px;">Could not load trending. Tap Retry.</p>
+          <button onclick="TrendingManager.load('${region}')" style="background:var(--accent);color:#000;border:none;padding:8px 20px;border-radius:20px;cursor:pointer;font-weight:600;">Retry</button>
+        </div>`;
+      } else {
+        this._renderWithTrend(grid, songs);
+      }
+      this.loading = false;
+    },
+    _renderWithTrend(container, songs) {
+      renderRecommendationCards(container, songs);
+      // Add trending position badges
+      const cards = container.querySelectorAll('.result-card');
+      songs.forEach((song, i) => {
+        if (!cards[i]) return;
+        const badge = document.createElement('div');
+        badge.className = 'trending-badge';
+        badge.textContent = i === 0 ? '🔥 #1' : (i < 3 ? '🔥 #' + (i+1) : '#' + (i+1));
+        cards[i].style.position = 'relative';
+        cards[i].insertBefore(badge, cards[i].firstChild);
+      });
+    }
+  };
+  // Expose globally for retry button
+  window.TrendingManager = TrendingManager;
 
   /* ----- Start ----- */
   init();

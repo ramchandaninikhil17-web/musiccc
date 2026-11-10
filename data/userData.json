@@ -1,29 +1,125 @@
 {
-  "theme": "dark",
-  "lastSaved": "2026-10-29T14:11:56.321Z",
+  "theme": "oled",
+  "lastSaved": "2026-11-10T11:39:43.126Z",
   "history": [
     {
       "song": {
-        "id": "kNvJ_XSXHpE",
-        "title": "Something Something - Video Song | Feat. Urvashi Sharma | Mika Singh, Bella | Blockbuster Hindi Song",
-        "channel": "Tips Official",
-        "duration": 199,
-        "thumbnail": "https://i.ytimg.com/vi/kNvJ_XSXHpE/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDX6Ws9kHQZaKgmyVgqXC-q9FqBQg",
-        "views": 23995916
+        "id": "DeumyOzKqgI",
+        "title": "Adele - Skyfall (Official Lyric Video)",
+        "channel": "Adele",
+        "duration": 290,
+        "thumbnail": "https://i.ytimg.com/vi/DeumyOzKqgI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFXO7w95g8ryMIM5zVdDJhY-9wFg",
+        "views": 841417253
       },
-      "playedAt": "2026-10-29T14:11:36.743Z",
+      "playedAt": "2026-11-10T11:39:34.076Z",
       "listenedSec": 0
     },
     {
       "song": {
-        "id": "qe4agjXLbtM",
-        "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
-        "channel": "Rytham Riyasat",
-        "duration": 1275,
-        "thumbnail": "https://i.ytimg.com/vi/qe4agjXLbtM/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIGUoZTAP&rs=AOn4CLAsKPFoa1l30Uj7VZwTs3hqmQyAxQ",
-        "views": 4391575
+        "id": "BPZkZpGMpXA",
+        "title": "KING: Tu Mil Jaaye | Shah Rukh Khan, Deepika | Sachin-Jigar, Arijit, Ed Sheeran, Madhubanti, Kumaar",
+        "channel": "T-Series and 3 more",
+        "duration": 223,
+        "thumbnail": "https://i.ytimg.com/vi/BPZkZpGMpXA/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBk3gWCXvg74SvzyCT1lmQZEU556g",
+        "views": 62187259
       },
-      "playedAt": "2026-10-29T14:07:27.100Z",
+      "playedAt": "2026-11-08T20:52:21.390Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-08T20:46:42.497Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:50:02.999Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:49:56.288Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:49:22.943Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:43:03.136Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:42:43.250Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "s3a4OQR-10M",
+        "title": "Tame Impala - Loser (Official Video)",
+        "channel": "Tame Impala",
+        "duration": 268,
+        "thumbnail": "https://i.ytimg.com/vi/s3a4OQR-10M/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAEA5DZYoLzRDAt_2deYwvBS-Nz6Q",
+        "views": 73441296
+      },
+      "playedAt": "2026-11-06T21:04:13.759Z",
+      "listenedSec": 0
+    },
+    {
+      "song": {
+        "id": "7KXVzkxM0-g",
+        "title": "Bheegi Bheegi Raaton Mein | The Paradise | Nani | Raghav Juyal | Lata Mangeshkar, Kishore Kumar",
+        "channel": "Saregama Music",
+        "duration": 58,
+        "thumbnail": "https://i.ytimg.com/vi/7KXVzkxM0-g/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgigr4zXBhjg6gQg4KgB&rs=AOn4CLCZze-VSFXcwV5aJjKrBgBFu_WpdQ&usqp=CBU",
+        "views": 9550
+      },
+      "playedAt": "2026-11-04T17:32:13.843Z",
       "listenedSec": 0
     },
     {
@@ -3163,35 +3259,9 @@
       "playedAt": "2026-09-05T17:37:32.327Z",
       "listenedSec": 57,
       "counted": true
-    },
-    {
-      "song": {
-        "id": "2fDzCWNS3ig",
-        "title": "The Weeknd - Out of Time",
-        "channel": "The Weeknd",
-        "duration": 234,
-        "thumbnail": "https://i.ytimg.com/vi/2fDzCWNS3ig/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC3uJtytdQ1NzXwblO_S2tB_nV8fg",
-        "views": 163975751
-      },
-      "playedAt": "2026-09-05T17:17:21.041Z",
-      "listenedSec": 18
-    },
-    {
-      "song": {
-        "id": "2fDzCWNS3ig",
-        "title": "The Weeknd - Out of Time",
-        "channel": "The Weeknd",
-        "duration": 234,
-        "thumbnail": "https://i.ytimg.com/vi/2fDzCWNS3ig/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLC3uJtytdQ1NzXwblO_S2tB_nV8fg",
-        "views": 163975751
-      },
-      "playedAt": "2026-09-05T16:45:40.190Z",
-      "listenedSec": 0
     }
   ],
-  "searchHistory": [
-    "something"
-  ],
+  "searchHistory": [],
   "playlists": [
     {
       "id": "pl_1786029815971",
@@ -3748,95 +3818,63 @@
   "shuffle": false,
   "cached_recommendations": [
     {
-      "id": "Fa5J106VvBg",
-      "title": "All Instagram Trending Songs 2026 | Viral Song Playlist",
-      "channel": "Akash Nayak",
-      "duration": 1725,
-      "thumbnail": "https://i.ytimg.com/vi/Fa5J106VvBg/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFvXQcwmIRAMX-3Pfw8ffBuzJa8A",
-      "views": 325424
+      "id": "dR9B_gPxjkk",
+      "title": "Kiliye Kiliye - Video Song | Lokah Chapter 1: Chandra | Kalyani Priyadarshan | Naslen | Dominic Arun",
+      "channel": "Saregama Malayalam",
+      "duration": 125,
+      "thumbnail": "https://i.ytimg.com/vi/dR9B_gPxjkk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAwl9b3hQJqOyRNAUj1fD-e9AnAXQ",
+      "views": 82897349
     },
     {
-      "id": "8BSlVizK57I",
-      "title": "(2020-2025 ) Most Viewed Songs In The World",
-      "channel": "C-Ompare",
-      "duration": 317,
-      "thumbnail": "https://i.ytimg.com/vi/8BSlVizK57I/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDR7FPWLaWwBR3V-FBWeXeQRNSoEA",
-      "views": 1535174
-    },
-    {
-      "id": "41HX_5G6eqQ",
-      "title": "Barsaat 🌧️| All Trending Songs | Taare x Samjho Na x Safar x Bairan x Zulfein x Sahiba x Majboor |",
-      "channel": "Voxwaves",
-      "duration": 1376,
-      "thumbnail": "https://i.ytimg.com/vi/41HX_5G6eqQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAHpYv19mzkv0Z1eQkwISkkH-vL0w",
-      "views": 9898683
-    },
-    {
-      "id": "Cl2r66CCVDk",
-      "title": "Top 10 Trending Songs | Taare, Samjho Na, Safar, Bairan, Zulfein, Sahiba, | Viral Songs Playlist",
-      "channel": "अनंत यात्रा",
-      "duration": 1791,
-      "thumbnail": "https://i.ytimg.com/vi/Cl2r66CCVDk/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBxnin_Ta_395ACIvTWv_qwUPAuVw",
-      "views": 1805404
-    },
-    {
-      "id": "VAdGW7QDJiU",
-      "title": "JAWAN: Chaleya (Hindi) | Shah Rukh Khan | Nayanthara | Atlee | Anirudh | Arijit S, Shilpa R | Kumaar",
+      "id": "n2dVFdqMYGA",
+      "title": "Sahiba (Official Music Video) : Aditya Rikhari, Ankita Chhetri | T-Series",
       "channel": "T-Series",
-      "duration": 188,
-      "thumbnail": "https://i.ytimg.com/vi/VAdGW7QDJiU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBuWEgODadHW9uxh7WbkyUTmcpcOA",
-      "views": 675526381
+      "duration": 184,
+      "thumbnail": "https://i.ytimg.com/vi/n2dVFdqMYGA/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLB9ch738TdFz5TbnsveLVZWMfEcaw",
+      "views": 407751366
     },
     {
-      "id": "7pitWFMHb6o",
-      "title": "All Instagram Trending Songs 2026 | LucyxMusic | Barsat X Aarzu X Kabhi kabhi",
-      "channel": "LucyXMusic",
-      "duration": 1194,
-      "thumbnail": "https://i.ytimg.com/vi/7pitWFMHb6o/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFQoSTAP&rs=AOn4CLBKilLMpvMNF-0omKHDCM7AJUk4Lw",
-      "views": 227141
+      "id": "TFTnJzWRTJ8",
+      "title": "Naal Nachna | Dhurandhar | Ranveer Singh, Sara Arjun, Shashwat Sachdev, Afsana Khan, Reble, Irshad",
+      "channel": "Saregama Music and 2 more",
+      "duration": 126,
+      "thumbnail": "https://i.ytimg.com/vi/TFTnJzWRTJ8/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLDbQ7__wkzoG5VtOU3jwVN3pP-wtQ",
+      "views": 104637850
     },
     {
-      "id": "YKsqWnM3cvU",
-      "title": "𓆩♡𓆪 𝑻𝑹𝑬𝑵𝑫𝑰𝑵𝑮 𝑺𝑶𝑵𝑮𝑺 𝑶𝑭 𝟐𝟎𝟐𝟔 𓆩♡𓆪 || All trending songs of 2026 together 💗✨🎀",
-      "channel": "Aesthetic boomer ",
-      "duration": 1697,
-      "thumbnail": "https://i.ytimg.com/vi/YKsqWnM3cvU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLACoDLAOhcaG28pdZ5T_fJYSUiHvA",
-      "views": 1795729
+      "id": "oMesPehN_Do",
+      "title": "Ambarsariya (Lyrical) Fukrey | Sona Mohapatra | Pulkit Samrat, Priya Anand | Ram Sampath",
+      "channel": "T-Series",
+      "duration": 268,
+      "thumbnail": "https://i.ytimg.com/vi/oMesPehN_Do/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLDekjgGQ3omUj2Lh6EQ8Ld-14ifqg",
+      "views": 93901473
     },
     {
-      "id": "mdvOLiWvV-w",
-      "title": "Post Malone Greatest Hits 2024 - Pop Music Mix - Top 10 Hits Of All Time",
-      "channel": "YScope Media",
-      "duration": 1786,
-      "thumbnail": "https://i.ytimg.com/vi/mdvOLiWvV-w/hq720.jpg?sqp=-oaymwE2CNAFEJQDSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB_gmAAtAFigIMCAAQARhlIFEoUjAP&rs=AOn4CLBB0WmO3KfssXp-nOVIdZpA5aSX5w",
-      "views": 830234
+      "id": "BPZkZpGMpXA",
+      "title": "KING: Tu Mil Jaaye | Shah Rukh Khan, Deepika | Sachin-Jigar, Arijit, Ed Sheeran, Madhubanti, Kumaar",
+      "channel": "T-Series and 3 more",
+      "duration": 223,
+      "thumbnail": "https://i.ytimg.com/vi/BPZkZpGMpXA/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBk3gWCXvg74SvzyCT1lmQZEU556g",
+      "views": 71453895
     },
     {
-      "id": "qZ78-_PdbwQ",
-      "title": "𝐀𝐋𝐋 𝐓𝐑𝐄𝐍𝐃𝐈𝐍𝐆 𝐇𝐈𝐍𝐃𝐈 𝐒𝐎𝐍𝐆𝐒 𝟐𝟎𝟐𝟔 | 𝐏𝐋𝐀𝐘𝐋𝐈𝐒𝐓 🎀",
-      "channel": "Aesthetic boomer ",
-      "duration": 713,
-      "thumbnail": "https://i.ytimg.com/vi/qZ78-_PdbwQ/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLCcj8dz4hl9vo8klsmk5IXCNI7j4Q",
-      "views": 12386030
-    },
-    {
-      "id": "enjkcCdAlXc",
-      "title": "Aavan Jaavan Song | WAR 2 | Hrithik Roshan, Kiara Advani | Pritam, Arijit Singh, Nikhita | Amitabh B",
-      "channel": "YRF",
-      "duration": 240,
-      "thumbnail": "https://i.ytimg.com/vi/enjkcCdAlXc/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBxzFF-N9lP8x3Unvhuk_fiOEOagg",
-      "views": 168922939
-    },
-    {
-      "id": "LRh8cam6vxM",
-      "title": "ALL TRENDING HINDI SONGS 2026 | PLAYLIST🔥",
-      "channel": "CHIRAG_845",
-      "duration": 986,
-      "thumbnail": "https://i.ytimg.com/vi/LRh8cam6vxM/hqdefault.jpg?sqp=-oaymwE2COADEI4CSFXyq4qpAygIARUAAIhCGAFwAcABBvABAfgB1AaAAuADigIMCAAQARhlIEUoTTAP&rs=AOn4CLBXeLyzEfAsTcWTOYhH3ILn5rgATw",
-      "views": 108866
+      "id": "yDv0WSgXJVg",
+      "title": "\"Senorita Zindagi Na Milegi Dobara\" Full HD Video Song | Farhan Akhtar, Hrithik Roshan, Abhay Deol",
+      "channel": "T-Series",
+      "duration": 232,
+      "thumbnail": "https://i.ytimg.com/vi/yDv0WSgXJVg/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLCr5rfCVXubYINfZuc6OJD9QdbgRQ",
+      "views": 182775200
     }
   ],
   "likes": [
+    {
+      "id": "DeumyOzKqgI",
+      "title": "Adele - Skyfall (Official Lyric Video)",
+      "channel": "Adele",
+      "duration": 290,
+      "thumbnail": "https://i.ytimg.com/vi/DeumyOzKqgI/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLAFXO7w95g8ryMIM5zVdDJhY-9wFg",
+      "views": 841417253
+    },
     {
       "id": "qe4agjXLbtM",
       "title": "Best of Karan Aujla||Karan Aujla- Geeta di Machine| Punjabi Music Playlist @KaranAujlaOfficial",
@@ -3991,7 +4029,7 @@
       "views": 387422932
     }
   ],
-  "accent_color": "emerald",
+  "accent_color": "pink",
   "orb": "show",
   "playCounts": {
     "ih2xubMaZWI": 1,
@@ -4135,6 +4173,14 @@
   "crossfade": 0,
   "dislikes": [
     {
+      "id": "nJZcbidTutE",
+      "title": "'Sooraj Dooba Hain' FULL VIDEO SONG | Arijit singh Aditi Singh Sharma | T-SERIES",
+      "channel": "T-Series",
+      "duration": 248,
+      "thumbnail": "https://i.ytimg.com/vi/nJZcbidTutE/hq720.jpg?sqp=-oaymwEgCNAFEJQDSFXyq4qpAxIIARUAAIhCGAFwAcABBrgC9xg=&rs=AOn4CLBgZZq65UWO8F9zsaUXYZl5xG60Ow",
+      "views": 394723291
+    },
+    {
       "id": "hvKW6iDOZrc",
       "title": "Avengers: Doomsday | Official Hindi Trailer | In Cinemas December 18",
       "channel": "IndiaMarvel",
@@ -4220,7 +4266,7 @@
   "daily_listening_diary": {
     "2026-10-29": {
       "date": "2026-10-29",
-      "minutes": 366,
+      "minutes": 420,
       "tracks": [
         {
           "id": "gwX71Dmc",
@@ -4271,7 +4317,69 @@
           "playedAt": "04:02 pm"
         }
       ]
+    },
+    "2026-11-02": {
+      "date": "2026-11-02",
+      "minutes": 32,
+      "tracks": []
+    },
+    "2026-11-04": {
+      "date": "2026-11-04",
+      "minutes": 22,
+      "tracks": []
+    },
+    "2026-11-06": {
+      "date": "2026-11-06",
+      "minutes": 14,
+      "tracks": []
+    },
+    "2026-11-08": {
+      "date": "2026-11-08",
+      "minutes": 98,
+      "tracks": []
     }
   },
-  "autoFixSearch": true
+  "autoFixSearch": true,
+  "downloaded_songs": [
+    {
+      "id": "4pFUP0HZwWM",
+      "title": "Captain America \"Avengers Assemble\" Scene - Portal Scene - Avengers : Endgame (2019) Scene",
+      "artist": "BestScene",
+      "channel": "BestScene",
+      "thumbnail": "https://i.ytimg.com/vi/4pFUP0HZwWM/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBg==&rs=AOn4CLBIo4v_YJUGDvkvjFRwi3dQvcjSYg",
+      "duration": 286,
+      "filename": "Captain America Avengers Assemble Scene - Portal Scene - Avengers Endgame (2019) Scene - BestScene.mp4",
+      "size": 77756787,
+      "addedAt": 1793814005283,
+      "isLocal": true,
+      "isDownloaded": true
+    },
+    {
+      "id": "fBNNVyX39nU",
+      "title": "Captain America Walks Towards Thanos Army | Avengers Endgame Movie Scene HD | No Logo Clips",
+      "artist": "No Logo Clips",
+      "channel": "No Logo Clips",
+      "thumbnail": "https://i.ytimg.com/vi/fBNNVyX39nU/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgiTo9D2BRjg6gQg4KgB&rs=AOn4CLAfYg8WXnsC44_LqLYMSxFoam5LHw&usqp=CBU",
+      "duration": 41,
+      "filename": "Captain America Walks Towards Thanos Army Avengers Endgame Movie Scene HD No Logo Clips.mp4",
+      "size": 6906631,
+      "addedAt": 1793813783502,
+      "isLocal": true,
+      "isDownloaded": true
+    },
+    {
+      "id": "0vt8ct_bmdw",
+      "title": "Captain America vs Thanos Fight Scene   Captain America Lifts Mjolnir   Avengers Endgame 2019",
+      "artist": "Movie Box",
+      "channel": "Movie Box",
+      "thumbnail": "https://i.ytimg.com/vi/0vt8ct_bmdw/hq720.jpg?sqp=-oaymwEcCNAFEJQDSFXyq4qpAw4IARUAAIhCGAFwAcABBqLzl_8DDgicw_aPBhjg6gQg4KgB&rs=AOn4CLD6hxc452nllb73jrTy2da9coXjHg&usqp=CBU",
+      "duration": 163,
+      "filename": "Captain America vs Thanos Fight Scene Captain America Lifts Mjolnir Avengers Endgame 2019 - Movie Box.mp4",
+      "size": 26929380,
+      "addedAt": 1793813701863,
+      "isLocal": true,
+      "isDownloaded": true
+    }
+  ],
+  "geminiApiKey": ""
 }

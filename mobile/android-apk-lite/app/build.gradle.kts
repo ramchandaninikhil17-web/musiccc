@@ -11,8 +11,8 @@ android {
         applicationId = "com.musicflow.player"
         minSdk = 24
         targetSdk = 34
-        versionCode = 350
-        versionName = "3.5.0-HyperFlow"
+        versionCode = 400
+        versionName = "4.0.0-OLEDPro"
     }
 
     buildFeatures {

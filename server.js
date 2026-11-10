@@ -1152,9 +1152,9 @@ app.post('/api/update-ytdlp', async (req, res) => {
 /*  GET /api/app-version & /api/check-update                          */
 /*  1-Click App Update & version recognition                         */
 /* ------------------------------------------------------------------ */
-const APP_VERSION_NAME = '3.5.0-HyperFlow';
-const APP_VERSION_CODE = 350;
-const APP_BUILD_DATE = '2026-10-29';
+const APP_VERSION_NAME = '4.0.0-OLEDPro';
+const APP_VERSION_CODE = 400;
+const APP_BUILD_DATE = '2026-11-07';
 
 app.get('/api/app-version', (req, res) => {
   res.json({
@@ -1356,9 +1356,9 @@ app.get('/api/stream/:videoId', async (req, res) => {
 
   // Tier 1: Try direct audio URL extraction via yt-dlp across player strategies
   const clientStrategies = [
-    ['--extractor-args', 'youtube:player_client=android,web'],
-    ['--extractor-args', 'youtube:player_client=android_music,android'],
-    []
+    [],
+    ['--extractor-args', 'youtube:player_client=visionos,default'],
+    ['--extractor-args', 'youtube:player_client=android_music,android']
   ];
 
   for (const clientArgs of clientStrategies) {
@@ -2494,11 +2494,11 @@ function transcodeTrack(videoId, workDir, index) {
       `https://www.youtube.com/watch?v=${videoId}`
     ];
     execFile(ytDlpPath, dlArgs, {
-      timeout: 180000,
+      timeout: 240000,
       windowsHide: true,
       maxBuffer: 10 * 1024 * 1024,
     }, (err, _stdout, stderr) => {
-      const target = `${prefix}.mp3`;
+      const target = findDownloadOutput(prefix) || `${prefix}.mp3`;
       if (err || !fs.existsSync(target)) {
         console.error('[Playlist DL]', videoId, err ? `${err.message}: ${String(stderr || '').trim()}` : 'file missing');
         resolve(null);
@@ -3108,9 +3108,430 @@ app.post('/api/smart-playlist', async (req, res) => {
 });
 
 /* ------------------------------------------------------------------ */
+/*  GET /api/song-radio/:videoId — Generate radio playlist            */
+/* ------------------------------------------------------------------ */
+app.get('/api/song-radio/:videoId', async (req, res) => {
+  const { videoId } = req.params;
+  if (!isYouTubeId(videoId)) {
+    return res.status(400).json({ error: 'Invalid YouTube ID' });
+  }
+
+  const cacheKey = `radio_${videoId}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    let songTitle = '', songChannel = '';
+    try {
+      const infoOut = await runYtDlp([
+        `https://www.youtube.com/watch?v=${videoId}`,
+        '--dump-json', '--no-warnings', '--skip-download',
+      ], 12000).catch(() => null);
+      if (infoOut) {
+        const d = JSON.parse(infoOut);
+        songTitle = d.title || '';
+        songChannel = d.channel || d.uploader || '';
+      }
+    } catch(e) {}
+
+    const queries = [];
+    if (songTitle) queries.push(`ytsearch12:${songTitle} similar songs`);
+    if (songChannel) queries.push(`ytsearch8:${songChannel} best songs`);
+    if (songTitle) queries.push(`ytsearch8:songs like ${songTitle}`);
+
+    const allResults = [];
+    const seen = new Set([videoId]);
+
+    for (const q of queries.slice(0, 2)) {
+      try {
+        const stdout = await runYtDlp([
+          q, '--dump-json', '--flat-playlist', '--no-warnings',
+          '--default-search', 'ytsearch', '--skip-download',
+        ], 18000).catch(() => null);
+        if (stdout) {
+          const items = stdout.split('\n').filter(Boolean).map(line => {
+            try {
+              const d = JSON.parse(line);
+              const dur = d.duration || 0;
+              if (dur && (dur < 60 || dur > 600)) return null;
+              return {
+                id: d.id, title: d.title || 'Unknown',
+                channel: d.channel || d.uploader || 'Unknown',
+                duration: dur,
+                thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+                views: d.view_count || 0,
+              };
+            } catch { return null; }
+          }).filter(Boolean).filter(item => item && isYouTubeId(item.id) && !seen.has(item.id));
+          items.forEach(it => { seen.add(it.id); allResults.push(it); });
+        }
+      } catch(e) {}
+    }
+
+    allResults.sort((a, b) => scoreSong(b, songTitle, true) - scoreSong(a, songTitle, true));
+    const radio = allResults.slice(0, 25);
+    setCache(cacheKey, radio);
+    res.json(radio);
+  } catch(err) {
+    console.error('[Song Radio]', err.message);
+    res.status(500).json({ error: 'Failed to generate radio' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/artist-radio?artist=... — Radio from artist name         */
+/* ------------------------------------------------------------------ */
+app.get('/api/artist-radio', async (req, res) => {
+  const artist = getSearchQuery(req.query.artist);
+  if (!artist) return res.status(400).json({ error: 'Missing artist' });
+
+  const cacheKey = `artist_radio_${artist.toLowerCase()}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  try {
+    const queries = [
+      `ytsearch15:${artist} best songs official`,
+      `ytsearch10:${artist} top hits playlist`,
+    ];
+
+    const allResults = [];
+    const seen = new Set();
+
+    for (const q of queries) {
+      try {
+        const stdout = await runYtDlp([
+          q, '--dump-json', '--flat-playlist', '--no-warnings',
+          '--default-search', 'ytsearch', '--skip-download',
+        ], 18000).catch(() => null);
+        if (stdout) {
+          const items = stdout.split('\n').filter(Boolean).map(line => {
+            try {
+              const d = JSON.parse(line);
+              const dur = d.duration || 0;
+              if (dur && (dur < 60 || dur > 600)) return null;
+              return {
+                id: d.id, title: d.title || 'Unknown',
+                channel: d.channel || d.uploader || 'Unknown',
+                duration: dur,
+                thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+                views: d.view_count || 0,
+              };
+            } catch { return null; }
+          }).filter(Boolean).filter(item => item && isYouTubeId(item.id) && !seen.has(item.id));
+          items.forEach(it => { seen.add(it.id); allResults.push(it); });
+        }
+      } catch(e) {}
+    }
+
+    allResults.sort((a, b) => scoreSong(b, artist, true) - scoreSong(a, artist, true));
+    const radio = allResults.slice(0, 30);
+    setCache(cacheKey, radio);
+    res.json(radio);
+  } catch(err) {
+    console.error('[Artist Radio]', err.message);
+    res.status(500).json({ error: 'Failed to generate artist radio' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/trending?region=...  — Trending songs by region          */
+/* ------------------------------------------------------------------ */
+app.get('/api/trending', async (req, res) => {
+  const region = (req.query.region || 'global').toLowerCase();
+  const cacheKey = `trending_${region}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  const trendingQueries = {
+    global: ['ytsearch20:top global music hits 2024 2025', 'ytsearch15:trending songs viral 2024'],
+    india: ['ytsearch20:top hindi songs 2024 latest hits', 'ytsearch15:trending bollywood songs 2024'],
+    punjabi: ['ytsearch15:top punjabi songs 2024 hits', 'ytsearch10:latest punjabi hits 2024'],
+    kpop: ['ytsearch15:kpop hits 2024 trending', 'ytsearch10:top kpop songs 2024'],
+    english: ['ytsearch15:top english pop songs 2024 trending', 'ytsearch15:billboard hot 100 hits 2024'],
+  };
+
+  const queries = trendingQueries[region] || trendingQueries.global;
+  const allResults = [];
+  const seen = new Set();
+
+  try {
+    for (const q of queries) {
+      try {
+        const stdout = await runYtDlp([
+          q, '--dump-json', '--flat-playlist', '--no-warnings',
+          '--default-search', 'ytsearch', '--skip-download',
+        ], 20000).catch(() => null);
+        if (stdout) {
+          const items = stdout.split('\n').filter(Boolean).map(line => {
+            try {
+              const d = JSON.parse(line);
+              const dur = d.duration || 0;
+              if (dur && (dur < 60 || dur > 600)) return null;
+              return {
+                id: d.id, title: d.title || 'Unknown',
+                channel: d.channel || d.uploader || 'Unknown',
+                duration: dur,
+                thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+                views: d.view_count || 0,
+              };
+            } catch { return null; }
+          }).filter(Boolean).filter(item => item && isYouTubeId(item.id) && !seen.has(item.id));
+          items.forEach(it => { seen.add(it.id); allResults.push(it); });
+        }
+      } catch(e) {}
+    }
+
+    allResults.sort((a, b) => {
+      const aV = Math.min(300, Math.log10((Number(a.views) || 1)) * 30);
+      const bV = Math.min(300, Math.log10((Number(b.views) || 1)) * 30);
+      return (scoreSong(b, '', true) + bV) - (scoreSong(a, '', true) + aV);
+    });
+
+    const trending = allResults.slice(0, 30);
+    setCache(cacheKey, trending);
+    res.json(trending);
+  } catch(err) {
+    console.error('[Trending]', err.message);
+    res.status(500).json({ error: 'Failed to fetch trending' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
+/*  GET /api/charts?chart=...  — Music Charts                         */
+/* ------------------------------------------------------------------ */
+app.get('/api/charts', async (req, res) => {
+  const chart = (req.query.chart || 'global50').toLowerCase();
+  const cacheKey = `chart_${chart}`;
+  const cached = getCached(cacheKey);
+  if (cached) return res.json(cached);
+
+  const chartQueries = {
+    global50: 'ytsearch25:spotify global top 50 songs 2024 official',
+    india40: 'ytsearch25:bollywood top songs 2024 latest hindi hits official',
+    viral: 'ytsearch25:viral songs tiktok trending 2024',
+    new_releases: 'ytsearch25:new music releases November 2024',
+    decades90s: 'ytsearch25:90s best songs greatest hits playlist official',
+    decades2000s: 'ytsearch25:2000s best songs hits playlist official',
+  };
+
+  const q = chartQueries[chart] || chartQueries.global50;
+
+  try {
+    const stdout = await runYtDlp([
+      q, '--dump-json', '--flat-playlist', '--no-warnings',
+      '--default-search', 'ytsearch', '--skip-download',
+    ], 25000).catch(() => null);
+
+    if (!stdout) return res.json([]);
+
+    const results = stdout.split('\n').filter(Boolean).map(line => {
+      try {
+        const d = JSON.parse(line);
+        const dur = d.duration || 0;
+        if (dur && (dur < 60 || dur > 600)) return null;
+        return {
+          id: d.id, title: d.title || 'Unknown',
+          channel: d.channel || d.uploader || 'Unknown',
+          duration: dur,
+          thumbnail: d.thumbnails ? d.thumbnails[d.thumbnails.length - 1]?.url : `https://i.ytimg.com/vi/${d.id}/hqdefault.jpg`,
+          views: d.view_count || 0,
+        };
+      } catch { return null; }
+    }).filter(Boolean).filter(item => item && isYouTubeId(item.id));
+
+    const seen = new Set();
+    const unique = results.filter(r => { if (seen.has(r.id)) return false; seen.add(r.id); return true; });
+    unique.sort((a, b) => scoreSong(b, '', true) - scoreSong(a, '', true));
+
+    const chartData = unique.slice(0, 25);
+    setCache(cacheKey, chartData);
+    res.json(chartData);
+  } catch(err) {
+    console.error('[Charts]', err.message);
+    res.status(500).json({ error: 'Failed to fetch charts' });
+  }
+});
+
+/* ------------------------------------------------------------------ */
 /*  SPA fallback                                                      */
 /* ------------------------------------------------------------------ */
 // Unknown API routes must 404 as JSON. The blanket '*' handler used to serve
+/* ================================================================
+   GEMINI AI PROXY  — All AI calls go through here so the key
+   is never embedded in the APK. Client sends key in X-Gemini-Key header.
+   ================================================================ */
+app.post('/api/ai/generate', (req, res) => {
+  const apiKey = req.headers['x-gemini-key'] || '';
+  if (!apiKey || apiKey.length < 20) {
+    return res.status(401).json({ error: 'Missing or invalid Gemini API key. Add it in Settings.' });
+  }
+  const { prompt, temperature = 0.7 } = req.body || {};
+  if (!prompt) return res.status(400).json({ error: 'No prompt provided' });
+
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: prompt }] }],
+    generationConfig: { temperature, maxOutputTokens: 1024 }
+  });
+
+  const options = {
+    hostname: 'generativelanguage.googleapis.com',
+    path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+
+  const request = https.request(options, (apiRes) => {
+    let data = '';
+    apiRes.on('data', chunk => { data += chunk; });
+    apiRes.on('end', () => {
+      try {
+        const json = JSON.parse(data);
+        if (json.error) return res.status(400).json({ error: json.error.message || 'Gemini API error' });
+        const text = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+        res.json({ text, raw: json });
+      } catch (e) {
+        res.status(500).json({ error: 'Failed to parse Gemini response' });
+      }
+    });
+  });
+  request.on('error', (e) => res.status(500).json({ error: 'Gemini API network error: ' + e.message }));
+  request.setTimeout(15000, () => { request.destroy(); res.status(504).json({ error: 'Gemini API timeout' }); });
+  request.write(body);
+  request.end();
+});
+
+/* ---- AI Trending Discovery (Gemini-powered) ---- */
+app.get('/api/ai/trending-discovery', async (req, res) => {
+  const apiKey = req.headers['x-gemini-key'] || '';
+  if (!apiKey || apiKey.length < 20) return res.status(401).json({ error: 'API key required' });
+  const region = req.query.region || 'global';
+  const type = req.query.type || 'songs'; // songs | movies | reels
+
+  const prompts = {
+    songs: `List 20 real trending songs right now (${region} region, ${new Date().toDateString()}). Focus on what's #1 on YouTube, Spotify, and social media. Include Bollywood, Hollywood, regional hits based on region. Return ONLY a JSON array: [{"title":"song name","artist":"artist name"}]. No explanation, pure JSON.`,
+    movies: `List 15 recent hit movies (${region}, released in last 6 months) with their famous soundtrack songs. Return ONLY JSON: [{"title":"song name","artist":"singer","movie":"movie name"}]. Pure JSON only.`,
+    reels: `List 20 songs currently most viral on Instagram Reels, YouTube Shorts and TikTok (${region}). These are the songs everyone is using for short videos. Return ONLY JSON: [{"title":"song name","artist":"artist name"}]. Pure JSON only.`
+  };
+
+  const prompt = prompts[type] || prompts.songs;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.3, maxOutputTokens: 1500 } });
+  const options = {
+    hostname: 'generativelanguage.googleapis.com',
+    path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+
+  try {
+    const text = await new Promise((resolve, reject) => {
+      const req2 = https.request(options, (r) => {
+        let d = ''; r.on('data', c => { d += c; }); r.on('end', () => resolve(d));
+      });
+      req2.on('error', reject);
+      req2.setTimeout(20000, () => { req2.destroy(); reject(new Error('timeout')); });
+      req2.write(body); req2.end();
+    });
+    const json = JSON.parse(text);
+    const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    // Extract JSON array from response (Gemini sometimes adds markdown)
+    const match = rawText.match(/\[[\s\S]*\]/);
+    const songs = match ? JSON.parse(match[0]) : [];
+    res.json({ songs, region, type });
+  } catch (e) {
+    res.status(500).json({ error: e.message, songs: [] });
+  }
+});
+
+/* ---- AI Smart Radio (Gemini picks similar songs) ---- */
+app.get('/api/ai/smart-radio', async (req, res) => {
+  const apiKey = req.headers['x-gemini-key'] || '';
+  if (!apiKey || apiKey.length < 20) return res.status(401).json({ error: 'API key required' });
+  const { title = '', artist = '' } = req.query;
+
+  const prompt = `I'm listening to "${title}" by "${artist}". Recommend 15 similar songs I'd love. Mix the original artist's other hits with similar artists. Return ONLY JSON: [{"title":"song","artist":"artist"}]. Pure JSON.`;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.5, maxOutputTokens: 800 } });
+  const options = {
+    hostname: 'generativelanguage.googleapis.com',
+    path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+
+  try {
+    const text = await new Promise((resolve, reject) => {
+      const r = https.request(options, (res2) => { let d=''; res2.on('data',c=>{d+=c;}); res2.on('end',()=>resolve(d)); });
+      r.on('error', reject); r.setTimeout(15000, ()=>{r.destroy();reject(new Error('timeout'));}); r.write(body); r.end();
+    });
+    const json = JSON.parse(text);
+    const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const match = rawText.match(/\[[\s\S]*\]/);
+    const songs = match ? JSON.parse(match[0]) : [];
+    res.json({ songs });
+  } catch (e) {
+    res.status(500).json({ error: e.message, songs: [] });
+  }
+});
+
+/* ---- AI Song Info (describe the playing song) ---- */
+app.get('/api/ai/song-info', async (req, res) => {
+  const apiKey = req.headers['x-gemini-key'] || '';
+  if (!apiKey || apiKey.length < 20) return res.status(401).json({ error: 'API key required' });
+  const { title = '', artist = '' } = req.query;
+
+  const prompt = `Give me a brief, engaging description of the song "${title}" by "${artist}". Include: release year, genre, what makes it special, mood, and 1 fun fact. Keep it under 80 words, conversational tone. No bullet points.`;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.7, maxOutputTokens: 200 } });
+  const options = {
+    hostname: 'generativelanguage.googleapis.com',
+    path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+
+  try {
+    const text = await new Promise((resolve, reject) => {
+      const r = https.request(options, (res2) => { let d=''; res2.on('data',c=>{d+=c;}); res2.on('end',()=>resolve(d)); });
+      r.on('error', reject); r.setTimeout(10000, ()=>{r.destroy();reject(new Error('timeout'));}); r.write(body); r.end();
+    });
+    const json = JSON.parse(text);
+    const info = json?.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    res.json({ info });
+  } catch (e) {
+    res.status(500).json({ error: e.message, info: '' });
+  }
+});
+
+/* ---- AI Playlist Generator (chat prompt → song list) ---- */
+app.post('/api/ai/playlist-gen', async (req, res) => {
+  const apiKey = req.headers['x-gemini-key'] || '';
+  if (!apiKey || apiKey.length < 20) return res.status(401).json({ error: 'API key required' });
+  const { prompt: userPrompt = '' } = req.body || {};
+  if (!userPrompt) return res.status(400).json({ error: 'No prompt' });
+
+  const prompt = `Create a music playlist for: "${userPrompt}". Give me 15 real songs that perfectly match this vibe/request. Mix popular and underrated tracks. Return ONLY JSON array: [{"title":"song","artist":"artist"}]. Pure JSON, no extra text.`;
+  const body = JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.6, maxOutputTokens: 900 } });
+  const options = {
+    hostname: 'generativelanguage.googleapis.com',
+    path: `/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) }
+  };
+
+  try {
+    const text = await new Promise((resolve, reject) => {
+      const r = https.request(options, (res2) => { let d=''; res2.on('data',c=>{d+=c;}); res2.on('end',()=>resolve(d)); });
+      r.on('error', reject); r.setTimeout(15000, ()=>{r.destroy();reject(new Error('timeout'));}); r.write(body); r.end();
+    });
+    const json = JSON.parse(text);
+    const rawText = json?.candidates?.[0]?.content?.parts?.[0]?.text || '[]';
+    const match = rawText.match(/\[[\s\S]*\]/);
+    const songs = match ? JSON.parse(match[0]) : [];
+    res.json({ songs, prompt: userPrompt });
+  } catch (e) {
+    res.status(500).json({ error: e.message, songs: [] });
+  }
+});
+
 // index.html with a 200, so a typo'd or removed endpoint surfaced in the client
 // as "Unexpected token '<' in JSON" instead of a readable error.
 app.use('/api', (req, res) => {

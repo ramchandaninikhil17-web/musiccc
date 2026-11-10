@@ -41,6 +41,13 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.media.AudioManager
 import android.media.MediaScannerConnection
+import android.media.MediaCodec
+import android.media.MediaExtractor
+import android.media.MediaFormat
+import android.media.MediaMuxer
+import java.nio.ByteBuffer
+import com.google.gson.JsonObject
+import com.google.gson.JsonParser
 import android.widget.Button
 import android.widget.FrameLayout
 import android.widget.LinearLayout
@@ -213,7 +220,7 @@ class MainActivity : AppCompatActivity() {
             cacheMode = WebSettings.LOAD_DEFAULT
             offscreenPreRaster = true
             mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-            userAgentString = webView.settings.userAgentString + " MusicFlowAndroid/3.5 (Standalone; SpotifyStyle)"
+            userAgentString = "Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Mobile Safari/537.36"
         }
 
         webView.setLayerType(View.LAYER_TYPE_HARDWARE, null)
@@ -502,8 +509,362 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ── Native Downloads ──
+    // ── Native Downloads (Supports Video + Audio Muxing & Pure Audio) ──
 
+    private fun downloadStreamToFile(
+        client: okhttp3.OkHttpClient,
+        streamUrl: String,
+        destFile: File,
+        onProgress: (percent: Int, downloadedBytes: Long, totalBytes: Long) -> Unit
+    ): Boolean {
+        destFile.parentFile?.mkdirs()
+        val resolvedUrl = if (streamUrl.startsWith("/")) "http://127.0.0.1:$LOCAL_PORT$streamUrl" else streamUrl
+        val req = okhttp3.Request.Builder()
+            .url(resolvedUrl)
+            .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36")
+            .header("Referer", "https://www.youtube.com/")
+            .header("Origin", "https://www.youtube.com")
+            .build()
+
+        try {
+            val resp = client.newCall(req).execute()
+            val cType = resp.header("Content-Type") ?: ""
+            if (!resp.isSuccessful || resp.body == null || cType.startsWith("text/html") || cType.startsWith("application/json")) {
+                val code = resp.code
+                resp.close()
+                throw Exception("HTTP $code ($cType) for download stream")
+            }
+
+            val body = resp.body!!
+            val totalBytes = body.contentLength()
+            body.byteStream().use { input ->
+                FileOutputStream(destFile).use { output ->
+                    val buffer = ByteArray(64 * 1024)
+                    var read: Int
+                    var downloaded: Long = 0
+                    var lastUpdate = System.currentTimeMillis()
+                    while (input.read(buffer).also { read = it } != -1) {
+                        output.write(buffer, 0, read)
+                        downloaded += read
+                        val now = System.currentTimeMillis()
+                        if (now - lastUpdate > 500) {
+                            lastUpdate = now
+                            val pct = if (totalBytes > 0) ((downloaded * 100) / totalBytes).toInt() else 0
+                            onProgress(pct, downloaded, totalBytes)
+                        }
+                    }
+                    output.flush()
+                    val finalPct = if (totalBytes > 0) ((downloaded * 100) / totalBytes).toInt() else 100
+                    onProgress(finalPct, downloaded, totalBytes)
+                }
+            }
+            return true
+        } catch (e: Exception) {
+            if (destFile.exists()) destFile.delete()
+            throw e
+        }
+    }
+
+    private fun muxVideoAndAudio(videoFile: File, audioFile: File, outputFile: File): Boolean {
+        var videoExtractor: MediaExtractor? = null
+        var audioExtractor: MediaExtractor? = null
+        var muxer: MediaMuxer? = null
+        var muxerStarted = false
+        try {
+            outputFile.parentFile?.mkdirs()
+            videoExtractor = MediaExtractor().apply { setDataSource(videoFile.absolutePath) }
+            audioExtractor = MediaExtractor().apply { setDataSource(audioFile.absolutePath) }
+
+            muxer = MediaMuxer(outputFile.absolutePath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4)
+
+            var videoTrackIndex = -1
+            var muxerVideoTrackIndex = -1
+            for (i in 0 until videoExtractor.trackCount) {
+                val format = videoExtractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+                if (mime.startsWith("video/")) {
+                    videoTrackIndex = i
+                    muxerVideoTrackIndex = muxer.addTrack(format)
+                    videoExtractor.selectTrack(i)
+                    break
+                }
+            }
+
+            var audioTrackIndex = -1
+            var muxerAudioTrackIndex = -1
+            for (i in 0 until audioExtractor.trackCount) {
+                val format = audioExtractor.getTrackFormat(i)
+                val mime = format.getString(MediaFormat.KEY_MIME) ?: ""
+                if (mime.startsWith("audio/")) {
+                    audioTrackIndex = i
+                    muxerAudioTrackIndex = muxer.addTrack(format)
+                    audioExtractor.selectTrack(i)
+                    break
+                }
+            }
+
+            if (videoTrackIndex == -1 || muxerVideoTrackIndex == -1) {
+                Log.e(TAG, "No video track found in ${videoFile.name}")
+                return false
+            }
+
+            val hasAudio = (audioTrackIndex != -1 && muxerAudioTrackIndex != -1)
+
+            muxer.start()
+            muxerStarted = true
+
+            val bufferSize = 2 * 1024 * 1024
+            val byteBuffer = ByteBuffer.allocateDirect(bufferSize)
+            val bufferInfo = MediaCodec.BufferInfo()
+
+            var videoDone = false
+            var audioDone = !hasAudio
+            var baseVideoTime = -1L
+            var baseAudioTime = -1L
+
+            while (!videoDone || !audioDone) {
+                val rawV = if (!videoDone) videoExtractor.sampleTime else Long.MAX_VALUE
+                val rawA = if (!audioDone) audioExtractor.sampleTime else Long.MAX_VALUE
+
+                val vPts = if (!videoDone) {
+                    if (rawV >= 0 && baseVideoTime >= 0) maxOf(0L, rawV - baseVideoTime) else rawV
+                } else Long.MAX_VALUE
+
+                val aPts = if (!audioDone) {
+                    if (rawA >= 0 && baseAudioTime >= 0) maxOf(0L, rawA - baseAudioTime) else rawA
+                } else Long.MAX_VALUE
+
+                if (!videoDone && (audioDone || vPts <= aPts)) {
+                    bufferInfo.offset = 0
+                    bufferInfo.size = videoExtractor.readSampleData(byteBuffer, 0)
+                    if (bufferInfo.size < 0) {
+                        videoDone = true
+                    } else {
+                        val sampleTime = videoExtractor.sampleTime
+                        if (baseVideoTime < 0 && sampleTime >= 0) {
+                            baseVideoTime = sampleTime
+                        }
+                        val pts = if (sampleTime >= 0) {
+                            if (baseVideoTime >= 0) maxOf(0L, sampleTime - baseVideoTime) else sampleTime
+                        } else {
+                            0L
+                        }
+                        bufferInfo.presentationTimeUs = pts
+                        bufferInfo.flags = videoExtractor.sampleFlags
+                        muxer.writeSampleData(muxerVideoTrackIndex, byteBuffer, bufferInfo)
+                        videoExtractor.advance()
+                    }
+                } else if (!audioDone) {
+                    bufferInfo.offset = 0
+                    bufferInfo.size = audioExtractor.readSampleData(byteBuffer, 0)
+                    if (bufferInfo.size < 0) {
+                        audioDone = true
+                    } else {
+                        val sampleTime = audioExtractor.sampleTime
+                        if (baseAudioTime < 0 && sampleTime >= 0) {
+                            baseAudioTime = sampleTime
+                        }
+                        val pts = if (sampleTime >= 0) {
+                            if (baseAudioTime >= 0) maxOf(0L, sampleTime - baseAudioTime) else sampleTime
+                        } else {
+                            0L
+                        }
+                        bufferInfo.presentationTimeUs = pts
+                        bufferInfo.flags = audioExtractor.sampleFlags
+                        muxer.writeSampleData(muxerAudioTrackIndex, byteBuffer, bufferInfo)
+                        audioExtractor.advance()
+                    }
+                }
+            }
+
+            muxer.stop()
+            muxerStarted = false
+            Log.i(TAG, "Successfully muxed video and audio into ${outputFile.name} (hasAudio=$hasAudio, size=${outputFile.length()})")
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Error muxing video and audio: ${e.message}", e)
+            if (outputFile.exists()) outputFile.delete()
+            return false
+        } finally {
+            try { videoExtractor?.release() } catch (e: Exception) {}
+            try { audioExtractor?.release() } catch (e: Exception) {}
+            try {
+                if (muxerStarted) muxer?.stop()
+                muxer?.release()
+            } catch (e: Exception) {}
+        }
+    }
+
+    fun performNativeDownload(url: String, title: String, artist: String, format: String, quality: String) {
+        val isVideo = format.equals("video", ignoreCase = true) || url.contains("format=video")
+        val ext = if (isVideo) "mp4" else "mp3"
+        val mime = if (isVideo) "video/mp4" else "audio/mpeg"
+        val subDirType = if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_MUSIC
+        val cleanTitle = (title.ifEmpty { "Media" }).replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim().ifEmpty { "Track" }
+        val filename = "$cleanTitle.$ext"
+        val resolvedUrl = if (url.startsWith("/")) {
+            "http://127.0.0.1:${LOCAL_PORT}$url"
+        } else url
+
+        runOnUiThread {
+            Toast.makeText(this@MainActivity, "⬇ Starting download: $cleanTitle (${if (isVideo) "${quality}p Video (with Sound)" else "${quality} kbps Audio"})", Toast.LENGTH_SHORT).show()
+        }
+
+        executor.execute {
+            val notifId = (System.currentTimeMillis() % 100000).toInt() + 2000
+            val notifManager = getSystemService(Context.NOTIFICATION_SERVICE) as? android.app.NotificationManager
+            val notifBuilder = androidx.core.app.NotificationCompat.Builder(this@MainActivity, MusicFlowApp.CHANNEL_DOWNLOAD)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle("Downloading $cleanTitle")
+                .setContentText("Preparing ${if (isVideo) "${quality}p Video (Audio + Video)" else "${quality} kbps Audio"}...")
+                .setOngoing(true)
+                .setProgress(100, 0, true)
+                .setPriority(androidx.core.app.NotificationCompat.PRIORITY_LOW)
+
+            try {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU ||
+                    ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+                    notifManager?.notify(notifId, notifBuilder.build())
+                }
+            } catch (e: Exception) {}
+
+            try {
+                val client = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(45, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(600, java.util.concurrent.TimeUnit.SECONDS)
+                    .followRedirects(true)
+                    .build()
+
+                var targetDir = File(Environment.getExternalStoragePublicDirectory(subDirType), "MusicFlow")
+                if (!targetDir.exists()) targetDir.mkdirs()
+                if (!targetDir.canWrite()) {
+                    targetDir = File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), "MusicFlow")
+                    if (!targetDir.exists()) targetDir.mkdirs()
+                }
+                if (!targetDir.canWrite()) {
+                    targetDir = getExternalFilesDir(subDirType) ?: filesDir
+                }
+
+                val targetFile = File(targetDir, filename)
+
+                val videoId = Regex("""/api/download/([a-zA-Z0-9_-]{11})""").find(url)?.groupValues?.get(1)
+                    ?: Regex("""[?&]v=([a-zA-Z0-9_-]{11})""").find(url)?.groupValues?.get(1)
+                    ?: ""
+
+                if (isVideo && videoId.isNotEmpty()) {
+                    // Query video-pair endpoint to check if adaptive streams need audio muxing
+                    var pairObj: JsonObject? = null
+                    try {
+                        val pairUrl = "http://127.0.0.1:${LOCAL_PORT}/api/video-pair/$videoId?quality=$quality"
+                        val pairReq = okhttp3.Request.Builder().url(pairUrl).build()
+                        val pairResp = client.newCall(pairReq).execute()
+                        val pairBody = pairResp.body?.string()
+                        pairResp.close()
+                        if (pairResp.isSuccessful && !pairBody.isNullOrEmpty()) {
+                            pairObj = JsonParser.parseString(pairBody).asJsonObject
+                        }
+                    } catch (e: Exception) {
+                        Log.w(TAG, "Video-pair fetch note: ${e.message}")
+                    }
+
+                    val isProgressive = pairObj?.get("isProgressive")?.asBoolean ?: false
+                    val vUrl = pairObj?.get("videoUrl")?.asString
+                    val aUrl = pairObj?.get("audioUrl")?.asString
+                    val fps = pairObj?.get("fps")?.asInt ?: 30
+                    val fpsLabel = if (fps >= 48) " ${fps}FPS Ultra" else if (fps > 30) " ${fps}FPS" else ""
+
+                    if (!isProgressive && !aUrl.isNullOrEmpty() && !vUrl.isNullOrEmpty()) {
+                        // YouTube DASH adaptive: Download video track and audio track separately, then mux into MP4
+                        val tempDir = cacheDir
+                        val tempVid = File(tempDir, "temp_vid_${System.currentTimeMillis()}.mp4")
+                        val tempAud = File(tempDir, "temp_aud_${System.currentTimeMillis()}.m4a")
+                        try {
+                            // Phase 1: Download Video Track (0% -> 75%)
+                            notifBuilder.setContentText("Downloading video$fpsLabel (0%)...").setProgress(100, 0, false)
+                            try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                            downloadStreamToFile(client, vUrl, tempVid) { pct, bytes, total ->
+                                val overall = (pct * 0.75).toInt()
+                                notifBuilder.setProgress(100, overall, total <= 0)
+                                    .setContentText("Downloading video$fpsLabel: $pct% (${bytes / (1024 * 1024)} MB)")
+                                try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                            }
+
+                            // Phase 2: Download Audio Track (75% -> 95%)
+                            notifBuilder.setContentText("Downloading audio (0%)...").setProgress(100, 75, false)
+                            try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                            downloadStreamToFile(client, aUrl, tempAud) { pct, bytes, total ->
+                                val overall = 75 + (pct * 0.20).toInt()
+                                notifBuilder.setProgress(100, overall, total <= 0)
+                                    .setContentText("Downloading audio: $pct% (${bytes / 1024} KB)")
+                                try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                            }
+
+                            // Phase 3: Hardware Muxing into single MP4 file with audio
+                            notifBuilder.setContentText("Merging audio & video (${quality}p$fpsLabel)...").setProgress(100, 96, true)
+                            try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                            val muxSuccess = muxVideoAndAudio(tempVid, tempAud, targetFile)
+                            if (!muxSuccess) {
+                                if (tempVid.exists()) {
+                                    tempVid.copyTo(targetFile, overwrite = true)
+                                } else {
+                                    throw Exception("Failed to merge audio and video tracks")
+                                }
+                            }
+                        } finally {
+                            try { tempVid.delete() } catch (e: Exception) {}
+                            try { tempAud.delete() } catch (e: Exception) {}
+                        }
+                    } else {
+                        // Progressive or single stream
+                        val streamUrl = if (!vUrl.isNullOrEmpty()) vUrl else resolvedUrl
+                        downloadStreamToFile(client, streamUrl, targetFile) { pct, bytes, total ->
+                            notifBuilder.setProgress(100, pct, total <= 0)
+                                .setContentText("Downloading video: $pct% (${bytes / (1024 * 1024)} MB)")
+                            try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                        }
+                    }
+                } else {
+                    // Audio download (MP3 / M4A)
+                    downloadStreamToFile(client, resolvedUrl, targetFile) { pct, bytes, total ->
+                        notifBuilder.setProgress(100, pct, total <= 0)
+                            .setContentText("Downloading audio: $pct% (${bytes / (1024 * 1024)} MB)")
+                        try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+                    }
+                }
+
+                MediaScannerConnection.scanFile(
+                    this@MainActivity,
+                    arrayOf(targetFile.absolutePath),
+                    arrayOf(mime)
+                ) { path, uri ->
+                    Log.i(TAG, "Indexed downloaded file: $path -> $uri")
+                }
+
+                notifBuilder.setContentTitle("✅ Download Complete")
+                    .setContentText("Saved: $filename to ${targetDir.name}/MusicFlow")
+                    .setProgress(0, 0, false)
+                    .setOngoing(false)
+                    .setAutoCancel(true)
+                try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "✅ Saved with Sound: $filename in ${targetDir.name}/MusicFlow", Toast.LENGTH_LONG).show()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Native download failed: ${e.message}", e)
+                notifBuilder.setContentTitle("❌ Download Failed")
+                    .setContentText(e.message ?: "Could not complete download")
+                    .setProgress(0, 0, false)
+                    .setOngoing(false)
+                    .setAutoCancel(true)
+                try { notifManager?.notify(notifId, notifBuilder.build()) } catch (e: Exception) {}
+
+                runOnUiThread {
+                    Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
     private inner class MusicFlowDownloadListener : DownloadListener {
         override fun onDownloadStart(
             url: String?, userAgent: String?, contentDisposition: String?,
@@ -512,16 +873,9 @@ class MainActivity : AppCompatActivity() {
             if (url == null) return
             try {
                 val filename = URLUtil.guessFileName(url, contentDisposition, mimeType ?: "audio/mpeg")
-                val request = DownloadManager.Request(Uri.parse(url)).apply {
-                    setMimeType(mimeType ?: "audio/mpeg")
-                    addRequestHeader("User-Agent", userAgent)
-                    setTitle(filename)
-                    setDescription("Downloading $filename to Music")
-                    setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                    setDestinationInExternalPublicDir(Environment.DIRECTORY_MUSIC, "MusicFlow/$filename")
-                }
-                (getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager).enqueue(request)
-                Toast.makeText(this@MainActivity, "⬇ Downloading to Music/MusicFlow: $filename", Toast.LENGTH_SHORT).show()
+                val isVideo = filename.endsWith(".mp4", ignoreCase = true) || (mimeType?.contains("video") == true)
+                val cleanTitle = filename.substringBeforeLast(".")
+                performNativeDownload(url, cleanTitle, "", if (isVideo) "video" else "audio", if (isVideo) "1080" else "192")
             } catch (e: Exception) {
                 Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
             }
@@ -757,39 +1111,12 @@ class MainActivity : AppCompatActivity() {
             val isVideo = url.contains("format=video")
             val format = if (isVideo) "video" else "audio"
             val quality = if (isVideo) "1080" else "192"
-            startNativeDownloadAdvanced(url, title, artist, format, quality)
+            performNativeDownload(url, title, artist, format, quality)
         }
 
         @JavascriptInterface
         fun startNativeDownloadAdvanced(url: String, title: String, artist: String, format: String, quality: String) {
-            runOnUiThread {
-                try {
-                    val isVideo = format.equals("video", ignoreCase = true) || url.contains("format=video")
-                    val ext = if (isVideo) "mp4" else "mp3"
-                    val mime = if (isVideo) "video/mp4" else "audio/mpeg"
-                    val subDir = if (isVideo) Environment.DIRECTORY_MOVIES else Environment.DIRECTORY_MUSIC
-                    val safeTitle = (title.ifEmpty { "Media" }).replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim()
-                    val filename = "$safeTitle.$ext"
-
-                    val resolvedUrl = if (url.startsWith("/")) {
-                        "http://127.0.0.1:${LOCAL_PORT}$url"
-                    } else url
-
-                    val request = DownloadManager.Request(Uri.parse(resolvedUrl)).apply {
-                        setMimeType(mime)
-                        setTitle(safeTitle)
-                        setDescription("Downloading $safeTitle (${if (isVideo) "${quality}p Video" else "${quality} kbps Audio"})")
-                        setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                        setDestinationInExternalPublicDir(subDir, "MusicFlow/$filename")
-                    }
-                    val manager = getSystemService(Context.DOWNLOAD_SERVICE) as DownloadManager
-                    manager.enqueue(request)
-                    Toast.makeText(this@MainActivity, "⬇ Downloading to ${if (isVideo) "Movies" else "Music"}/MusicFlow: $filename", Toast.LENGTH_SHORT).show()
-                } catch (e: Exception) {
-                    Log.w(TAG, "Native download trigger notice: ${e.message}")
-                    Toast.makeText(this@MainActivity, "Download failed: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
+            performNativeDownload(url, title, artist, format, quality)
         }
 
         @JavascriptInterface
@@ -985,8 +1312,21 @@ class MainActivity : AppCompatActivity() {
             (function() {
                 var sfp = document.getElementById('spotifyFullscreenPlayer');
                 if (sfp && sfp.classList.contains('active')) {
+                    var sfpLrc = document.getElementById('sfpLyricsOverlay');
+                    if (sfpLrc && sfpLrc.classList.contains('active')) {
+                        sfpLrc.classList.remove('active');
+                        return true;
+                    }
                     if (window.SpotifyMobileController && typeof window.SpotifyMobileController.closeFullscreen === 'function') {
                         window.SpotifyMobileController.closeFullscreen();
+                        return true;
+                    }
+                }
+                var modals = ['downloadOptionsModal', 'settingsModal', 'sleepTimerModal', 'eqModal', 'shareModal', 'batchImportModal', 'createPlaylistModal'];
+                for (var i = 0; i < modals.length; i++) {
+                    var m = document.getElementById(modals[i]);
+                    if (m && m.style.display !== 'none' && m.offsetWidth > 0) {
+                        m.style.display = 'none';
                         return true;
                     }
                 }

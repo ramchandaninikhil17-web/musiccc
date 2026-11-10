@@ -1,11 +1,11 @@
 {
-  "name": "MusicFlow",
+  "name": "MusicFlow v4.0 OLED Pro",
   "short_name": "MusicFlow",
-  "description": "High-Performance Music Streaming Player",
+  "description": "Best Free Music Player — OLED Black, Spotify-Class Features",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0b0e14",
-  "theme_color": "#6366f1",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "icons": [
     {
       "src": "/icons/icon-192.png",

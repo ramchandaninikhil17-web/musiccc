@@ -35,6 +35,8 @@ class LocalServer(
     port: Int = 8765
 ) : NanoHTTPD(port) {
 
+    private val serverPort: Int = port
+
     companion object {
         private const val TAG = "LocalServer"
         private val gson = Gson()
@@ -43,10 +45,11 @@ class LocalServer(
             "https://yt.chocolatemoo53.com",
             "https://invidious.slipfox.xyz",
             "https://invidious.nerdvpn.de",
+            "https://inv.nadeko.net",
             "https://invidious.tiekoetter.com",
             "https://invidious.lunar.icu",
-            "https://inv.nadeko.net",
-            "https://invidious.f5.si"
+            "https://invidious.private.coffee",
+            "https://inv.tux.pizza"
         )
 
         private const val CHROME_UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36"
@@ -74,6 +77,7 @@ class LocalServer(
     private val assets: AssetManager = context.assets
 
     data class CacheEntry(val data: Any, val ts: Long = System.currentTimeMillis())
+    data class CandidateVideo(val obj: JsonObject, val height: Int, val fps: Int, val bitrate: Long)
 
     init {
         Thread {
@@ -136,6 +140,9 @@ class LocalServer(
                 uri.startsWith("/api/info/") -> handleInfo(uri)
                 uri.startsWith("/api/suggestions") -> handleSuggestions(session)
                 uri.startsWith("/api/recommendations") -> handleRecommendations(session)
+                uri.startsWith("/api/trending") -> handleTrending(session)
+                uri.startsWith("/api/charts") -> handleCharts(session)
+                uri.startsWith("/api/song-radio/") -> handleSongRadio(uri)
                 uri.startsWith("/api/smart-search") -> handleSmartSearch(session)
                 uri.startsWith("/api/resolve-link") -> handleResolveLink(session)
                 uri == "/api/user-data" && method == Method.GET -> handleGetUserData()
@@ -150,6 +157,8 @@ class LocalServer(
                 uri.startsWith("/api/batch-search") && method == Method.POST -> handleBatchSearch(session)
                 uri.startsWith("/api/archive-session") -> jsonOk("""{"success":true}""")
                 uri.startsWith("/api/update-ytdlp") -> jsonOk("""{"ok":true,"updated":false,"from":"standalone","to":"standalone"}""")
+                uri.startsWith("/api/video-pair/") -> handleVideoPair(session, uri)
+                uri.startsWith("/api/stream-track/") -> handleStreamTrack(session, uri)
                 uri.startsWith("/api/download/") -> handleDownload(session, uri)
                 uri.startsWith("/api/playlist-download") -> handlePlaylistDownload(session)
                 uri.startsWith("/api/diagnose") -> jsonOk("""{"standalone":true,"activeInstances":${invidiousInstances.size}}""")
@@ -396,23 +405,33 @@ class LocalServer(
         if (!isValidVideoId(videoId)) return jsonError(400, "Invalid video ID")
 
         val quality = session.parms?.get("quality") ?: "high"
+        val isRetry = session.parms?.containsKey("retry") == true || session.parms?.containsKey("t") == true
         val cacheKey = "${videoId}_$quality"
 
-        try {
-            var audioUrl = getCached(audioUrlCache, cacheKey) as? String
+        if (isRetry) {
+            audioUrlCache.remove(cacheKey)
+        }
 
-            if (audioUrl == null) {
-                audioUrl = extractAudioUrl(videoId, quality)
-                if (audioUrl != null) {
-                    setCache(audioUrlCache, cacheKey, audioUrl)
+        try {
+            // Check cache first if not explicitly retrying
+            val cachedUrl = if (!isRetry) getCached(audioUrlCache, cacheKey) as? String else null
+            if (cachedUrl != null) {
+                val resp = tryProxyAudio(cachedUrl, session)
+                if (resp != null) return resp
+                audioUrlCache.remove(cacheKey)
+            }
+
+            // Resolve multiple candidate stream URLs (Invidious proxied, Piped, Cloud)
+            val candidates = resolveAudioCandidates(videoId, quality)
+            for (candidateUrl in candidates) {
+                val resp = tryProxyAudio(candidateUrl, session)
+                if (resp != null) {
+                    setCache(audioUrlCache, cacheKey, candidateUrl)
+                    return resp
                 }
             }
 
-            if (audioUrl.isNullOrEmpty()) {
-                return jsonError(502, "Could not resolve audio stream for $videoId")
-            }
-
-            return proxyAudioStream(audioUrl, session)
+            return jsonError(502, "All audio stream sources failed for $videoId")
         } catch (e: Exception) {
             Log.e(TAG, "Stream error for $videoId: ${e.message}", e)
             audioUrlCache.remove(cacheKey)
@@ -421,8 +440,16 @@ class LocalServer(
     }
 
     private fun extractAudioUrl(videoId: String, quality: String): String? {
+        val candidates = resolveAudioCandidates(videoId, quality)
+        return candidates.firstOrNull()
+    }
+
+    private fun resolveAudioCandidates(videoId: String, quality: String): List<String> {
+        val candidates = mutableListOf<String>()
+
+        // 1. Invidious Instances with Proxy Rewriting
         val count = invidiousInstances.size
-        for (i in 0 until minOf(count, 5)) {
+        for (i in 0 until minOf(count, 4)) {
             val idx = (currentInstanceIdx.get() + i) % count
             val host = invidiousInstances[idx]
             try {
@@ -458,76 +485,129 @@ class LocalServer(
                             t.contains("mp4") || t.contains("m4a")
                         }
 
-                        val candidates = (if (mp4Audio.isNotEmpty()) mp4Audio else allAudio)
+                        val sorted = (if (mp4Audio.isNotEmpty()) mp4Audio else allAudio)
                             .sortedByDescending { it.get("bitrate")?.asLong ?: 0L }
 
                         val chosen = when (quality) {
-                            "low", "64" -> candidates.last()
-                            "128" -> candidates.getOrNull(candidates.size / 2) ?: candidates.last()
-                            "192" -> candidates.getOrNull(1) ?: candidates.first()
-                            else -> candidates.first() // "320", "256", "high"
+                            "low", "64" -> sorted.last()
+                            "128" -> sorted.getOrNull(sorted.size / 2) ?: sorted.last()
+                            "192" -> sorted.getOrNull(1) ?: sorted.first()
+                            else -> sorted.first()
                         }
-                        val directAudioUrl = chosen.get("url")?.asString
-                        if (!directAudioUrl.isNullOrEmpty()) {
+                        val rawUrl = chosen.get("url")?.asString
+                        if (!rawUrl.isNullOrEmpty()) {
+                            // Primary candidate: rewrite googlevideo URL to route through Invidious proxy
+                            if (rawUrl.contains("/videoplayback")) {
+                                try {
+                                    val uriObj = java.net.URI(rawUrl)
+                                    val proxied = "$host/videoplayback?" + (uriObj.rawQuery ?: "")
+                                    candidates.add(proxied)
+                                } catch (e: Exception) {
+                                    candidates.add(rawUrl)
+                                }
+                            } else if (rawUrl.startsWith("/")) {
+                                candidates.add("$host$rawUrl")
+                            } else {
+                                candidates.add(rawUrl)
+                            }
+
+                            if (!candidates.contains(rawUrl)) {
+                                candidates.add(rawUrl)
+                            }
                             currentInstanceIdx.set(idx)
-                            return directAudioUrl
+                            break
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Audio extract failed on $host: ${e.message}")
+                Log.w(TAG, "Audio candidate notice on $host: ${e.message}")
             }
         }
-        // Cloud Fallback: proxy from live Render backend
-        try {
-            val cloudUrl = "https://musiccc-59kv.onrender.com/api/stream/$videoId?quality=$quality"
-            val req = Request.Builder()
-                .url(cloudUrl)
-                .header("User-Agent", CHROME_UA)
-                .head()
-                .build()
-            val resp = httpClient.newCall(req).execute()
-            val code = resp.code
-            resp.close()
-            if (code in 200..302) {
-                return cloudUrl
-            }
-        } catch (e: Exception) {
-            Log.w(TAG, "Cloud stream fallback note: ${e.message}")
+
+        // 2. Piped Instances Fallback
+        val pipedHosts = listOf(
+            "https://api.piped.private.coffee",
+            "https://pipedapi.kavin.rocks",
+            "https://piped-api.lunar.icu",
+            "https://api.piped.projectsegfau.lt"
+        )
+        for (pipedHost in pipedHosts) {
+            try {
+                val pUrl = "$pipedHost/streams/$videoId"
+                val pReq = Request.Builder().url(pUrl).header("User-Agent", CHROME_UA).build()
+                val pResp = httpClient.newCall(pReq).execute()
+                val pBody = pResp.body?.string()
+                pResp.close()
+                if (pResp.isSuccessful && !pBody.isNullOrEmpty()) {
+                    val pRoot = JsonParser.parseString(pBody).asJsonObject
+                    val pAudio = pRoot.getAsJsonArray("audioStreams") ?: JsonArray()
+                    for (item in pAudio) {
+                        val sUrl = item.asJsonObject.get("url")?.asString
+                        if (!sUrl.isNullOrEmpty() && !candidates.contains(sUrl)) {
+                            candidates.add(sUrl)
+                        }
+                    }
+                    if (candidates.isNotEmpty()) break
+                }
+            } catch (e: Exception) {}
         }
-        return null
+
+        // 3. Cloud Fallback
+        val cloudUrl = "https://musiccc-59kv.onrender.com/api/stream/$videoId?quality=$quality"
+        if (!candidates.contains(cloudUrl)) {
+            candidates.add(cloudUrl)
+        }
+
+        return candidates
     }
 
-    private fun proxyAudioStream(audioUrl: String, session: IHTTPSession): Response {
-        val reqBuilder = Request.Builder()
-            .url(audioUrl)
-            .header("User-Agent", CHROME_UA)
-            .header("Referer", "https://www.youtube.com/")
-            .header("Origin", "https://www.youtube.com")
+    private fun tryProxyAudio(audioUrl: String, session: IHTTPSession): Response? {
+        return try {
+            val reqBuilder = Request.Builder()
+                .url(audioUrl)
+                .header("User-Agent", CHROME_UA)
+                .header("Referer", "https://www.youtube.com/")
+                .header("Origin", "https://www.youtube.com")
 
-        val range = session.headers?.get("range")
-        if (!range.isNullOrEmpty()) {
-            reqBuilder.header("Range", range)
+            val range = session.headers?.get("range")
+            if (!range.isNullOrEmpty()) {
+                reqBuilder.header("Range", range)
+            }
+
+            val response = streamProxyClient.newCall(reqBuilder.build()).execute()
+            if (!response.isSuccessful && response.code != 206) {
+                response.close()
+                return null
+            }
+
+            val body = response.body ?: run {
+                response.close()
+                return null
+            }
+
+            val contentType = response.header("Content-Type") ?: "audio/mp4"
+            if (contentType.startsWith("text/html") || contentType.startsWith("application/json")) {
+                response.close()
+                return null
+            }
+
+            val status = if (response.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
+            val contentLength = body.contentLength()
+            val stream = body.byteStream()
+
+            val nanoResponse = newFixedLengthResponse(status, contentType, stream, contentLength)
+            nanoResponse.addHeader("Accept-Ranges", "bytes")
+            nanoResponse.addHeader("Cache-Control", "public, max-age=3600")
+            nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
+
+            response.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
+            response.header("Content-Length")?.let { nanoResponse.addHeader("Content-Length", it) }
+
+            nanoResponse
+        } catch (e: Exception) {
+            Log.w(TAG, "tryProxyAudio notice for $audioUrl: ${e.message}")
+            null
         }
-
-        val response = streamProxyClient.newCall(reqBuilder.build()).execute()
-        val body = response.body ?: return jsonError(502, "Empty audio stream response")
-
-        val contentType = response.header("Content-Type") ?: "audio/mp4"
-        val status = if (response.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
-
-        val contentLength = body.contentLength()
-        val stream = body.byteStream()
-
-        val nanoResponse = newFixedLengthResponse(status, contentType, stream, contentLength)
-        nanoResponse.addHeader("Accept-Ranges", "bytes")
-        nanoResponse.addHeader("Cache-Control", "public, max-age=3600")
-        nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
-
-        response.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
-        response.header("Content-Length")?.let { nanoResponse.addHeader("Content-Length", it) }
-
-        return nanoResponse
     }
 
     // ── Info ──
@@ -643,6 +723,50 @@ class LocalServer(
             setCache(searchCache, cacheKey, json)
         }
         return jsonOk(json)
+    }
+
+    // ── Trending, Charts & Song Radio ──
+
+    private fun handleTrending(session: IHTTPSession): Response {
+        val region = session.parms?.get("region") ?: "global"
+        val q = when (region) {
+            "india" -> "trending songs india hindi hits 2026"
+            "punjabi" -> "trending punjabi hit songs 2026"
+            "kpop" -> "trending kpop songs 2026"
+            "english" -> "trending english billboard hits 2026"
+            else -> "trending songs global hits 2026"
+        }
+        val cacheKey = "trending_$region"
+        getCached(searchCache, cacheKey)?.let { return jsonOk(it as String) }
+        val results = searchYouTubeDirect(q)
+        val json = gson.toJson(results)
+        if (results.size() > 0) setCache(searchCache, cacheKey, json)
+        return jsonOk(json)
+    }
+
+    private fun handleCharts(session: IHTTPSession): Response {
+        val chart = session.parms?.get("chart") ?: "global50"
+        val q = when (chart) {
+            "india40" -> "top songs india hindi hits 2026"
+            "viral" -> "viral hits songs tiktok reels"
+            "new_releases" -> "new music releases latest songs 2026"
+            "decades90s" -> "90s greatest hit songs"
+            "decades2000s" -> "2000s greatest hit songs"
+            else -> "top 50 songs global billboard hits 2026"
+        }
+        val cacheKey = "chart_$chart"
+        getCached(searchCache, cacheKey)?.let { return jsonOk(it as String) }
+        val results = searchYouTubeDirect(q)
+        val json = gson.toJson(results)
+        if (results.size() > 0) setCache(searchCache, cacheKey, json)
+        return jsonOk(json)
+    }
+
+    private fun handleSongRadio(uri: String): Response {
+        val videoId = uri.removePrefix("/api/song-radio/").substringBefore('?')
+        val q = "related songs hits $videoId"
+        val results = searchYouTubeDirect(q)
+        return jsonOk(gson.toJson(results))
     }
 
     // ── Smart Search ──
@@ -937,6 +1061,25 @@ class LocalServer(
         return null
     }
 
+    private fun extractFormatFps(obj: JsonObject): Int {
+        val f = obj.get("fps")?.asInt
+        if (f != null && f > 0) return f
+        val ql = obj.get("qualityLabel")?.asString
+        if (!ql.isNullOrEmpty()) {
+            val m = Regex("""\d+p(\d+)""").find(ql)
+            val v = m?.groupValues?.get(1)?.toIntOrNull()
+            if (v != null && v > 0) return v
+        }
+        return 30
+    }
+
+    private fun extractFormatBitrate(obj: JsonObject): Long {
+        val b = obj.get("bitrate")?.asLong ?: obj.get("averageBitrate")?.asLong
+        if (b != null && b > 0L) return b
+        val brStr = obj.get("bitrate")?.asString
+        return brStr?.toLongOrNull() ?: 0L
+    }
+
     private fun handleFormats(uri: String): Response {
         val videoId = uri.removePrefix("/api/formats/").split("?")[0].trim()
         if (!isValidVideoId(videoId)) {
@@ -1012,112 +1155,332 @@ class LocalServer(
         return jsonOk("""{"heights":[360,480,720,1080,1440,2160],"maxHeight":2160,"hasVideo":true,"audioBitrates":[128,192,256,320],"maxAudioBitrate":320}""")
     }
 
-    // ── Downloads (Supports Both Multi-Quality Video MP4 & Audio MP3) ──
+    // ── Video Pair & Adaptive Stream Engine ──
 
-    private fun handleDownload(session: IHTTPSession, uri: String): Response {
-        val videoId = uri.removePrefix("/api/download/").split("?")[0].trim()
-        val titleHint = session.parms?.get("title")?.trim() ?: "Song"
-        val format = session.parms?.get("format")?.trim() ?: "audio"
-        val quality = session.parms?.get("quality")?.trim() ?: (if (format == "video") "1080" else "192")
-
+    private fun handleVideoPair(session: IHTTPSession, uri: String): Response {
+        val videoId = uri.removePrefix("/api/video-pair/").split("?")[0].trim()
+        val quality = session.parms?.get("quality")?.trim() ?: "1080"
         if (!isValidVideoId(videoId)) return jsonError(400, "Invalid video ID")
 
-        val isVideo = format == "video"
-        val safeTitle = titleHint.replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim().ifEmpty { "Media" }
-        val encodedTitle = try { java.net.URLEncoder.encode(safeTitle, "UTF-8") } catch (e: Exception) { "Media" }
+        val targetHeight = quality.toIntOrNull() ?: 1080
 
-        // 1. High-resolution Video (1080p, 1440p 2K, 2160p 4K) or High-bitrate Audio (320k, 256k):
-        // YouTube DASH splits 1080p+ into video-only and audio-only streams. To deliver a complete,
-        // high-resolution file WITH audio, route through the cloud muxed downloader.
-        val targetHeight = quality.toIntOrNull() ?: 720
-        val needsCloudMux = (isVideo && targetHeight >= 1080) || (!isVideo && (quality == "320" || quality == "256"))
-
-        if (needsCloudMux) {
+        // Probe formats from Invidious
+        val count = invidiousInstances.size
+        for (i in 0 until minOf(count, 5)) {
+            val idx = (currentInstanceIdx.get() + i) % count
+            val host = invidiousInstances[idx]
             try {
-                val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=$format&quality=$quality&title=$encodedTitle"
-                val reqBuilder = Request.Builder()
-                    .url(cloudUrl)
+                val req = Request.Builder()
+                    .url("$host/api/v1/videos/$videoId")
                     .header("User-Agent", CHROME_UA)
-                val range = session.headers?.get("range")
-                if (!range.isNullOrEmpty()) {
-                    reqBuilder.header("Range", range)
-                }
+                    .build()
+                val resp = httpClient.newCall(req).execute()
+                val body = resp.body?.string()
+                resp.close()
 
-                val cloudResp = streamProxyClient.newCall(reqBuilder.build()).execute()
-                if (cloudResp.isSuccessful && cloudResp.body != null) {
-                    val body = cloudResp.body!!
-                    val ext = if (isVideo) "mp4" else "mp3"
-                    val mimeType = if (isVideo) "video/mp4" else "audio/mpeg"
-                    val filename = "$safeTitle.$ext"
-                    val status = if (cloudResp.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
-                    val contentLength = body.contentLength()
-                    val stream = body.byteStream()
+                if (resp.isSuccessful && !body.isNullOrEmpty()) {
+                    val root = JsonParser.parseString(body).asJsonObject
+                    val formatStreams = root.getAsJsonArray("formatStreams") ?: JsonArray()
+                    val adaptiveFormats = root.getAsJsonArray("adaptiveFormats") ?: JsonArray()
 
-                    val nanoResponse = newFixedLengthResponse(status, mimeType, stream, contentLength)
-                    nanoResponse.addHeader("Accept-Ranges", "bytes")
-                    nanoResponse.addHeader("Content-Disposition", "attachment; filename=\"$filename\"")
-                    nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
-                    nanoResponse.addHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition")
-                    cloudResp.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
-                    if (contentLength > 0) {
-                        nanoResponse.addHeader("Content-Length", contentLength.toString())
+                    // Adaptive stream: separate video and audio tracks for ultra quality (up to 60fps & 320k audio)
+                    val videoCandidates = mutableListOf<CandidateVideo>()
+                    for (elem in adaptiveFormats) {
+                        val obj = elem.asJsonObject
+                        val type = obj.get("type")?.asString ?: obj.get("mimeType")?.asString ?: ""
+                        if (type.startsWith("video/")) {
+                            val container = obj.get("container")?.asString ?: ""
+                            val isMp4 = type.contains("mp4") || container.contains("mp4")
+                            if (isMp4) {
+                                val h = extractFormatHeight(obj) ?: 0
+                                if (h > 0) {
+                                    val fps = extractFormatFps(obj)
+                                    val bitrate = extractFormatBitrate(obj)
+                                    videoCandidates.add(CandidateVideo(obj, h, fps, bitrate))
+                                }
+                            }
+                        }
                     }
-                    return nanoResponse
+
+                    // Prioritize avc1 (H.264) for 100% Android MediaMuxer compatibility
+                    val avcCandidates = videoCandidates.filter {
+                        val type = it.obj.get("type")?.asString ?: ""
+                        type.contains("avc1") || type.contains("avc")
+                    }
+                    val pool = if (avcCandidates.isNotEmpty()) avcCandidates else videoCandidates
+
+                    if (pool.isNotEmpty()) {
+                        // Multi-tier sort:
+                        // 1. Target height closeness
+                        // 2. Highest FPS descending (60fps > 50fps > 30fps > 24fps)
+                        // 3. Highest Bitrate descending
+                        val sortedPool = pool.sortedWith(
+                            compareBy<CandidateVideo> {
+                                if (it.height == targetHeight) 0
+                                else if (it.height < targetHeight) (targetHeight - it.height) * 1000
+                                else (it.height - targetHeight) * 2000
+                            }.thenByDescending { it.fps }
+                             .thenByDescending { it.bitrate }
+                        )
+
+                        val bestVideo = sortedPool.first()
+                        val resolvedHeight = bestVideo.height
+                        val resolvedFps = bestVideo.fps
+
+                        val result = JsonObject().apply {
+                            addProperty("isProgressive", false)
+                            addProperty("videoUrl", "http://127.0.0.1:$serverPort/api/stream-track/$videoId?type=video&quality=$resolvedHeight")
+                            addProperty("audioUrl", "http://127.0.0.1:$serverPort/api/stream-track/$videoId?type=audio&quality=320")
+                            addProperty("height", resolvedHeight)
+                            addProperty("fps", resolvedFps)
+                        }
+                        currentInstanceIdx.set(idx)
+                        return jsonOk(gson.toJson(result))
+                    }
+
+                    // Fallback to progressive only if no adaptive MP4 video exists
+                    for (elem in formatStreams) {
+                        val obj = elem.asJsonObject
+                        val container = obj.get("container")?.asString ?: "mp4"
+                        if (container.contains("mp4") || obj.get("type")?.asString?.contains("mp4") == true) {
+                            val h = extractFormatHeight(obj) ?: 0
+                            val fps = extractFormatFps(obj)
+                            val result = JsonObject().apply {
+                                addProperty("isProgressive", true)
+                                addProperty("videoUrl", "http://127.0.0.1:$serverPort/api/stream-track/$videoId?type=progressive&quality=$quality")
+                                add("audioUrl", null)
+                                addProperty("height", h)
+                                addProperty("fps", fps)
+                            }
+                            currentInstanceIdx.set(idx)
+                            return jsonOk(gson.toJson(result))
+                        }
+                    }
                 }
-                cloudResp.close()
             } catch (e: Exception) {
-                Log.w(TAG, "Cloud mux download notice for $videoId: ${e.message}")
+                Log.w(TAG, "Video pair metadata probe note on $host: ${e.message}")
             }
         }
 
-        // 2. Direct Stream Fallback (or standard progressive download for 720p / 480p / 360p / 192k / 128k)
-        val downloadStreamUrl = if (isVideo) {
-            extractVideoUrl(videoId, quality)
-        } else {
-            extractAudioUrl(videoId, quality)
-        } ?: return jsonError(502, "Could not resolve stream for ${if (isVideo) "video" else "audio"} download")
-
-        return try {
-            val reqBuilder = Request.Builder()
-                .url(downloadStreamUrl)
-                .header("User-Agent", CHROME_UA)
-                .header("Referer", "https://www.youtube.com/")
-                .header("Origin", "https://www.youtube.com")
-
-            val range = session.headers?.get("range")
-            if (!range.isNullOrEmpty()) {
-                reqBuilder.header("Range", range)
-            }
-
-            val response = streamProxyClient.newCall(reqBuilder.build()).execute()
-            val body = response.body ?: return jsonError(502, "Empty download stream response")
-
-            val ext = if (isVideo) "mp4" else "mp3"
-            val mimeType = if (isVideo) "video/mp4" else "audio/mpeg"
-            val filename = "$safeTitle.$ext"
-            val status = if (response.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
-            val contentLength = body.contentLength()
-            val stream = body.byteStream()
-
-            val nanoResponse = newFixedLengthResponse(status, mimeType, stream, contentLength)
-            nanoResponse.addHeader("Accept-Ranges", "bytes")
-            nanoResponse.addHeader("Content-Disposition", "attachment; filename=\"$filename\"")
-            nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
-            nanoResponse.addHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition")
-            response.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
-            if (contentLength > 0) {
-                nanoResponse.addHeader("Content-Length", contentLength.toString())
-            }
-
-            nanoResponse
-        } catch (e: Exception) {
-            Log.e(TAG, "Download proxy error for $videoId: ${e.message}", e)
-            jsonError(500, "Download failed: ${e.message?.take(80)}")
+        // Fallback pair
+        val fallback = JsonObject().apply {
+            addProperty("isProgressive", false)
+            addProperty("videoUrl", "http://127.0.0.1:$serverPort/api/stream-track/$videoId?type=video&quality=$quality")
+            addProperty("audioUrl", "http://127.0.0.1:$serverPort/api/stream-track/$videoId?type=audio&quality=320")
+            addProperty("height", targetHeight)
+            addProperty("fps", 30)
         }
+        return jsonOk(gson.toJson(fallback))
     }
 
-    private fun extractVideoUrl(videoId: String, quality: String): String? {
+    private fun handleStreamTrack(session: IHTTPSession, uri: String): Response {
+        val videoId = uri.removePrefix("/api/stream-track/").split("?")[0].trim()
+        val type = session.parms?.get("type") ?: "video"
+        val quality = session.parms?.get("quality") ?: "1080"
+        if (!isValidVideoId(videoId)) return jsonError(400, "Invalid video ID")
+
+        val candidates = when (type) {
+            "video" -> resolveVideoTrackCandidates(videoId, quality)
+            "audio" -> resolveAudioTrackCandidates(videoId)
+            "progressive" -> resolveProgressiveTrackCandidates(videoId, quality)
+            else -> resolveVideoTrackCandidates(videoId, quality)
+        }
+
+        val defaultMime = when (type) {
+            "video" -> "video/mp4"
+            "audio" -> "audio/mp4"
+            "progressive" -> "video/mp4"
+            else -> "video/mp4"
+        }
+
+        for (cand in candidates) {
+            val resp = tryProxyTrackStream(cand, session, defaultMime)
+            if (resp != null) return resp
+        }
+
+        return jsonError(502, "Could not resolve active stream track for $videoId ($type)")
+    }
+
+    private fun resolveVideoTrackCandidates(videoId: String, quality: String): List<String> {
+        val targetHeight = quality.toIntOrNull() ?: 1080
+        val candidates = mutableListOf<String>()
+
+        val count = invidiousInstances.size
+        for (i in 0 until minOf(count, 5)) {
+            val idx = (currentInstanceIdx.get() + i) % count
+            val host = invidiousInstances[idx]
+            try {
+                val req = Request.Builder()
+                    .url("$host/api/v1/videos/$videoId")
+                    .header("User-Agent", CHROME_UA)
+                    .build()
+                val resp = httpClient.newCall(req).execute()
+                val body = resp.body?.string()
+                resp.close()
+
+                if (resp.isSuccessful && !body.isNullOrEmpty()) {
+                    val root = JsonParser.parseString(body).asJsonObject
+                    val adaptive = root.getAsJsonArray("adaptiveFormats") ?: JsonArray()
+
+                    val matches = mutableListOf<CandidateVideo>()
+                    for (elem in adaptive) {
+                        val obj = elem.asJsonObject
+                        val type = obj.get("type")?.asString ?: obj.get("mimeType")?.asString ?: ""
+                        if (type.startsWith("video/")) {
+                            val container = obj.get("container")?.asString ?: ""
+                            if (type.contains("mp4") || container.contains("mp4")) {
+                                val h = extractFormatHeight(obj) ?: 0
+                                if (h > 0) {
+                                    val fps = extractFormatFps(obj)
+                                    val bitrate = extractFormatBitrate(obj)
+                                    matches.add(CandidateVideo(obj, h, fps, bitrate))
+                                }
+                            }
+                        }
+                    }
+
+                    val avcMatches = matches.filter {
+                        val type = it.obj.get("type")?.asString ?: ""
+                        type.contains("avc1") || type.contains("avc")
+                    }
+                    val pool = if (avcMatches.isNotEmpty()) avcMatches else matches
+
+                    if (pool.isNotEmpty()) {
+                        val sortedPool = pool.sortedWith(
+                            compareBy<CandidateVideo> {
+                                if (it.height == targetHeight) 0
+                                else if (it.height < targetHeight) (targetHeight - it.height) * 1000
+                                else (it.height - targetHeight) * 2000
+                            }.thenByDescending { it.fps }
+                             .thenByDescending { it.bitrate }
+                        )
+
+                        for (cand in sortedPool.take(3)) {
+                            val rawUrl = cand.obj.get("url")?.asString
+                            if (!rawUrl.isNullOrEmpty()) {
+                                if (rawUrl.contains("googlevideo.com")) {
+                                    try {
+                                        val u = java.net.URI(rawUrl)
+                                        val pathAndQuery = if (u.rawQuery != null) "${u.rawPath}?${u.rawQuery}" else u.rawPath
+                                        candidates.add("$host$pathAndQuery")
+                                    } catch (e: Exception) {
+                                        candidates.add(rawUrl)
+                                    }
+                                } else if (rawUrl.startsWith("/")) {
+                                    candidates.add("$host$rawUrl")
+                                } else {
+                                    candidates.add(rawUrl)
+                                }
+                                if (!candidates.contains(rawUrl)) {
+                                    candidates.add(rawUrl)
+                                }
+                            }
+                        }
+                        if (candidates.isNotEmpty()) {
+                            currentInstanceIdx.set(idx)
+                            break
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Video track candidate error on $host: ${e.message}")
+            }
+        }
+
+        val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=video&quality=$quality"
+        if (!candidates.contains(cloudUrl)) {
+            candidates.add(cloudUrl)
+        }
+
+        return candidates
+    }
+
+    private fun resolveAudioTrackCandidates(videoId: String): List<String> {
+        val candidates = mutableListOf<String>()
+
+        val count = invidiousInstances.size
+        for (i in 0 until minOf(count, 5)) {
+            val idx = (currentInstanceIdx.get() + i) % count
+            val host = invidiousInstances[idx]
+            try {
+                val req = Request.Builder()
+                    .url("$host/api/v1/videos/$videoId")
+                    .header("User-Agent", CHROME_UA)
+                    .build()
+                val resp = httpClient.newCall(req).execute()
+                val body = resp.body?.string()
+                resp.close()
+
+                if (resp.isSuccessful && !body.isNullOrEmpty()) {
+                    val root = JsonParser.parseString(body).asJsonObject
+                    val adaptive = root.getAsJsonArray("adaptiveFormats") ?: JsonArray()
+
+                    val audioMatches = mutableListOf<JsonObject>()
+                    for (elem in adaptive) {
+                        val obj = elem.asJsonObject
+                        val type = obj.get("type")?.asString ?: obj.get("mimeType")?.asString ?: ""
+                        if (type.startsWith("audio/")) {
+                            val container = obj.get("container")?.asString ?: ""
+                            if (type.contains("mp4") || container.contains("m4a") || container.contains("mp4")) {
+                                audioMatches.add(obj)
+                            }
+                        }
+                    }
+
+                    // Sort audio matches by highest bitrate descending for studio sound quality!
+                    val sortedAudios = audioMatches.sortedByDescending {
+                        extractFormatBitrate(it)
+                    }
+
+                    val bestAudios = if (sortedAudios.isNotEmpty()) sortedAudios else {
+                        adaptive.filter {
+                            (it.asJsonObject.get("type")?.asString ?: "").startsWith("audio/")
+                        }.map { it.asJsonObject }.sortedByDescending { extractFormatBitrate(it) }
+                    }
+
+                    for (bestAudio in bestAudios.take(3)) {
+                        val rawUrl = bestAudio.get("url")?.asString
+                        if (!rawUrl.isNullOrEmpty()) {
+                            if (rawUrl.contains("googlevideo.com")) {
+                                try {
+                                    val u = java.net.URI(rawUrl)
+                                    val pathAndQuery = if (u.rawQuery != null) "${u.rawPath}?${u.rawQuery}" else u.rawPath
+                                    candidates.add("$host$pathAndQuery")
+                                } catch (e: Exception) {
+                                    candidates.add(rawUrl)
+                                }
+                            } else if (rawUrl.startsWith("/")) {
+                                candidates.add("$host$rawUrl")
+                            } else {
+                                candidates.add(rawUrl)
+                            }
+                            if (!candidates.contains(rawUrl)) {
+                                candidates.add(rawUrl)
+                            }
+                        }
+                    }
+                    if (candidates.isNotEmpty()) {
+                        currentInstanceIdx.set(idx)
+                        break
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Audio track candidate error on $host: ${e.message}")
+            }
+        }
+
+        val generalAudio = resolveAudioCandidates(videoId, "320")
+        for (g in generalAudio) {
+            if (!candidates.contains(g)) candidates.add(g)
+        }
+
+        return candidates
+    }
+
+    private fun resolveProgressiveTrackCandidates(videoId: String, quality: String): List<String> {
         val targetHeight = quality.toIntOrNull() ?: 720
+        val candidates = mutableListOf<String>()
+
         val count = invidiousInstances.size
         for (i in 0 until minOf(count, 5)) {
             val idx = (currentInstanceIdx.get() + i) % count
@@ -1135,37 +1498,227 @@ class LocalServer(
                     val root = JsonParser.parseString(body).asJsonObject
                     val formats = root.getAsJsonArray("formatStreams") ?: JsonArray()
 
-                    // FormatStreams have both audio + video pre-multiplexed into MP4
-                    val formatMatches = mutableListOf<Pair<JsonObject, Int>>()
+                    val matches = mutableListOf<CandidateVideo>()
                     for (elem in formats) {
                         val obj = elem.asJsonObject
                         val container = obj.get("container")?.asString ?: "mp4"
                         if (container.contains("mp4") || obj.get("type")?.asString?.contains("mp4") == true) {
                             val h = extractFormatHeight(obj) ?: 0
-                            formatMatches.add(Pair(obj, h))
+                            val fps = extractFormatFps(obj)
+                            val bitrate = extractFormatBitrate(obj)
+                            matches.add(CandidateVideo(obj, h, fps, bitrate))
                         }
                     }
 
-                    if (formatMatches.isNotEmpty()) {
-                        // Find stream matching or closest <= targetHeight
-                        val best = formatMatches.minByOrNull { (_, h) ->
-                            if (h == targetHeight) 0
-                            else if (h < targetHeight) targetHeight - h
-                            else (h - targetHeight) + 10000
-                        }?.first
+                    if (matches.isNotEmpty()) {
+                        val best = matches.sortedWith(
+                            compareBy<CandidateVideo> {
+                                if (it.height == targetHeight) 0
+                                else if (it.height < targetHeight) (targetHeight - it.height) * 10
+                                else (it.height - targetHeight) * 20
+                            }.thenByDescending { it.fps }
+                             .thenByDescending { it.bitrate }
+                        ).first().obj
 
-                        val url = best?.get("url")?.asString
-                        if (!url.isNullOrEmpty()) {
+                        val rawUrl = best.get("url")?.asString
+                        if (!rawUrl.isNullOrEmpty()) {
+                            if (rawUrl.contains("googlevideo.com")) {
+                                try {
+                                    val u = java.net.URI(rawUrl)
+                                    val pathAndQuery = if (u.rawQuery != null) "${u.rawPath}?${u.rawQuery}" else u.rawPath
+                                    candidates.add("$host$pathAndQuery")
+                                } catch (e: Exception) {
+                                    candidates.add(rawUrl)
+                                }
+                            } else if (rawUrl.startsWith("/")) {
+                                candidates.add("$host$rawUrl")
+                            } else {
+                                candidates.add(rawUrl)
+                            }
+                            if (!candidates.contains(rawUrl)) {
+                                candidates.add(rawUrl)
+                            }
                             currentInstanceIdx.set(idx)
-                            return url
+                            break
                         }
                     }
                 }
             } catch (e: Exception) {
-                Log.w(TAG, "Video extract notice for $host: ${e.message}")
+                Log.w(TAG, "Progressive candidate error on $host: ${e.message}")
             }
         }
-        return null
+
+        val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=video&quality=$quality"
+        if (!candidates.contains(cloudUrl)) {
+            candidates.add(cloudUrl)
+        }
+
+        return candidates
+    }
+
+    private fun tryProxyTrackStream(streamUrl: String, session: IHTTPSession, defaultMime: String): Response? {
+        return try {
+            val reqBuilder = Request.Builder()
+                .url(streamUrl)
+                .header("User-Agent", CHROME_UA)
+                .header("Referer", "https://www.youtube.com/")
+                .header("Origin", "https://www.youtube.com")
+
+            val range = session.headers?.get("range")
+            if (!range.isNullOrEmpty()) {
+                reqBuilder.header("Range", range)
+            }
+
+            val response = streamProxyClient.newCall(reqBuilder.build()).execute()
+            if (!response.isSuccessful && response.code != 206) {
+                response.close()
+                return null
+            }
+
+            val body = response.body ?: run {
+                response.close()
+                return null
+            }
+
+            val contentType = response.header("Content-Type") ?: defaultMime
+            if (contentType.startsWith("text/html") || contentType.startsWith("application/json")) {
+                response.close()
+                return null
+            }
+
+            val status = if (response.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
+            val contentLength = body.contentLength()
+            val stream = body.byteStream()
+
+            val nanoResponse = newFixedLengthResponse(status, contentType, stream, contentLength)
+            nanoResponse.addHeader("Accept-Ranges", "bytes")
+            nanoResponse.addHeader("Cache-Control", "public, max-age=3600")
+            nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
+
+            response.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
+            if (contentLength > 0) {
+                nanoResponse.addHeader("Content-Length", contentLength.toString())
+            }
+
+            nanoResponse
+        } catch (e: Exception) {
+            Log.w(TAG, "tryProxyTrackStream notice for $streamUrl: ${e.message}")
+            null
+        }
+    }
+
+    // ── Downloads (Supports Both Multi-Quality Video MP4 & Audio MP3) ──
+
+    private fun handleDownload(session: IHTTPSession, uri: String): Response {
+        val videoId = uri.removePrefix("/api/download/").split("?")[0].trim()
+        val titleHint = session.parms?.get("title")?.trim() ?: "Song"
+        val format = session.parms?.get("format")?.trim() ?: "audio"
+        val quality = session.parms?.get("quality")?.trim() ?: (if (format == "video") "1080" else "192")
+
+        if (!isValidVideoId(videoId)) return jsonError(400, "Invalid video ID")
+
+        val isVideo = format == "video"
+        val safeTitle = titleHint.replace(Regex("[^a-zA-Z0-9 _.-]"), "").trim().ifEmpty { "Media" }
+        val ext = if (isVideo) "mp4" else "mp3"
+        val mimeType = if (isVideo) "video/mp4" else "audio/mpeg"
+        val filename = "$safeTitle.$ext"
+
+        // 1. For video: if high-res, first attempt Render Cloud muxer (which has full ffmpeg)
+        val targetHeight = quality.toIntOrNull() ?: 720
+        if (isVideo && targetHeight >= 1080) {
+            try {
+                val encodedTitle = java.net.URLEncoder.encode(safeTitle, "UTF-8")
+                val cloudUrl = "https://musiccc-59kv.onrender.com/api/download/$videoId?format=$format&quality=$quality&title=$encodedTitle"
+                val reqBuilder = Request.Builder()
+                    .url(cloudUrl)
+                    .header("User-Agent", CHROME_UA)
+                val range = session.headers?.get("range")
+                if (!range.isNullOrEmpty()) reqBuilder.header("Range", range)
+
+                val cloudResp = streamProxyClient.newCall(reqBuilder.build()).execute()
+                if (cloudResp.isSuccessful && cloudResp.body != null) {
+                    val body = cloudResp.body!!
+                    val cType = cloudResp.header("Content-Type") ?: ""
+                    if (!cType.startsWith("text/html") && !cType.startsWith("application/json")) {
+                        val status = if (cloudResp.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
+                        val contentLength = body.contentLength()
+                        val nanoResponse = newFixedLengthResponse(status, mimeType, body.byteStream(), contentLength)
+                        nanoResponse.addHeader("Accept-Ranges", "bytes")
+                        nanoResponse.addHeader("Content-Disposition", "attachment; filename=\"$filename\"")
+                        nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
+                        nanoResponse.addHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition")
+                        cloudResp.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
+                        if (contentLength > 0) nanoResponse.addHeader("Content-Length", contentLength.toString())
+                        return nanoResponse
+                    }
+                }
+                cloudResp.close()
+            } catch (e: Exception) {
+                Log.w(TAG, "Cloud mux download fallback for $videoId: ${e.message}")
+            }
+        }
+
+        // 2. Candidate-based streaming with multi-candidate fallback
+        val candidates = if (isVideo) {
+            resolveProgressiveTrackCandidates(videoId, quality).ifEmpty {
+                resolveVideoTrackCandidates(videoId, quality)
+            }
+        } else {
+            resolveAudioCandidates(videoId, quality)
+        }
+
+        for (cand in candidates) {
+            try {
+                val reqBuilder = Request.Builder()
+                    .url(cand)
+                    .header("User-Agent", CHROME_UA)
+                    .header("Referer", "https://www.youtube.com/")
+                    .header("Origin", "https://www.youtube.com")
+
+                val range = session.headers?.get("range")
+                if (!range.isNullOrEmpty()) reqBuilder.header("Range", range)
+
+                val response = streamProxyClient.newCall(reqBuilder.build()).execute()
+                if (!response.isSuccessful && response.code != 206) {
+                    response.close()
+                    continue
+                }
+
+                val body = response.body
+                if (body == null) {
+                    response.close()
+                    continue
+                }
+
+                val contentType = response.header("Content-Type") ?: mimeType
+                if (contentType.startsWith("text/html") || contentType.startsWith("application/json")) {
+                    response.close()
+                    continue
+                }
+
+                val status = if (response.code == 206) Response.Status.PARTIAL_CONTENT else Response.Status.OK
+                val contentLength = body.contentLength()
+                val nanoResponse = newFixedLengthResponse(status, mimeType, body.byteStream(), contentLength)
+                nanoResponse.addHeader("Accept-Ranges", "bytes")
+                nanoResponse.addHeader("Content-Disposition", "attachment; filename=\"$filename\"")
+                nanoResponse.addHeader("Access-Control-Allow-Origin", "*")
+                nanoResponse.addHeader("Access-Control-Expose-Headers", "Content-Length, Content-Disposition")
+                response.header("Content-Range")?.let { nanoResponse.addHeader("Content-Range", it) }
+                if (contentLength > 0) nanoResponse.addHeader("Content-Length", contentLength.toString())
+                return nanoResponse
+            } catch (e: Exception) {
+                Log.w(TAG, "Candidate download error for $cand: ${e.message}")
+            }
+        }
+
+        return jsonError(502, "Could not resolve active download stream for $videoId")
+    }
+
+    private fun extractVideoUrl(videoId: String, quality: String): String? {
+        val candidates = resolveProgressiveTrackCandidates(videoId, quality).ifEmpty {
+            resolveVideoTrackCandidates(videoId, quality)
+        }
+        return candidates.firstOrNull()
     }
 
     private fun handlePlaylistDownload(session: IHTTPSession): Response {

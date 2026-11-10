@@ -39,18 +39,28 @@ del /Q apk-output\*.apk 2>nul
 del /Q app\build\outputs\apk\debug\*.apk 2>nul
 del /Q app\build\outputs\apk\release\*.apk 2>nul
 
+echo Syncing latest web assets into APK assets...
+if not exist app\src\main\assets\public mkdir app\src\main\assets\public
+copy /Y ..\..\public\index.html app\src\main\assets\public\index.html
+if not exist app\src\main\assets\public\js mkdir app\src\main\assets\public\js
+copy /Y ..\..\public\js\app.js app\src\main\assets\public\js\app.js
+if not exist app\src\main\assets\public\css mkdir app\src\main\assets\public\css
+copy /Y ..\..\public\css\style.css app\src\main\assets\public\css\style.css
+
 if "%BUILD_TYPE%"=="release" (
     call gradlew.bat assembleRelease
     if errorlevel 1 goto :error
     copy /Y app\build\outputs\apk\release\app-release.apk apk-output\MusicFlow.apk
     copy /Y app\build\outputs\apk\release\app-release.apk apk-output\MusicFlow-release.apk
     copy /Y app\build\outputs\apk\release\app-release.apk ..\..\MusicFlow.apk
+    copy /Y app\build\outputs\apk\release\app-release.apk ..\..\public\MusicFlow.apk
 ) else (
     call gradlew.bat assembleDebug
     if errorlevel 1 goto :error
     copy /Y app\build\outputs\apk\debug\app-debug.apk apk-output\MusicFlow.apk
     copy /Y app\build\outputs\apk\debug\app-debug.apk apk-output\MusicFlow-debug.apk
     copy /Y app\build\outputs\apk\debug\app-debug.apk ..\..\MusicFlow.apk
+    copy /Y app\build\outputs\apk\debug\app-debug.apk ..\..\public\MusicFlow.apk
 )
 
 echo.

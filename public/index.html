@@ -1,11 +1,11 @@
-<!DOCTYPE html>
-<html lang="en" data-theme="dark">
+﻿<!DOCTYPE html>
+<html lang="en" data-theme="oled">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>MusicFlow v3.5.0-HyperFlow — 120FPS Cloud Music Player</title>
-  <meta name="description" content="MusicFlow is a beautiful, ultra-fast music player that streams high-quality audio with zero setup, Apple floating orb, and Picture-in-Picture productivity mode." />
-  <meta name="theme-color" content="#6366f1" />
+  <title>MusicFlow v4.0 OLED Pro — Best Free Music Player</title>
+  <meta name="description" content="MusicFlow is the ultimate free music player with OLED black UI, AI playlists, real-time lyrics, equalizer, and Spotify-competing features. Stream any song instantly." />
+  <meta name="theme-color" content="#000000" />
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -48,7 +48,7 @@
         </a></li>
         <li><a href="#mood" class="nav-link" data-page="mood" id="navMood">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-          <span>🎭 Mood Flow</span>
+          <span>Mood Flow</span>
         </a></li>
         <li><a href="#profile" class="nav-link" data-page="profile" id="navProfile">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
@@ -56,7 +56,19 @@
         </a></li>
         <li><a href="#focus" class="nav-link" id="navFocus">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-          <span>🧠 Focus Flow</span>
+          <span>Focus Flow</span>
+        </a></li>
+        <li><a href="#charts" class="nav-link" data-page="charts" id="navCharts">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          <span>Charts</span>
+        </a></li>
+        <li><a href="#trending" class="nav-link" data-page="trending" id="navTrending">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+          <span>Trending</span>
+        </a></li>
+        <li><a href="#ai-discover" class="nav-link" data-page="ai-discover" id="navAiDiscover">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+          <span>AI Discover</span>
         </a></li>
       </ul>
 
@@ -165,7 +177,7 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
           </button>
           <!-- 1-Click App Update Pill -->
-          <button class="top-btn update-top-btn" id="appUpdateBtn" title="1-Click App Update (v3.5.0-HyperFlow)" type="button">
+          <button class="top-btn update-top-btn" id="appUpdateBtn" title="1-Click App Update (v4.0.0-OLEDPro)" type="button">
             <span>⚡ Update</span>
           </button>
           <button class="top-btn theme-btn" id="themeToggleBtn" title="Toggle theme">
@@ -734,6 +746,113 @@
           </div>
         </section>
 
+        <!-- ===== CHARTS PAGE ===== -->
+        <section class="page" id="pageCharts" style="display:none;">
+          <div class="home-greeting">
+            <h1>📈 Music Charts</h1>
+            <p>Top songs from around the world — updated daily</p>
+          </div>
+          <div class="mood-pills-bar" id="chartTypePills" role="toolbar" aria-label="Chart selector">
+            <button class="mood-pill active" data-chart="global50" type="button">🌍 Global Top 50</button>
+            <button class="mood-pill" data-chart="india40" type="button">🇮🇳 India Top 40</button>
+            <button class="mood-pill" data-chart="viral" type="button">🔥 Viral Hits</button>
+            <button class="mood-pill" data-chart="new_releases" type="button">✨ New Releases</button>
+            <button class="mood-pill" data-chart="decades90s" type="button">📼 90s Hits</button>
+            <button class="mood-pill" data-chart="decades2000s" type="button">🎸 2000s Hits</button>
+          </div>
+          <div class="home-section" id="chartsSection">
+            <div class="section-header">
+              <h2 id="chartsTitle">🌍 Global Top 50</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="playAllChartsBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="refreshChartsBtn">🔄 Refresh</button>
+              </div>
+            </div>
+            <div class="results-grid" id="chartsGrid">
+              <div style="text-align:center; padding:40px; color:var(--text-secondary);">
+                <div class="spinner" style="margin:0 auto 16px;"></div>
+                <p>Loading charts...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== TRENDING PAGE ===== -->
+        <section class="page" id="pageTrending" style="display:none;">
+          <div class="home-greeting">
+            <h1>🔥 Trending Now</h1>
+            <p>What the world is listening to right now</p>
+          </div>
+          <div class="mood-pills-bar" id="trendingRegionPills" role="toolbar" aria-label="Trending region">
+            <button class="mood-pill active" data-region="global" type="button">🌍 Global</button>
+            <button class="mood-pill" data-region="india" type="button">🇮🇳 India</button>
+            <button class="mood-pill" data-region="punjabi" type="button">🎵 Punjabi</button>
+            <button class="mood-pill" data-region="kpop" type="button">🇰🇷 K-Pop</button>
+            <button class="mood-pill" data-region="english" type="button">🇺🇸 English</button>
+          </div>
+          <div class="home-section" id="trendingSection">
+            <div class="section-header">
+              <h2 id="trendingTitle">🌍 Global Trending</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="playAllTrendingBtn">
+                  <svg viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                  Play All
+                </button>
+                <button class="text-btn" id="refreshTrendingBtn">🔄 Refresh</button>
+              </div>
+            </div>
+            <div class="results-grid" id="trendingGrid">
+              <div style="text-align:center; padding:40px; color:var(--text-secondary);">
+                <div class="spinner" style="margin:0 auto 16px;"></div>
+                <p>Fetching trending songs...</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="page" id="pageAiDiscover" style="display:none;">
+          <div class="home-greeting">
+            <h1 id="aiDiscoverTitle">AI Discover</h1>
+            <p>Powered by Gemini AI — real music intelligence, right now</p>
+          </div>
+          <div class="mood-pills-bar" id="aiDiscoverTypePills" role="toolbar">
+            <button class="mood-pill active" data-aitype="trending" type="button">Trending</button>
+            <button class="mood-pill" data-aitype="movies" type="button">Movie Hits</button>
+            <button class="mood-pill" data-aitype="reels" type="button">Viral Reels</button>
+            <button class="mood-pill" data-aitype="playlist" type="button">AI Playlist</button>
+          </div>
+          <div id="aiPlaylistGenBox" style="display:none;" class="ai-playlist-box">
+            <div class="ai-playlist-input-row">
+              <input type="text" id="aiPlaylistPromptInput" class="ai-playlist-input" placeholder="e.g. chill rainy day, Bollywood gym, 2000s pop nostalgia..." />
+              <button id="aiPlaylistGenBtn" class="ai-gen-btn">Generate</button>
+            </div>
+          </div>
+          <div class="mood-pills-bar" id="aiRegionPills" role="toolbar" style="margin-top:-8px;">
+            <button class="mood-pill active" data-region="india" type="button">India</button>
+            <button class="mood-pill" data-region="global" type="button">Global</button>
+            <button class="mood-pill" data-region="punjabi" type="button">Punjabi</button>
+            <button class="mood-pill" data-region="english" type="button">English</button>
+          </div>
+          <div id="aiNoKeyWarning" class="ai-no-key-box" style="display:none;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:48px;height:48px;stroke:#1db954;margin-bottom:12px;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+            <h3 style="margin:0 0 8px;">Add Your Gemini AI Key</h3>
+            <p style="color:var(--text-secondary);margin:0 0 16px;font-size:14px;">Get a free key at <strong>aistudio.google.com</strong>, then paste it in Settings</p>
+            <button id="aiGoToSettingsBtn" class="pill-action-btn" style="background:linear-gradient(135deg,#1db954,#17a44a);color:#000;font-weight:700;padding:10px 24px;">Open Settings</button>
+          </div>
+          <div class="home-section" id="aiDiscoverSection">
+            <div class="section-header">
+              <h2 id="aiDiscoverResultTitle">AI Results</h2>
+              <div class="section-header-actions">
+                <button class="text-btn" id="aiPlayAllBtn">Play All</button>
+                <button class="text-btn" id="aiRefreshBtn">Refresh</button>
+              </div>
+            </div>
+            <div class="results-grid" id="aiDiscoverGrid"></div>
+          </div>
+        </section>
       </main>
     </div>
 
@@ -852,6 +971,9 @@
         <button class="np-btn" id="qualityBtn" title="Audio Quality">
           <span class="quality-label" id="qualityLabel">HQ</span>
         </button>
+        <button class="np-btn speed-toggle-btn" id="speedBtn" title="Playback Speed (1×)">
+          <span class="speed-label" id="speedLabel">1×</span>
+        </button>
         <button class="np-btn" id="muteBtn" title="Mute">
           <svg class="vol-on-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
           <svg class="vol-off-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none;"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="23" y1="9" x2="17" y2="15"/><line x1="17" y1="9" x2="23" y2="15"/></svg>
@@ -892,7 +1014,11 @@
     </button>
     <button class="sbn-btn" data-page="mood" id="sbnMood" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>
-      <span>AI DJ / Flow</span>
+      <span>AI DJ</span>
+    </button>
+    <button class="sbn-btn" data-page="trending" id="sbnTrending" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></svg>
+      <span>Trending</span>
     </button>
   </nav>
 
@@ -997,6 +1123,14 @@
       <button class="sfp-action-pill" id="sfpDlBtn" type="button">
         <span>⬇️</span>
         <span>Download</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpRadioBtn" type="button">
+        <span>📻</span>
+        <span>Song Radio</span>
+      </button>
+      <button class="sfp-action-pill" id="sfpSpeedBtn" type="button">
+        <span class="sfp-speed-label" id="sfpSpeedLabel">1×</span>
+        <span>Speed</span>
       </button>
     </div>
   </div>
@@ -1245,9 +1379,11 @@
             <button class="accent-dot active" data-color="indigo" style="background:#6366f1;" title="Indigo"></button>
             <button class="accent-dot" data-color="cyan" style="background:#06b6d4;" title="Cyberpunk Cyan"></button>
             <button class="accent-dot" data-color="emerald" style="background:#10b981;" title="Emerald Green"></button>
+            <button class="accent-dot" data-color="green" style="background:#1db954;" title="Spotify Green"></button>
             <button class="accent-dot" data-color="orange" style="background:#f97316;" title="Sunset Orange"></button>
             <button class="accent-dot" data-color="pink" style="background:#ec4899;" title="Rose Pink"></button>
             <button class="accent-dot" data-color="purple" style="background:#a855f7;" title="Electric Purple"></button>
+            <button class="accent-dot" data-color="red" style="background:#ef4444;" title="Crimson Red"></button>
           </div>
         </div>
         <div class="setting-row">
@@ -1307,14 +1443,39 @@
         </div>
         <div class="setting-row">
           <div class="setting-info">
-            <span class="setting-label">🚀 App Version & 1-Click Update <span class="version-badge-pill" id="settingsAppVersionBadge">v3.5.0-HyperFlow</span></span>
-            <span class="setting-desc" id="settingsUpdateDesc">120FPS GPU engine with instant predictive audio pre-buffering</span>
+            <span class="setting-label">🚀 App Version & 1-Click Update <span class="version-badge-pill" id="settingsAppVersionBadge">v4.0.0-OLEDPro</span></span>
+            <span class="setting-desc" id="settingsUpdateDesc">OLED Pro � Spotify-class Charts, Trending, Radio &amp; Speed Control</span>
           </div>
           <button class="pill-action-btn" id="settingsCheckUpdateBtn" style="padding:6px 14px; font-size:13px; background:linear-gradient(135deg, #10b981, #06b6d4);">⚡ 1-Click Update</button>
         </div>
         <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:12px 0;" />
+        <!-- GEMINI AI SETTINGS -->
+        <div class="setting-row ai-key-row">
+          <div class="setting-info">
+            <span class="setting-label">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;display:inline;vertical-align:-2px;margin-right:5px;stroke:#1db954;"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+              Gemini AI Key
+            </span>
+            <span class="setting-desc">Unlocks AI Trending, Smart Radio, Playlist AI &amp; Song Info</span>
+          </div>
+          <div class="ai-key-input-wrap">
+            <input type="password" id="settingGeminiKey" class="setting-text-input" placeholder="AIza..." autocomplete="off" spellcheck="false" />
+            <button id="geminiKeySaveBtn" class="pill-action-btn" style="padding:6px 14px;font-size:13px;background:linear-gradient(135deg,#1db954,#17a44a);">Save</button>
+          </div>
+        </div>
+        <div class="setting-row" id="aiStatusRow" style="display:none;">
+          <div class="setting-info">
+            <span class="setting-label" style="color:#1db954;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px;display:inline;vertical-align:-2px;stroke:#1db954;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Gemini AI Active
+            </span>
+            <span class="setting-desc" id="aiStatusDesc">AI features unlocked — Trending, Smart Radio, Playlist AI</span>
+          </div>
+          <button id="geminiKeyClearBtn" class="pill-action-btn" style="padding:6px 14px;font-size:13px;background:#333;">Clear Key</button>
+        </div>
+        <hr style="border:none; border-top:1px solid rgba(255,255,255,0.1); margin:12px 0;" />
         <div class="setting-row">
-          <div class="setting-info"><span class="setting-label">🔄 Fresh Start</span><span class="setting-desc">Archive queue, history & search — start a clean session. Likes, playlists & settings are kept.</span></div>
+          <div class="setting-info"><span class="setting-label">Fresh Start</span><span class="setting-desc">Archive queue, history & search — start a clean session. Likes, playlists & settings are kept.</span></div>
           <button class="pill-action-btn" id="freshStartBtn" style="padding:6px 14px; font-size:13px; background:linear-gradient(135deg, #ef4444, #f97316);">🔄 Fresh Start</button>
         </div>
       </div>
@@ -1835,6 +1996,9 @@
           <span>Download MP3</span>
         </button>
       </div>
+    </div>
+  </div>
+
   <!-- ============ YOUTUBE LINK MODAL ============ -->
   <div class="modal-overlay" id="ytLinkModal" style="display:none;">
     <div class="modal yt-link-modal" style="max-width:500px;">
@@ -1948,8 +2112,8 @@
   <!-- Hidden Canvas & Video for Picture-in-Picture Mini-Player -->
   <canvas id="pipCanvas" width="480" height="270" style="display:none;"></canvas>
   <video id="pipVideo" playsinline muted style="position:fixed; bottom:-9999px; left:-9999px; width:480px; height:270px; opacity:0; pointer-events:none;"></video>
-  <!-- Hidden YouTube Player Container for Resilient Direct Playback -->
-  <div id="ytFallbackContainer" style="position:fixed;bottom:-9999px;left:-9999px;width:1px;height:1px;opacity:0.001;pointer-events:none;z-index:-100;" aria-hidden="true">
+  <!-- Resilient Background YouTube Player Container (In-viewport to prevent Chromium throttling/error 150) -->
+  <div id="ytFallbackContainer" style="position:fixed;right:0;bottom:0;width:240px;height:240px;opacity:0.001;pointer-events:none;z-index:-999;overflow:hidden;" aria-hidden="true">
     <div id="ytFallbackPlayer"></div>
   </div>
 
@@ -1962,5 +2126,34 @@
       });
     }
   </script>
+
+  <!-- ============ PLAYBACK SPEED POPUP ============ -->
+  <div class="speed-popup" id="speedPopup" style="display:none;">
+    <div class="speed-popup-inner">
+      <div class="speed-popup-title">Playback Speed</div>
+      <div class="speed-options">
+        <button class="speed-opt" data-speed="0.5">0.5×</button>
+        <button class="speed-opt" data-speed="0.75">0.75×</button>
+        <button class="speed-opt active" data-speed="1">Normal</button>
+        <button class="speed-opt" data-speed="1.25">1.25×</button>
+        <button class="speed-opt" data-speed="1.5">1.5×</button>
+        <button class="speed-opt" data-speed="1.75">1.75×</button>
+        <button class="speed-opt" data-speed="2">2×</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SONG RADIO TOAST ============ -->
+  <div class="song-radio-toast" id="songRadioToast" style="display:none;">
+    <div class="srt-inner">
+      <span class="srt-icon">📻</span>
+      <div class="srt-info">
+        <span class="srt-title" id="srtTitle">Song Radio</span>
+        <span class="srt-sub">Playing songs similar to current track</span>
+      </div>
+      <button class="srt-close" id="srtClose">×</button>
+    </div>
+  </div>
+
 </body>
 </html>

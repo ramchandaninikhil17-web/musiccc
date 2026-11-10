@@ -2,34 +2,34 @@
    MusicFlow v2.0 — Premium Theme with Light/Dark Mode
    ================================================================ */
 
-/* ----- Design Tokens (Dark Mode Default) ----- */
-:root, [data-theme="dark"] {
-  --bg-primary: #0a0a1a;
-  --bg-secondary: #111128;
-  --bg-card: rgba(25, 25, 60, 0.55);
+/* ----- Design Tokens (Dark Mode Default — OLED-first Spotify Green) ----- */
+:root, [data-theme="dark"], [data-theme="oled"] {
+  --bg-primary: #000000;
+  --bg-secondary: #0a0a0a;
+  --bg-card: rgba(18, 18, 18, 0.9);
   --bg-glass: rgba(255, 255, 255, 0.04);
   --bg-glass-hover: rgba(255, 255, 255, 0.08);
   --bg-glass-active: rgba(255, 255, 255, 0.12);
-  --bg-sidebar: rgba(10, 10, 30, 0.95);
-  --bg-modal: rgba(18, 18, 42, 0.97);
+  --bg-sidebar: #000000;
+  --bg-modal: #0d0d0d;
 
-  --accent: #7c3aed;
-  --accent-light: #a78bfa;
-  --accent-glow: rgba(124, 58, 237, 0.35);
-  --accent-gradient: linear-gradient(135deg, #7c3aed, #ec4899);
+  --accent: #1db954;
+  --accent-light: #1ed760;
+  --accent-glow: rgba(29, 185, 84, 0.3);
+  --accent-gradient: linear-gradient(135deg, #1db954, #17a847);
   --accent-red: #ef4444;
 
-  --text-primary: #f1f0ff;
-  --text-secondary: #a0a0c0;
-  --text-muted: #65658a;
+  --text-primary: #ffffff;
+  --text-secondary: #b3b3b3;
+  --text-muted: #535353;
 
-  --border: rgba(255, 255, 255, 0.06);
-  --border-hover: rgba(255, 255, 255, 0.12);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-hover: rgba(255, 255, 255, 0.15);
 
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-  --shadow-md: 0 4px 24px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 48px rgba(0,0,0,0.5);
-  --shadow-glow: 0 0 30px var(--accent-glow);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.9);
+  --shadow-md: 0 4px 24px rgba(0,0,0,0.95);
+  --shadow-lg: 0 8px 48px rgba(0,0,0,1);
+  --shadow-glow: 0 0 40px var(--accent-glow);
 }
 
 /* ----- Light Mode ----- */
@@ -57,28 +57,11 @@
 
 [data-theme="light"] .bg-animation { opacity: 0.3; }
 
-/* ----- OLED Pitch Black Mode ----- */
-[data-theme="oled"] {
-  --bg-primary: #000000;
-  --bg-secondary: #050505;
-  --bg-card: rgba(15, 15, 15, 0.75);
-  --bg-glass: rgba(255, 255, 255, 0.03);
-  --bg-glass-hover: rgba(255, 255, 255, 0.07);
-  --bg-glass-active: rgba(255, 255, 255, 0.1);
-  --bg-sidebar: #000000;
-  --bg-modal: #080808;
-
-  --text-primary: #ffffff;
-  --text-secondary: #a3a3a3;
-  --text-muted: #666666;
-
-  --border: rgba(255, 255, 255, 0.08);
-  --border-hover: rgba(255, 255, 255, 0.18);
-
-  --shadow-sm: 0 2px 8px rgba(0,0,0,0.8);
-  --shadow-md: 0 4px 24px rgba(0,0,0,0.9);
-  --shadow-lg: 0 8px 48px rgba(0,0,0,1);
-}
+/* ----- OLED Pitch Black Mode (fully unified with dark default above) ----- */
+/* [data-theme="oled"] is now already covered by the :root ruleset above.
+   This block is kept as a no-op anchor so any JS that sets data-theme="oled"
+   continues to work without overriding the shared token set. */
+[data-theme="oled"] { /* tokens inherited from :root – nothing to override */ }
 
 [data-theme="oled"] .bg-animation { opacity: 0.1; }
 
@@ -242,7 +225,7 @@ a { text-decoration: none; color: inherit; }
   position: sticky; top: 0; z-index: 90;
   display: flex; align-items: center; gap: 12px;
   height: 64px; padding: 0 24px;
-  background: rgba(10, 10, 26, 0.7);
+  background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid var(--border);
 }
@@ -1080,7 +1063,7 @@ a { text-decoration: none; color: inherit; }
 .now-playing-bar {
   position: fixed; bottom: 0; left: 0; right: 0;
   height: var(--np-height);
-  background: rgba(10, 10, 26, 0.92);
+  background: rgba(0, 0, 0, 0.96);
   backdrop-filter: blur(24px);
   border-top: 1px solid var(--border);
   z-index: 200;
@@ -1323,9 +1306,14 @@ body.is-scrubbing-progress {
 .modal-overlay {
   position: fixed; inset: 0; z-index: 500;
   display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   animation: fadeIn 0.2s ease;
+  padding: 16px;
+  box-sizing: border-box;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
@@ -1334,24 +1322,67 @@ body.is-scrubbing-progress {
   background: var(--bg-modal);
   border: 1px solid var(--border);
   border-radius: var(--radius-xl);
-  width: 90%; max-width: 420px;
+  width: 92%; max-width: 440px;
   box-shadow: var(--shadow-lg);
   animation: modalIn 0.25s ease;
+  display: flex;
+  flex-direction: column;
+  max-height: calc(100vh - 40px);
+  max-height: calc(100dvh - 40px);
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 #settingsModal .modal {
-  max-width: 470px;
+  max-width: 490px;
+  max-height: min(88vh, 720px);
+  max-height: min(88dvh, 720px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
 @keyframes modalIn { from { transform: scale(0.95) translateY(10px); opacity: 0; } to { transform: scale(1) translateY(0); opacity: 1; } }
 
-.modal-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--border); }
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
 .modal-header h3 { font-size: 18px; font-weight: 700; }
-.modal-close { width: 28px; height: 28px; display: flex; align-items: center; justify-content: center; border-radius: var(--radius-sm); color: var(--text-muted); }
+.modal-close {
+  width: 32px; height: 32px;
+  display: flex; align-items: center; justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
 .modal-close:hover { background: var(--bg-glass-hover); color: var(--text-primary); }
-.modal-close svg { width: 16px; height: 16px; }
+.modal-close svg { width: 18px; height: 18px; }
 
-.modal-body { padding: 20px 22px; }
+.modal-body {
+  padding: 20px 22px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+#settingsModal .modal-body {
+  padding: 18px 20px 48px 20px;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  touch-action: pan-y !important;
+  overscroll-behavior: contain;
+  flex: 1 1 auto;
+  min-height: 0;
+}
 
 .setting-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border); }
 .setting-row:last-child { border-bottom: none; }
@@ -3096,15 +3127,13 @@ body.is-scrubbing-progress {
 }
 
 /* ================================================================
-   OLED PITCH BLACK THEME & ACCENT COLOR STUDIO
+   OLED PITCH BLACK THEME & ACCENT COLOR STUDIO (extra custom props)
    ================================================================ */
 [data-theme="oled"] {
   --bg-dark: #000000;
-  --bg-sidebar: #050505;
-  --bg-card: #0a0a0a;
   --bg-card-hover: #121212;
   --bg-surface: #0f0f0f;
-  --border-color: rgba(255, 255, 255, 0.08);
+  --border-color: rgba(255, 255, 255, 0.07);
   --border-subtle: rgba(255, 255, 255, 0.04);
 }
 
@@ -6941,4 +6970,1806 @@ body.is-scrubbing-progress {
     width: 48px !important;
     height: 48px !important;
   }
+}
+
+/* Mobile & Standalone APK Modal Scrolling */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 12px !important;
+    align-items: center !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .modal {
+    width: 96% !important;
+    max-width: 480px !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+    border-radius: var(--radius-lg) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+  #settingsModal .modal {
+    width: 96% !important;
+    max-width: 480px !important;
+    max-height: calc(100vh - 32px) !important;
+    max-height: calc(100dvh - 32px) !important;
+  }
+  #settingsModal .modal-body {
+    padding: 16px 18px 60px 18px !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    touch-action: pan-y !important;
+    overscroll-behavior: contain !important;
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+  }
+}
+
+
+/* ================================================================
+   SPOTIFY NATIVE MOBILE APP ENGINE (body.is-mobile-app)
+   ================================================================ */
+body.is-mobile-app .sidebar {
+  display: none !important;
+}
+
+body.is-mobile-app .main-area {
+  margin-left: 0 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+}
+
+body.is-mobile-app .top-bar {
+  padding-top: calc(10px + env(safe-area-inset-top, 0px)) !important;
+  padding-left: 14px !important;
+  padding-right: 14px !important;
+  height: auto !important;
+  min-height: 52px !important;
+  background: rgba(11, 15, 23, 0.95) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+body.is-mobile-app .mobile-brand-header {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+body.is-mobile-app .mobile-menu-btn {
+  display: none !important;
+}
+
+body.is-mobile-app .search-container {
+  display: none !important;
+}
+
+body.is-mobile-app[data-active-page="search"] .search-container {
+  display: flex !important;
+  width: 100% !important;
+}
+
+body.is-mobile-app[data-active-page="search"] .mobile-brand-header {
+  display: none !important;
+}
+
+body.is-mobile-app .page-content {
+  padding: 16px 14px !important;
+  padding-bottom: 155px !important;
+}
+
+/* Spotify Mobile Floating Pill Mini-Player */
+body.is-mobile-app .now-playing-bar {
+  display: block !important;
+  position: fixed !important;
+  bottom: calc(66px + env(safe-area-inset-bottom, 0px)) !important;
+  left: 8px !important;
+  right: 8px !important;
+  height: 58px !important;
+  background: rgba(18, 24, 38, 0.96) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7), 0 0 1px rgba(255, 255, 255, 0.2) !important;
+  padding: 0 8px !important;
+  z-index: 899 !important;
+  overflow: hidden !important;
+  cursor: pointer;
+}
+
+body.is-mobile-app .now-playing-inner {
+  height: 100% !important;
+  padding: 0 4px !important;
+  gap: 8px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+}
+
+body.is-mobile-app .np-track-info {
+  flex: 1 !important;
+  min-width: 0 !important;
+  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+}
+
+body.is-mobile-app .np-thumbnail-wrap {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 8px !important;
+  flex-shrink: 0 !important;
+  overflow: hidden !important;
+}
+
+body.is-mobile-app .np-details {
+  margin-left: 10px !important;
+  overflow: hidden;
+  flex: 1;
+}
+
+body.is-mobile-app .np-title {
+  font-size: 13px !important;
+  font-weight: 700 !important;
+  color: #ffffff !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.is-mobile-app .np-channel {
+  font-size: 11px !important;
+  color: rgba(255, 255, 255, 0.6) !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+
+body.is-mobile-app .np-controls {
+  flex: 0 0 auto !important;
+  margin: 0 !important;
+}
+
+body.is-mobile-app .np-buttons {
+  gap: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+body.is-mobile-app .np-play-btn {
+  width: 38px !important;
+  height: 38px !important;
+  background: #ffffff !important;
+  color: #0b0f19 !important;
+  border-radius: 50% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+  transition: transform 0.15s ease !important;
+}
+
+body.is-mobile-app .np-play-btn:active {
+  transform: scale(0.92) !important;
+}
+
+body.is-mobile-app .np-play-btn svg {
+  fill: #0b0f19 !important;
+  width: 18px !important;
+  height: 18px !important;
+}
+
+body.is-mobile-app .np-progress-wrap {
+  position: absolute !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 2.5px !important;
+  padding: 0 !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+}
+
+body.is-mobile-app .np-progress-fill {
+  background: #10b981 !important;
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.8) !important;
+}
+
+body.is-mobile-app .np-time,
+body.is-mobile-app .np-progress-thumb,
+body.is-mobile-app .np-right-controls {
+  display: none !important;
+}
+
+/* Spotify Mobile Bottom Navigation Bar */
+body.is-mobile-app .spotify-bottom-nav {
+  display: flex !important;
+  position: fixed !important;
+  bottom: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  height: 62px !important;
+  background: rgba(11, 14, 22, 0.98) !important;
+  backdrop-filter: blur(28px) !important;
+  -webkit-backdrop-filter: blur(28px) !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  z-index: 900 !important;
+  padding: 0 8px !important;
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  align-items: center !important;
+  justify-content: space-around !important;
+}
+
+body.is-mobile-app .sbn-btn {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 3px !important;
+  background: none !important;
+  border: none !important;
+  color: rgba(255, 255, 255, 0.55) !important;
+  font-size: 10.5px !important;
+  font-weight: 600 !important;
+  cursor: pointer !important;
+  padding: 6px 14px !important;
+  border-radius: 8px !important;
+  transition: color 0.2s ease, transform 0.15s ease !important;
+  -webkit-tap-highlight-color: transparent !important;
+}
+
+body.is-mobile-app .sbn-btn.active {
+  color: #10b981 !important;
+  font-weight: 700 !important;
+}
+
+body.is-mobile-app .sbn-btn.active svg {
+  transform: scale(1.12) !important;
+  stroke: #10b981 !important;
+}
+
+/* Spotify Fullscreen Player */
+body.is-mobile-app .spotify-fullscreen-player {
+  display: flex !important;
+  flex-direction: column !important;
+  position: fixed !important;
+  inset: 0 !important;
+  background: radial-gradient(circle at 50% 15%, #1c273c 0%, #0c111a 65%, #06090e 100%) !important;
+  z-index: 2000 !important;
+  padding: 16px 20px !important;
+  padding-top: calc(16px + env(safe-area-inset-top, 0px)) !important;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom, 0px)) !important;
+  transform: translate3d(0, 100%, 0) !important;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  overflow: hidden !important;
+}
+
+body.is-mobile-app .spotify-fullscreen-player.active {
+  transform: translate3d(0, 0, 0) !important;
+}
+
+
+/* ================================================================
+   MUSICFLOW PREMIUM OLED UPGRADE — Spotify-Grade Design System
+   Appended overrides — all existing class names preserved.
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   1. BG ANIMATION ORBS — green accent tint for OLED
+   ---------------------------------------------------------------- */
+.bg-animation .orb:nth-child(1) {
+  background: radial-gradient(circle, var(--accent, #1db954) 0%, transparent 70%);
+  opacity: 0.12;
+}
+.bg-animation .orb:nth-child(2) {
+  background: radial-gradient(circle, var(--accent, #17a847) 0%, transparent 70%);
+  opacity: 0.08;
+}
+.bg-animation .orb:nth-child(3) {
+  background: radial-gradient(circle, var(--accent-light, #1ed760) 0%, transparent 70%);
+  opacity: 0.06;
+}
+
+/* ----------------------------------------------------------------
+   2. SIDEBAR — OLED premium style
+   ---------------------------------------------------------------- */
+.sidebar {
+  background: #000000;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Active nav item: left accent bar + glow fill */
+.nav-link.active {
+  background: var(--accent-glow, rgba(99, 102, 241, 0.16));
+  color: var(--accent-light, var(--accent-light, #1ed760));
+  font-weight: 700;
+  box-shadow: inset 3px 0 0 var(--accent, #6366f1);
+  border-radius: 0 var(--radius-md) var(--radius-md) 0;
+}
+
+.nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: #ffffff;
+}
+
+/* ----------------------------------------------------------------
+   3. NOW PLAYING BAR — premium OLED redesign
+   ---------------------------------------------------------------- */
+.now-playing-bar {
+  background: #000000 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
+  /* 1px gradient accent line at top */
+  box-shadow: 0 -1px 0 0 var(--accent-glow, rgba(99, 102, 241, 0.5)), 0 -8px 32px rgba(0, 0, 0, 0.95) !important;
+}
+
+/* Larger album art */
+.np-thumbnail-wrap {
+  width: 60px !important;
+  height: 60px !important;
+  border-radius: 10px !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+}
+
+/* Progress bar: thicker track + glow */
+.np-progress-track {
+  height: 5px !important;
+  background: rgba(255, 255, 255, 0.1) !important;
+  transition: height 0.15s ease;
+}
+
+.np-progress-bar:hover .np-progress-track,
+.np-progress-bar.seeking .np-progress-track {
+  height: 7px !important;
+}
+
+.np-progress-fill {
+  background: var(--accent, #6366f1) !important;
+  box-shadow: 0 0 10px var(--accent-glow, rgba(99, 102, 241, 0.6)) !important;
+}
+
+.np-progress-thumb {
+  background: #ffffff !important;
+  box-shadow: 0 0 8px var(--accent-glow, rgba(99, 102, 241, 0.9)), 0 0 3px rgba(255, 255, 255, 0.8) !important;
+}
+
+.np-progress-bar:hover .np-progress-thumb,
+.np-progress-bar.seeking .np-progress-thumb {
+  transform: translate(-50%, -50%) scale(1.4) !important;
+  box-shadow: 0 0 16px var(--accent-glow, rgba(99, 102, 241, 1)), 0 0 4px #fff !important;
+}
+
+/* Play button — dynamic accent style */
+.np-play-btn {
+  background: var(--accent, #6366f1) !important;
+  color: #000000 !important;
+  box-shadow: 0 4px 20px var(--accent-glow, rgba(99, 102, 241, 0.5)) !important;
+  border-radius: 50% !important;
+}
+
+.np-play-btn:hover {
+  transform: scale(1.08) !important;
+  background: var(--accent-light, #818cf8) !important;
+  box-shadow: 0 6px 28px var(--accent-glow, rgba(99, 102, 241, 0.7)) !important;
+}
+
+/* Volume slider with dynamic accent */
+.np-volume-fill {
+  background: var(--accent, #6366f1) !important;
+}
+
+.np-volume-thumb {
+  background: #fff !important;
+  box-shadow: 0 0 6px var(--accent-glow, rgba(99, 102, 241, 0.5)) !important;
+}
+
+.np-volume-bar:hover .np-volume-thumb {
+  transform: translate(-50%, -50%) scale(1.3) !important;
+}
+
+/* EQ bars */
+.np-equalizer span {
+  background: var(--accent, #6366f1) !important;
+}
+
+/* ----------------------------------------------------------------
+   4. RESULT CARDS / SONG CARDS — Spotify-like premium hover
+   ---------------------------------------------------------------- */
+.result-card {
+  background: rgba(18, 18, 18, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  border-radius: 10px !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.22s ease,
+              box-shadow 0.22s ease !important;
+}
+
+.result-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  border-color: var(--accent-glow, rgba(99, 102, 241, 0.4)) !important;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8), 0 0 0 1px var(--accent-glow, rgba(99, 102, 241, 0.2)) !important;
+}
+
+.result-card.playing {
+  border-color: var(--accent, #6366f1) !important;
+  box-shadow: 0 0 24px var(--accent-glow, rgba(99, 102, 241, 0.35)) !important;
+}
+
+/* Play overlay button — dynamic accent circle */
+.overlay-play-btn {
+  background: var(--accent, #6366f1) !important;
+  color: #000 !important;
+  box-shadow: 0 8px 24px var(--accent-glow, rgba(99, 102, 241, 0.5)) !important;
+}
+
+.result-card:hover .overlay-play-btn {
+  transform: scale(1.05) !important;
+}
+
+/* ----------------------------------------------------------------
+   5. GENRE / MOOD / PLAYLIST / LIBRARY CARDS — hover glow
+   ---------------------------------------------------------------- */
+.genre-card:hover {
+  transform: translateY(-5px) scale(1.03) !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6) !important;
+  filter: brightness(1.08);
+}
+
+.playlist-card {
+  background: rgba(18, 18, 18, 0.9) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              border-color 0.22s ease,
+              box-shadow 0.22s ease !important;
+}
+
+.playlist-card:hover {
+  transform: translateY(-4px) scale(1.02) !important;
+  border-color: var(--accent-glow, rgba(99, 102, 241, 0.3)) !important;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.7) !important;
+}
+
+.library-card {
+  transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.22s ease !important;
+}
+
+.library-card:hover {
+  transform: translateY(-3px) scale(1.01) !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Library play button — dynamic accent */
+.lib-card-play,
+.lib-play-btn {
+  background: var(--accent, #6366f1) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 16px var(--accent-glow, rgba(99, 102, 241, 0.4)) !important;
+}
+
+.lib-card-play:hover,
+.lib-play-btn:hover {
+  transform: scale(1.1) !important;
+  box-shadow: 0 6px 22px var(--accent-glow, rgba(99, 102, 241, 0.6)) !important;
+}
+
+/* ----------------------------------------------------------------
+   6. PLAY-ALL / ACTION BUTTONS — dynamic accent
+   ---------------------------------------------------------------- */
+.play-all-btn {
+  background: var(--accent, #6366f1) !important;
+  color: #000 !important;
+}
+
+.play-all-btn:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px var(--accent-glow, rgba(99, 102, 241, 0.5)) !important;
+  background: var(--accent-light, #818cf8) !important;
+}
+
+/* Hero section play button */
+.hero-play-btn {
+  background: var(--accent, #6366f1) !important;
+  color: #000 !important;
+  box-shadow: 0 8px 24px var(--accent-glow, rgba(99, 102, 241, 0.4)) !important;
+}
+
+.hero-play-btn:hover {
+  transform: translateY(-2px) scale(1.03) !important;
+  box-shadow: 0 12px 32px var(--accent-glow, rgba(99, 102, 241, 0.55)) !important;
+  background: var(--accent-light, #818cf8) !important;
+}
+
+/* ----------------------------------------------------------------
+   7. SONG PLAY OVERLAY — bottom-right circle
+   ---------------------------------------------------------------- */
+.song-card .play-overlay {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  width: 44px;
+  height: 44px;
+  background: var(--accent, #6366f1);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 8px 24px var(--accent-glow, rgba(99, 102, 241, 0.5));
+  color: #000;
+  pointer-events: none;
+}
+
+.song-card:hover .play-overlay {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ----------------------------------------------------------------
+   8. SKELETON SHIMMER — OLED-optimised
+   ---------------------------------------------------------------- */
+.skeleton {
+  background: linear-gradient(90deg, #111 25%, #1a1a1a 50%, #111 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+.skeleton-thumb,
+.skeleton-line {
+  background: linear-gradient(90deg, #111 25%, #1c1c1c 50%, #111 75%) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ----------------------------------------------------------------
+   9. UTILITY CLASSES
+   ---------------------------------------------------------------- */
+
+/* Neon glow text */
+.glow-text {
+  text-shadow: 0 0 20px var(--accent), 0 0 40px var(--accent-glow);
+}
+
+/* Car mode button */
+.car-mode-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 12px 20px;
+  color: white;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.car-mode-btn:hover {
+  background: var(--accent-glow, rgba(99, 102, 241, 0.2));
+  border-color: var(--accent, #6366f1);
+}
+
+/* Playback speed pill */
+.speed-pill {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.speed-pill.active,
+.speed-pill:hover {
+  background: var(--accent, #6366f1);
+  color: #000;
+  border-color: var(--accent, #6366f1);
+}
+
+/* ----------------------------------------------------------------
+   10. WAVEFORM / EQUALIZER ANIMATION
+   ---------------------------------------------------------------- */
+.np-equalizer span {
+  animation: waveform 1.2s ease-in-out infinite !important;
+}
+
+@keyframes waveform {
+  0%, 100% { height: 3px; }
+  50% { height: 16px; }
+}
+
+/* ----------------------------------------------------------------
+   11. PULSE RING ANIMATION
+   ---------------------------------------------------------------- */
+@keyframes pulseRing {
+  0% { transform: scale(1); opacity: 0.7; }
+  70% { transform: scale(2); opacity: 0; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+/* ----------------------------------------------------------------
+   12. QUEUE SIDEBAR — OLED pitch black
+   ---------------------------------------------------------------- */
+.queue-sidebar {
+  background: #000000 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.queue-item.active {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  border-left: 3px solid var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   13. LYRICS PANEL — OLED black
+   ---------------------------------------------------------------- */
+.lyrics-panel {
+  background: #000000 !important;
+  border-left: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+.lyrics-line.active {
+  color: var(--accent, #1db954) !important;
+  font-weight: 700;
+  font-size: 20px;
+}
+
+/* ----------------------------------------------------------------
+   14. MODALS — deeper OLED black
+   ---------------------------------------------------------------- */
+.modal {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+/* ----------------------------------------------------------------
+   15. TOAST — OLED black background
+   ---------------------------------------------------------------- */
+.toast {
+  background: rgba(10, 10, 10, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* ----------------------------------------------------------------
+   16. SEARCH BAR FOCUS — green glow
+   ---------------------------------------------------------------- */
+.search-bar:focus-within {
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   17. MODAL INPUTS — green focus glow
+   ---------------------------------------------------------------- */
+.modal-input:focus {
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   18. MODAL SUBMIT / ACCENT BUTTONS — Spotify green
+   ---------------------------------------------------------------- */
+.modal-submit-btn {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+}
+
+.modal-submit-btn:hover {
+  background: var(--accent-light, #1ed760) !important;
+  box-shadow: 0 6px 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   19. BROWSE TABS — green active state
+   ---------------------------------------------------------------- */
+.browse-tab.active {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+}
+
+/* ----------------------------------------------------------------
+   20. MOOD PILLS — green active
+   ---------------------------------------------------------------- */
+.mood-pill.active {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  border-color: transparent !important;
+  box-shadow: 0 0 16px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.mood-pill:hover {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  color: #fff !important;
+  border-color: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   21. FULLSCREEN PLAYER — pure OLED black
+   ---------------------------------------------------------------- */
+.spotify-fullscreen-player {
+  background: radial-gradient(circle at 50% 15%, #0a1a0f 0%, #000000 60%, #000000 100%) !important;
+}
+
+/* Green scrubber fill */
+.sfp-scrubber-fill {
+  background: var(--accent, #1db954) !important;
+}
+
+/* Green art glow */
+.sfp-art-glow {
+  background: radial-gradient(circle, var(--accent-glow, rgba(29, 185, 84, )) 0%, transparent 70%) !important;
+}
+
+/* Play button — white circle */
+.sfp-play-btn {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  box-shadow: 0 8px 28px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   22. MOBILE BOTTOM NAV — OLED black + green active
+   ---------------------------------------------------------------- */
+.spotify-bottom-nav {
+  background: #000000 !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.07) !important;
+}
+
+.sbn-btn.active {
+  color: var(--accent, #1db954) !important;
+}
+
+.sbn-btn.active svg {
+  stroke: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   23. MOBILE MINI-PLAYER — OLED black pill
+   ---------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .now-playing-bar {
+    background: rgba(0, 0, 0, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 14px !important;
+  }
+
+  .np-progress-fill {
+    background: var(--accent, #1db954) !important;
+  }
+
+  .spotify-bottom-nav {
+    background: #000000 !important;
+  }
+}
+
+/* ----------------------------------------------------------------
+   24. EQ MODAL — green accent
+   ---------------------------------------------------------------- */
+.eq-preset-btn:hover,
+.eq-preset-btn.active {
+  background: var(--accent, #1db954) !important;
+  border-color: var(--accent, #1db954) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 14px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.eq-slider {
+  accent-color: var(--accent, #1db954) !important;
+}
+
+.eq-fx-range {
+  accent-color: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   25. SLEEP TIMER — green active
+   ---------------------------------------------------------------- */
+.sleep-option-btn:hover,
+.sleep-option-btn.active {
+  background: var(--accent, #1db954) !important;
+  border-color: var(--accent, #1db954) !important;
+  color: #000 !important;
+  box-shadow: 0 6px 16px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   26. AI PLAYLIST GENERATE BUTTON — keep gradient but shift to green
+   ---------------------------------------------------------------- */
+.ai-generate-main-btn {
+  background: linear-gradient(135deg, var(--accent, #1db954) 0%, var(--accent, #17a847) 50%, #0f7a32 100%) !important;
+  box-shadow: 0 8px 25px -4px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.ai-generate-main-btn:hover {
+  box-shadow: 0 12px 32px -4px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   27. ACTIVE MOOD OPTIONS / STEP DOTS — green
+   ---------------------------------------------------------------- */
+.mood-step-dot.active span {
+  background: var(--accent, #1db954) !important;
+  box-shadow: 0 0 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.mood-option-chip.selected {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 0 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   28. DOWNLOAD PROGRESS — green fill
+   ---------------------------------------------------------------- */
+.dl-bar-fill,
+.dl-progress-fill {
+  background: linear-gradient(90deg, var(--accent, #1db954), var(--accent, #17a847), var(--accent-light, #1ed760)) !important;
+  background-size: 200% 100% !important;
+}
+
+/* ----------------------------------------------------------------
+   29. STAT CARDS + PROFILE PAGE — gradient text in green
+   ---------------------------------------------------------------- */
+.stat-number {
+  background: linear-gradient(135deg, var(--accent, #1db954), var(--accent-light, #1ed760)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ----------------------------------------------------------------
+   30. SCROLLBAR STYLING — subtle dark green thumb
+   ---------------------------------------------------------------- */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+}
+
+/* ----------------------------------------------------------------
+   31. ACTIVE QUEUE ITEM — green left border
+   ---------------------------------------------------------------- */
+.queue-item.active {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  border-left: 3px solid var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   32. SUGGESTION ITEM KEYBOARD CURSOR — green left bar
+   ---------------------------------------------------------------- */
+.suggestion-item.sug-active {
+  box-shadow: inset 2px 0 0 var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   33. SONG ROW ACTIVE STATE — green left bar
+   ---------------------------------------------------------------- */
+.song-row.active {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  box-shadow: inset 3px 0 0 var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   34. CROSSFADE SLIDER — green thumb
+   ---------------------------------------------------------------- */
+.crossfade-control input[type="range"]::-webkit-slider-thumb {
+  background: var(--accent, #1db954) !important;
+}
+.crossfade-control input[type="range"]::-moz-range-thumb {
+  background: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   35. FOCUS VISIBLE — green outline everywhere
+   ---------------------------------------------------------------- */
+:focus-visible {
+  outline: 2px solid var(--accent, #1db954) !important;
+  outline-offset: 2px !important;
+}
+
+/* ----------------------------------------------------------------
+   36. LOGO — green gradient text
+   ---------------------------------------------------------------- */
+.logo-text {
+  background: linear-gradient(135deg, var(--accent, #1db954), var(--accent-light, #1ed760)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ----------------------------------------------------------------
+   37. PAGE TITLE — green gradient
+   ---------------------------------------------------------------- */
+.page-title {
+  background: linear-gradient(135deg, var(--accent, #1db954), var(--accent-light, #1ed760)) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* ----------------------------------------------------------------
+   38. HERO BADGE + BADGES — green gradient
+   ---------------------------------------------------------------- */
+.hero-badge {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 12px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   39. TAG HOVER — green accent
+   ---------------------------------------------------------------- */
+.tag:hover {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 4px 16px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   40. DYNAMIC ISLAND PILL — OLED black
+   ---------------------------------------------------------------- */
+.di-minimized-pill {
+  background: rgba(0, 0, 0, 0.9) !important;
+}
+
+.di-minimized-pill:hover {
+  box-shadow: 0 8px 30px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   41. APPLE FLOATING ORB — green ring pulse
+   ---------------------------------------------------------------- */
+.orb-ring-pulse {
+  border-color: var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.apple-floating-orb.playing .orb-soundwaves span {
+  animation-name: soundBarGreen;
+}
+
+@keyframes soundBarGreen {
+  0% { height: 4px; opacity: 0.5; }
+  100% { height: 18px; opacity: 1; background: var(--accent, #1db954); }
+}
+
+/* ----------------------------------------------------------------
+   42. ACTIVE LYRICS LINE — green glow
+   ---------------------------------------------------------------- */
+.sfp-lyric-line.active {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  text-shadow: 0 0 24px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   43. SPEED CHIP ACTIVE — green
+   ---------------------------------------------------------------- */
+.speed-chip.active {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 0 10px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   44. DL QUALITY ACTIVE — green border
+   ---------------------------------------------------------------- */
+.dl-quality-option.active {
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 0 0 3px var(--accent-glow, rgba(29, 185, 84, )), 0 2px 8px rgba(0,0,0,0.3) !important;
+}
+
+.dl-quality-option.active .dl-q-value {
+  color: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   45. POMODORO RING — green progress
+   ---------------------------------------------------------------- */
+.pomodoro-progress-ring {
+  stroke: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   46. VOICE BTN — green armed state
+   ---------------------------------------------------------------- */
+.voice-btn.armed { color: var(--accent, #1db954) !important; }
+.voice-btn.armed::after { background: var(--accent, #1db954) !important; }
+.voice-btn.active { background: var(--accent, #1db954) !important; color: #000 !important; }
+
+/* ----------------------------------------------------------------
+   47. BOTTOM SHEET HANDLE — subtle green tint
+   ---------------------------------------------------------------- */
+.mobile-sheet-handle {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   48. GLASS CARDS body override — make all cards true dark
+   ---------------------------------------------------------------- */
+.stat-card,
+.daily-day-card,
+.batch-chips-section,
+.batch-options-card,
+.batch-progress-box,
+.batch-results-preview {
+  background: rgba(12, 12, 12, 0.95) !important;
+  border: 1px solid rgba(255, 255, 255, 0.06) !important;
+}
+
+/* ----------------------------------------------------------------
+   49. AI CUSTOM PLAYLIST CARD — OLED dark green tinted
+   ---------------------------------------------------------------- */
+.ai-custom-playlist-card {
+  background: linear-gradient(135deg, rgba(0, 20, 8, 0.85) 0%, rgba(0, 0, 0, 0.95) 60%, rgba(0, 15, 6, 0.9) 100%) !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+  box-shadow: 0 16px 48px -10px var(--accent-glow, rgba(29, 185, 84, )), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+.ai-card-glow {
+  background: radial-gradient(circle, var(--accent-glow, rgba(29, 185, 84, )) 0%, rgba(23, 168, 71, 0.08) 50%, transparent 70%) !important;
+}
+
+/* ----------------------------------------------------------------
+   50. SEARCH CORRECTION INDICATOR — green tint
+   ---------------------------------------------------------------- */
+.search-correction {
+  color: var(--accent-light, #1ed760) !important;
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ================================================================
+   END OF MUSICFLOW PREMIUM OLED UPGRADE
+   ================================================================ */
+
+
+/* ================================================================
+   MUSICFLOW v4.0 OLED PRO — NEW FEATURES CSS
+   ================================================================ */
+
+/* ----------------------------------------------------------------
+   51. PLAYBACK SPEED POPUP
+   ---------------------------------------------------------------- */
+.speed-popup {
+  position: fixed;
+  bottom: calc(var(--np-height) + 16px);
+  right: 24px;
+  z-index: 9000;
+  background: #111;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.9), 0 0 20px var(--accent-glow, rgba(29, 185, 84, ));
+  min-width: 200px;
+  animation: slideUpFade 0.2s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.speed-popup-title {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+
+.speed-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.speed-opt {
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+}
+.speed-opt:hover {
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border-color: var(--accent-glow, rgba(29, 185, 84, ));
+  color: var(--accent, #1db954);
+}
+.speed-opt.active {
+  background: var(--accent, #1db954);
+  border-color: var(--accent, #1db954);
+  color: #000;
+}
+
+.speed-toggle-btn .speed-label,
+.np-btn .speed-label {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--text-secondary);
+}
+
+/* ----------------------------------------------------------------
+   52. SONG RADIO TOAST
+   ---------------------------------------------------------------- */
+.song-radio-toast {
+  position: fixed;
+  top: 80px;
+  right: 24px;
+  z-index: 9500;
+  background: #111;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 14px;
+  padding: 12px 16px;
+  max-width: 320px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8);
+  animation: slideInRight 0.3s cubic-bezier(0.4,0,0.2,1);
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(100%); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.srt-inner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.srt-icon { font-size: 24px; }
+
+.srt-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.srt-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent, #1db954);
+}
+
+.srt-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.srt-close {
+  font-size: 20px;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.srt-close:hover { color: var(--text-primary); }
+
+/* ----------------------------------------------------------------
+   53. CHARTS & TRENDING PAGES
+   ---------------------------------------------------------------- */
+/* Chart type pills are reusing .mood-pill styles — no extra needed */
+
+#chartsGrid .result-card,
+#trendingGrid .result-card {
+  position: relative;
+}
+
+/* Rank number on chart cards */
+.chart-rank {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: rgba(0,0,0,0.75);
+  border-radius: 6px;
+  padding: 2px 7px;
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--accent, #1db954);
+  letter-spacing: 0.5px;
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+.chart-rank.top3 {
+  background: linear-gradient(135deg, var(--accent, #1db954), var(--accent, #17a847));
+  color: #000;
+}
+
+/* Trending fire badge */
+.trending-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-size: 14px;
+  animation: flicker 2s ease-in-out infinite;
+  z-index: 2;
+}
+
+@keyframes flicker {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(1.15); }
+}
+
+/* ----------------------------------------------------------------
+   54. SHIMMER SKELETON LOADERS
+   ---------------------------------------------------------------- */
+.skeleton-card {
+  background: #111;
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+}
+
+.skeleton-thumb {
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #1a1a1a;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-thumb::after,
+.skeleton-line::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.05) 50%, transparent 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0%   { background-position:  200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-line {
+  height: 12px;
+  background: #1a1a1a;
+  border-radius: 6px;
+  margin: 8px;
+  position: relative;
+  overflow: hidden;
+}
+
+.skeleton-line.short { width: 60%; }
+.skeleton-line.medium { width: 80%; }
+
+/* ----------------------------------------------------------------
+   55. ENHANCED NOW PLAYING BAR — OLED PREMIUM
+   ---------------------------------------------------------------- */
+.now-playing-bar {
+  background: #000 !important;
+  border-top: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* Green accent top line on now playing */
+.now-playing-bar::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent, #1db954), transparent);
+  opacity: 0.6;
+}
+
+/* Progress bar glow */
+.np-progress-fill {
+  background: linear-gradient(90deg, var(--accent, #1db954), var(--accent-light, #1ed760)) !important;
+  box-shadow: 0 0 8px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.np-progress-thumb {
+  background: var(--accent, #1db954) !important;
+  box-shadow: 0 0 10px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   56. SIDEBAR — PREMIUM OLED
+   ---------------------------------------------------------------- */
+.sidebar {
+  background: #000 !important;
+  border-right: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.nav-link.active {
+  background: var(--accent-glow, rgba(29, 185, 84, )) !important;
+  color: var(--accent, #1db954) !important;
+  border-left: 3px solid var(--accent, #1db954) !important;
+}
+
+.nav-link:hover:not(.active) {
+  background: rgba(255,255,255,0.05) !important;
+}
+
+/* ----------------------------------------------------------------
+   57. ENHANCED CARD HOVER — SPOTIFY STYLE
+   ---------------------------------------------------------------- */
+.result-card,
+.song-card {
+  transition: transform 0.2s cubic-bezier(0.4,0,0.2,1),
+              box-shadow 0.2s ease,
+              background 0.2s ease !important;
+  position: relative;
+}
+
+.result-card:hover,
+.song-card:hover {
+  transform: translateY(-4px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.8), 0 0 0 1px rgba(255,255,255,0.08) !important;
+}
+
+/* Play button overlay on card hover */
+.result-card .card-play-hover {
+  position: absolute;
+  bottom: 44px;
+  right: 10px;
+  width: 44px;
+  height: 44px;
+  background: var(--accent, #1db954);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transform: translateY(8px);
+  transition: all 0.2s cubic-bezier(0.4,0,0.2,1);
+  box-shadow: 0 8px 24px var(--accent-glow, rgba(29, 185, 84, ));
+  z-index: 3;
+  pointer-events: none;
+}
+
+.result-card:hover .card-play-hover {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.card-play-hover svg {
+  width: 18px;
+  height: 18px;
+  fill: #000;
+  margin-left: 2px;
+}
+
+/* ----------------------------------------------------------------
+   58. GENRE / MOOD CARDS — RICHER
+   ---------------------------------------------------------------- */
+.genre-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+.genre-card:hover {
+  transform: scale(1.05) !important;
+  box-shadow: 0 12px 36px rgba(0,0,0,0.6) !important;
+}
+
+/* ----------------------------------------------------------------
+   59. FULLSCREEN PLAYER BOTTOM ACTION PILLS — WRAP ON SMALL SCREENS
+   ---------------------------------------------------------------- */
+.sfp-bottom-actions {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* ----------------------------------------------------------------
+   60. MOBILE BOTTOM NAV — PURE BLACK, GREEN ACTIVE
+   ---------------------------------------------------------------- */
+.spotify-bottom-nav {
+  background: #000 !important;
+  border-top: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+.sbn-btn.active {
+  color: var(--accent, #1db954) !important;
+}
+
+.sbn-btn.active span {
+  color: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   61. WAVEFORM EQUALIZER ANIMATION — GREEN BARS
+   ---------------------------------------------------------------- */
+.np-equalizer span {
+  background: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   62. APPLE ORB — GREEN RING
+   ---------------------------------------------------------------- */
+.orb-ring-pulse {
+  border-color: var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   63. SETTINGS THEME SELECT — ACTIVE OLED HIGHLIGHT
+   ---------------------------------------------------------------- */
+/* already handled by accent; this ensures the OLED option stands out */
+#settingTheme option[value="oled"]::before { content: "✓ "; }
+
+/* ----------------------------------------------------------------
+   64. LIBRARY CARDS — PREMIUM HOVER
+   ---------------------------------------------------------------- */
+.library-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease !important;
+}
+.library-card:hover {
+  transform: translateY(-3px) !important;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.6) !important;
+  border-color: var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   65. TOAST NOTIFICATION — GREEN ACCENT
+   ---------------------------------------------------------------- */
+.toast {
+  background: #111 !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.8) !important;
+}
+
+/* ----------------------------------------------------------------
+   66. VOLUME BAR — GREEN FILL
+   ---------------------------------------------------------------- */
+.np-volume-fill {
+  background: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   67. SCRUBBER — FULLSCREEN PLAYER
+   ---------------------------------------------------------------- */
+.sfp-scrubber-fill {
+  background: var(--accent, #1db954) !important;
+}
+.sfp-scrubber-thumb {
+  background: #fff !important;
+  box-shadow: 0 0 8px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   68. HOME HERO CARD — SPOTIFY GREEN GRADIENT
+   ---------------------------------------------------------------- */
+.home-hero-card {
+  background: linear-gradient(135deg, #0a2a16 0%, #000 60%, #071a0e 100%) !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+.hero-play-btn {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+.hero-play-btn:hover {
+  background: var(--accent-light, #1ed760) !important;
+  transform: scale(1.04) !important;
+  box-shadow: 0 6px 28px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   69. MOOD PILLS — GREEN ACTIVE STATE
+   ---------------------------------------------------------------- */
+.mood-pill.active {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+  border-color: var(--accent, #1db954) !important;
+  box-shadow: 0 4px 16px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   70. AI GENERATE BUTTON — PREMIUM GREEN
+   ---------------------------------------------------------------- */
+.ai-generate-main-btn {
+  background: linear-gradient(135deg, var(--accent, #1db954), var(--accent, #17a847)) !important;
+  color: #000 !important;
+  box-shadow: 0 4px 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+.ai-generate-main-btn:hover {
+  background: linear-gradient(135deg, var(--accent-light, #1ed760), var(--accent, #1db954)) !important;
+  box-shadow: 0 6px 28px var(--accent-glow, rgba(29, 185, 84, )) !important;
+  transform: translateY(-2px) !important;
+}
+
+/* ----------------------------------------------------------------
+   71. PLAY ALL BUTTONS — GREEN
+   ---------------------------------------------------------------- */
+.play-all-btn,
+.hero-play-btn,
+.ai-res-play-btn {
+  background: var(--accent, #1db954) !important;
+  color: #000 !important;
+}
+
+/* ----------------------------------------------------------------
+   72. SPINNER — GREEN
+   ---------------------------------------------------------------- */
+.spinner {
+  border-top-color: var(--accent, #1db954) !important;
+}
+
+/* ----------------------------------------------------------------
+   73. DYNAMIC ISLAND HEADER — OLED BLACK
+   ---------------------------------------------------------------- */
+.dynamic-island-header {
+  background: rgba(0,0,0,0.9) !important;
+  backdrop-filter: blur(20px) !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   74. MODALS — OLED BLACK
+   ---------------------------------------------------------------- */
+.modal {
+  background: #0d0d0d !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+.modal-header {
+  border-bottom: 1px solid rgba(255,255,255,0.06) !important;
+}
+
+/* ----------------------------------------------------------------
+   75. EQ PANEL — OLED BLACK
+   ---------------------------------------------------------------- */
+.eq-panel {
+  background: #0d0d0d !important;
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   76. LYRICS PANEL — OLED BLACK WITH GREEN ACTIVE LINE
+   ---------------------------------------------------------------- */
+.lyrics-panel {
+  background: #000 !important;
+  border-left: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+.sfp-lyric-line.active {
+  color: var(--accent, #1db954) !important;
+  text-shadow: 0 0 20px var(--accent-glow, rgba(29, 185, 84, )) !important;
+}
+
+/* ----------------------------------------------------------------
+   77. QUEUE SIDEBAR — OLED BLACK
+   ---------------------------------------------------------------- */
+.queue-sidebar {
+  background: #000 !important;
+  border-left: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+/* ----------------------------------------------------------------
+   78. BACKGROUND ORBS — SUBTLE ON OLED
+   ---------------------------------------------------------------- */
+[data-theme="oled"] .bg-animation .orb {
+  opacity: 0.08 !important;
+  filter: blur(120px) !important;
+}
+
+/* Green-tinted orbs for OLED/dark */
+.bg-animation .orb:nth-child(1) {
+  background: radial-gradient(circle, var(--accent, #1db954) 0%, transparent 70%) !important;
+}
+.bg-animation .orb:nth-child(2) {
+  background: radial-gradient(circle, var(--accent, #17a847) 0%, transparent 70%) !important;
+}
+.bg-animation .orb:nth-child(3) {
+  background: radial-gradient(circle, var(--accent, #1db954) 0%, transparent 70%) !important;
+}
+
+/* ================================================================
+   END OF MUSICFLOW v4.0 NEW FEATURES CSS
+   ================================================================ */
+
+
+/* ================================================================
+   SECTION 79 — GEMINI AI FEATURES STYLES
+   ================================================================ */
+
+/* AI Settings row */
+.ai-key-row { flex-wrap: wrap; gap: 10px; }
+.ai-key-input-wrap { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.setting-text-input {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  padding: 8px 12px;
+  min-width: 200px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.setting-text-input:focus { border-color: var(--accent, #1db954); box-shadow: 0 0 0 2px var(--accent-glow, rgba(29, 185, 84, )); }
+.setting-text-input::placeholder { color: var(--text-muted); opacity: 0.6; }
+
+/* AI No-Key Warning Box */
+.ai-no-key-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border: 1px dashed var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 20px;
+  margin: 16px 0;
+  text-align: center;
+  animation: fadeIn 0.4s ease;
+}
+
+/* AI Playlist Generator */
+.ai-playlist-box {
+  margin: 0 0 16px;
+  padding: 16px;
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 16px;
+  animation: fadeIn 0.3s ease;
+}
+.ai-playlist-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.ai-playlist-input {
+  flex: 1;
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  padding: 12px 16px;
+  outline: none;
+  transition: border-color 0.2s;
+}
+.ai-playlist-input:focus { border-color: var(--accent, #1db954); }
+.ai-playlist-input::placeholder { color: var(--text-muted); }
+.ai-gen-btn {
+  background: linear-gradient(135deg, var(--accent, #1db954), #17a44a);
+  color: #000;
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  border-radius: 12px;
+  padding: 12px 20px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform 0.15s, opacity 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.ai-gen-btn:hover { transform: scale(1.04); opacity: 0.9; }
+.ai-gen-btn:active { transform: scale(0.97); }
+.ai-gen-btn.loading { opacity: 0.6; pointer-events: none; }
+
+/* AI Discover loading state */
+.ai-thinking-card {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  gap: 16px;
+  color: var(--text-secondary);
+}
+.ai-thinking-dots {
+  display: flex;
+  gap: 6px;
+}
+.ai-thinking-dots span {
+  width: 8px; height: 8px;
+  background: var(--accent, #1db954);
+  border-radius: 50%;
+  animation: aiDotBounce 1.2s infinite;
+}
+.ai-thinking-dots span:nth-child(2) { animation-delay: 0.2s; }
+.ai-thinking-dots span:nth-child(3) { animation-delay: 0.4s; }
+@keyframes aiDotBounce {
+  0%, 80%, 100% { transform: translateY(0); opacity: 0.5; }
+  40% { transform: translateY(-10px); opacity: 1; }
+}
+
+/* AI tag badge on cards */
+.ai-source-badge {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: linear-gradient(135deg, var(--accent, #1db954), #17a44a);
+  color: #000;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 6px;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Song Info AI card (shows under fullscreen player) */
+.ai-song-info-card {
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 14px;
+  padding: 14px 18px;
+  margin: 12px 16px 0;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  animation: fadeIn 0.4s ease;
+  display: none;
+}
+.ai-song-info-card.visible { display: block; }
+.ai-song-info-header {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--accent, #1db954);
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* AI Smart Radio badge */
+.ai-radio-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--accent-glow, rgba(29, 185, 84, ));
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent, #1db954);
+  margin-bottom: 8px;
+}
+
+/* AI Search button indicator in search bar */
+.ai-search-active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg,var(--accent-glow, rgba(29, 185, 84, )),var(--accent-glow, rgba(29, 185, 84, )));
+  border: 1px solid var(--accent-glow, rgba(29, 185, 84, ));
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--accent, #1db954);
+  pointer-events: none;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

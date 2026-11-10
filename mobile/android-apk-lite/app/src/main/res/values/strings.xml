@@ -1,4 +1,5 @@
 <resources>
     <string name="app_name">MusicFlow</string>
     <string name="notif_channel_playback">Now Playing</string>
+    <string name="notif_channel_download">Downloads</string>
 </resources>
